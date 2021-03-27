@@ -1,0 +1,17 @@
+{
+	"folders": [],
+	"settings": {
+		"files.associations": {
+			"flashmemorydriver.h": "c",
+			"msp430x14x.h": "c",
+			"usersetting.h": "c",
+			"string.h": "c",
+			"cstdint": "cpp",
+			"interrupttimer.h": "c",
+			"*.tcc": "cpp",
+			"string": "cpp",
+			"fstream": "cpp",
+			"array": "cpp"
+		}
+	}
+}
