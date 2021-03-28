@@ -1,0 +1,2 @@
+# Digital-Weighing-Scale-Board-6-Channels
+The board using ESP32 Dev Board as the microcontroller, made in portable form, and easy to use. Weighing can be performed on 6 different objects at the same time, with adjustable maximum weighing on each channel. Use 3 pcs of IC ADS1232 as an Analog to Digital Converter. Calibration sensor feature available, with a maximum of 8 calibration points. 3 data logging models available, that are Local via Micro SD card, Serial RS232, and logging through ThingSpeak.
