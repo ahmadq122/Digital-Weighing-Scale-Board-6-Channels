@@ -195,7 +195,7 @@ uint8_t StateMachine::homeScreen(void)
 
         evenBuzzer();
 
-        hmi.serialEvent_2();
+        // hmi.serialEvent_2();
 
         for (int i = 0; i < 16; i++)
         {
@@ -365,7 +365,7 @@ uint8_t StateMachine::measurementUnits(void)
     {
         while (!hmi.checkAnyButtonPressed(&button))
         {
-            hmi.serialEvent_2();
+            // hmi.serialEvent_2();
         }
         for (uint8_t i = 0; i < 11; i++)
         {

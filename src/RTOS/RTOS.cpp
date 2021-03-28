@@ -1,14 +1,15 @@
-#include "RTOS.h"
-
 #if CONFIG_FREERTOS_UNICORE
 #define ARDUINO_RUNNING_CORE 0
 #else
 #define ARDUINO_RUNNING_CORE 1
 #endif
 
+#include "RTOS.h"
+#include "Nextion/Nextion.h"
+
 //Define the tasks
 void Task_01(void *pvParameters);
-// void Task_02(void *pvParameters);
+void Task_02(void *pvParameters);
 // void Task_03(void *pvParameters);
 // void Task_04(void *pvParameters);
 
@@ -25,14 +26,14 @@ void RealTimeOS::setup(void)
         NULL,
         ARDUINO_RUNNING_CORE);
 
-    // xTaskCreatePinnedToCore(
-    //     Task_02,
-    //     "Task_02",
-    //     512, // Stack size
-    //     NULL,
-    //     1, // Priority
-    //     NULL,
-    //     ARDUINO_RUNNING_CORE);
+    xTaskCreatePinnedToCore(
+        Task_02,
+        "Task_02",
+        1024, // Stack size
+        NULL,
+        configMAX_PRIORITIES - 2, // Priority
+        NULL,
+        ARDUINO_RUNNING_CORE);
 }
 
 /*--------------------------------------------------*/
@@ -61,6 +62,17 @@ void Task_01(void *pvParameters) // This is a task.
         }
         rtos.secondBlink = !rtos.secondBlink;
         vTaskDelay(1000); // Delay for 1 second
+    }
+}
+
+void Task_02(void *pvParameters) // This is a task.
+{
+    (void)pvParameters;
+
+    for (;;) // A Task shall never return or exit.
+    {
+        hmi.serialEvent_2();
+        vTaskDelay(30); // Delay for 1 second
     }
 }
 

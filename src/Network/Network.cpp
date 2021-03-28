@@ -125,8 +125,8 @@ bool Network::networkConfig(void)
         //Wait for button press
         while (!hmi.checkAnyButtonPressed(&button))
         {
-            hmi.serialEvent_2();
-            delay(10);
+            // hmi.serialEvent_2();
+            // delay(10);
             if (needToRefreshStatus && (WiFi.isConnected()))
             {
                 showNetworkProperty(true);
@@ -216,7 +216,7 @@ __scan:
         {
             while (!hmi.checkAnyButtonPressed(&button))
             {
-                hmi.serialEvent_2();
+                // hmi.serialEvent_2();
                 if (hmi.getWaitingEndSignal())
                 {
                     networkState = false;
@@ -249,7 +249,7 @@ __scan:
             }
             while (!hmi.checkAnyButtonPressed(&button))
             {
-                hmi.serialEvent_2();
+                // hmi.serialEvent_2();
                 // Serial.println("wait1");
             }
 
@@ -269,7 +269,7 @@ __scan:
                 while (!hmi.checkAnyButtonPressed(&button))
                 {
                     // Serial.println("wait2");
-                    hmi.serialEvent_2();
+                    // hmi.serialEvent_2();
                 }
                 if (hmi.getDataButton(1))
                 {

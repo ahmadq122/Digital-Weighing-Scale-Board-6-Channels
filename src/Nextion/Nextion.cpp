@@ -377,7 +377,7 @@ void Nextion::waitForPageRespon(void)
 {
     while (!getWaitingEndSignal())
     {
-        serialEvent_2();
+        // serialEvent_2();
     }
     printDebug(data.getDebugMode(), "Page ready!");
 }
@@ -413,8 +413,6 @@ void Nextion::serialEvent_2(void)
       printDebug(data.getDebugMode(), "Failed to get the data!");
     }
   }
-
-  delay(20);
 }
 
 Nextion hmi;

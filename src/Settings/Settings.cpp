@@ -14,7 +14,7 @@ start:
 
     while (true)
     {
-        hmi.serialEvent_2();
+        // hmi.serialEvent_2();
         for (int i = 0; i < 7; i++)
         {
             button[i] = hmi.getDataButton(i);
@@ -97,7 +97,7 @@ void Settings::timeZone(void)
 
     while (true)
     {
-        hmi.serialEvent_2();
+        // hmi.serialEvent_2();
         for (int i = 0; i < 4; i++)
         {
             button[i] = hmi.getDataButton(i);
@@ -141,7 +141,7 @@ void Settings::brightness(void)
     hmi.waitForPageRespon();
     while (!hmi.getDataButton(0))
     {
-        hmi.serialEvent_2();
+        // hmi.serialEvent_2();
     }
 }
 void Settings::maximumWeight(void)
@@ -162,7 +162,7 @@ start:
 
     while (true)
     {
-        hmi.serialEvent_2();
+        // hmi.serialEvent_2();
         for (int i = 0; i < 7; i++)
         {
             button[i] = hmi.getDataButton(i);
@@ -180,7 +180,7 @@ start:
                     hmi.flushAvailableButton();
                     while (!button1[0] && !button1[1])
                     {
-                        hmi.serialEvent_2();
+                        // hmi.serialEvent_2();
                         button1[0] = hmi.getDataButton(0);
                         button1[1] = hmi.getDataButton(1);
                     }
@@ -207,7 +207,7 @@ void Settings::batteryCapacity(void)
     hmi.setStringToNextion("num_string.txt", String() + data.getBatteryCapacity());
     while (!button[0] && !button[1])
     {
-        hmi.serialEvent_2();
+        // hmi.serialEvent_2();
         for (uint8_t i = 0; i < 2; i++)
             button[i] = hmi.getDataButton(i);
     }
@@ -262,7 +262,7 @@ void Settings::debugMenu(void)
 
     while (true)
     {
-        hmi.serialEvent_2();
+        // hmi.serialEvent_2();
         for (int i = 0; i < 12; i++)
         {
             button[i] = hmi.getDataButton(i);
@@ -307,7 +307,7 @@ start:
     hmi.waitForPageRespon();
     while (true)
     {
-        hmi.serialEvent_2();
+        // hmi.serialEvent_2();
         for (int i = 0; i < 4; i++)
         {
             button[i] = hmi.getDataButton(i);
@@ -382,7 +382,7 @@ start:
 
     while (true)
     {
-        hmi.serialEvent_2();
+        // hmi.serialEvent_2();
         for (int i = 0; i < 10; i++)
         {
             button[i] = hmi.getDataButton(i);
@@ -408,7 +408,7 @@ start:
                     hmi.flushAvailableButton();
                     while (!button1[0] && !button1[1])
                     {
-                        hmi.serialEvent_2();
+                        // hmi.serialEvent_2();
                         button1[0] = hmi.getDataButton(0);
                         button1[1] = hmi.getDataButton(1);
                     }
@@ -433,7 +433,7 @@ void Settings::zeroCalibration(void)
     hmi.waitForPageRespon();
     while (true)
     {
-        hmi.serialEvent_2();
+        // hmi.serialEvent_2();
         for (int i = 0; i < 2; i++)
         {
             button[i] = hmi.getDataButton(i);
@@ -459,7 +459,7 @@ void Settings::pointCalibration(void)
     hmi.waitForPageRespon();
     while (true)
     {
-        hmi.serialEvent_2();
+        // hmi.serialEvent_2();
         for (int i = 0; i < 6; i++)
         {
             button[i] = hmi.getDataButton(i);
