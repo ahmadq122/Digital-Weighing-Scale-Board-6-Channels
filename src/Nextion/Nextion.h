@@ -27,13 +27,14 @@ enum DataFromNextionFlag
     BUZZER,        //"buz-"
     WAIT,          //"wet-"
     EXIT,          //"ext-"
-    TOUCH,          //"tch-"
+    TOUCH,         //"tch-"
     UNKNOWN = 0xFF //error
 };
 
 class Nextion
 {
 public:
+    void init(void);
     // void setStringToNextion(const char *variableName, const char *newString);
     void setStringToNextion(String variableName, String newString);
     void setIntegerToNextion(const char *variableName, uint64_t newValue);

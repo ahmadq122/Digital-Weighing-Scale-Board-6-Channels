@@ -3,34 +3,20 @@
 #include "FlashMemory/FlashMemory.h"
 #include "RTOS/RTOS.h"
 
+void Nextion::init(void)
+{
+  rtos.dimmCounterDownSecond = data.getDimScreenTimer();
+  rtos.currentBrightness = data.getScreenBrightness();
+  setIntegerToNextion("dims", rtos.currentBrightness);
+}
+
 void Nextion::sendCommandToNextion(const char *cmd)
 {
-  // while  (NexSerial.available())
-  //   {
-  //     NexSerial.read();
-  //   }
-
   NexSerial.print(cmd);
   NexSerial.write(0xFF);
   NexSerial.write(0xFF);
   NexSerial.write(0xFF);
-  // return recvRetCommandFinished();
 }
-
-// void Nextion::setStringToNextion(const char *variableName, const char *newString)
-// {
-//   String cmd;
-//   char buffer[15] = {0};
-
-//   buffer[0] = '\"';
-//   strcat(buffer, newString);
-//   strcat(buffer, "\"");
-
-//   cmd = String() + variableName;
-//   cmd += "=";
-//   cmd += buffer;
-//   sendCommandToNextion(cmd.c_str());
-// }
 
 void Nextion::setStringToNextion(String variableName, String newString)
 {
@@ -109,9 +95,7 @@ bool Nextion::checkDataStringFromNextion(const char *stringData)
     }
     else if (type == STRING)
     {
-      // printDebug(data.getDebugMode(), data[2]);
       strcpy(dataString[id], dat[2]);
-      // printDebug(data.getDebugMode(), dataString[id]);
     }
     else if (type == INTEGER)
     {
@@ -129,6 +113,7 @@ bool Nextion::checkDataStringFromNextion(const char *stringData)
     else if (type == WAIT)
     {
       waitingEndSignal = atoi(dat[2]) > 0 ? true : false;
+      presetScreenBrightness();
     }
     else if (type == EXIT)
     {
@@ -391,7 +376,6 @@ uint16_t Nextion::getValue(const char *variableName, uint32_t *number)
 {
   String cmd = String("get ");
   cmd += variableName;
-  // cmd += ".val";
   sendCommandToNextion(cmd.c_str());
   return recvRetNumber(number);
 }
@@ -400,7 +384,6 @@ uint16_t Nextion::getText(const char *variableName, char *buffer, uint32_t len)
   String cmd;
   cmd += "get ";
   cmd += variableName;
-  // cmd += ".txt";
   sendCommandToNextion(cmd.c_str());
   return recvRetString(buffer, len);
 }
@@ -450,13 +433,13 @@ void Nextion::serialEvent_2(void)
 
 void Nextion::presetScreenBrightness(void)
 {
-  if (data.getDimScreenTimer() != 0)
+  if (data.getDimScreenTimer() > 0)
   {
     rtos.dimmCounterDownSecond = data.getDimScreenTimer();
     if (rtos.currentBrightness != data.getScreenBrightness())
     {
       rtos.currentBrightness = data.getScreenBrightness();
-      setIntegerToNextion("dim", rtos.currentBrightness);
+      setIntegerToNextion("dims", rtos.currentBrightness);
     }
   }
 }

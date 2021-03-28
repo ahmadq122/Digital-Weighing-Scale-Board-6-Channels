@@ -62,6 +62,7 @@ void StateMachine::setup(void)
 {
     rtos.setup();
     initFlash(MEMORY_SIZE);
+
     if (data.getDebugMode())
     {
         Serial.begin(data.getBaudrateSerial(DEBUG));
@@ -78,6 +79,7 @@ void StateMachine::setup(void)
     net.setup();
     initTime();
     initSDCard();
+    hmi.init();
 }
 
 bool StateMachine::initTime(void)
