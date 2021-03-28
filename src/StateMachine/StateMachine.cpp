@@ -1,6 +1,4 @@
-#include "InterruptTimer.h"
 #include <Arduino.h>
-#include <ESP32TimerInterrupt.h>
 #include "StateMachine.h"
 #include "FlashMemory/FlashMemory.h"
 #include "Nextion/Nextion.h"
@@ -10,39 +8,9 @@
 #include "MicroSD/MicroSD.h"
 #include <HTTPClient.h>
 #include "Settings/Settings.h"
+#include "ADC/ADS1232.h"
+#include "RTOS/RTOS.h"
 
-static uint32_t counterUpSeconds;
-static uint32_t counterDownSeconds;
-static uint32_t interruptSeconds;
-static bool secondBlink;
-static bool secondTriggered[10];
-static bool wifiConnectionTriggered;
-static bool wifiConnected = false;
-static bool initTimeState = true;
-static bool syncroneRTC = false; //syncronize RTC data with ntp at the first time
-
-void IRAM_ATTR TimerHandler0(void)
-{
-#if (TIMER_INTERRUPT_DEBUG > 0)
-    if (++counterUpSeconds == 0xFFFFFFFFFF)
-        counterUpSeconds = 0;
-    if (counterDownSeconds)
-        counterDownSeconds--;
-    if (++interruptSeconds > 59)
-        interruptSeconds = 0;
-
-    if (interruptSeconds % 5 == 0 && !wifiConnectionTriggered)
-        wifiConnectionTriggered = true;
-
-    for (uint8_t i = 0; i < 10; i++)
-    {
-        secondTriggered[i] = 1;
-    }
-    secondBlink = !secondBlink;
-#endif
-}
-
-ESP32Timer iTimer0(0);
 
 /*****************************************************************************
  *******************************ESP32S-PIN************************************
@@ -93,7 +61,7 @@ uint8_t pin[10] = {
 
 void StateMachine::setup(void)
 {
-    setupInterruptTimer();
+    rtos.setup();
     initFlash(MEMORY_SIZE);
     if (data.getDebugMode())
     {
@@ -116,19 +84,6 @@ void StateMachine::setup(void)
 bool StateMachine::initTime(void)
 {
     bool ret = RTC.begin();
-
-    // if (ret)
-    // {
-    //     Serial.println(String() + rtcd.day + " " + rtcd.date + "/" + rtcd.month + "/" + rtcd.year);
-    //     Serial.println(String() + rtcd.hour + ":" + rtcd.minute + ":" + rtcd.second);
-    //     // RTC.setDate(19, 3, 2021);
-    //     // RTC.setTime(19, 57, 00);
-    //     // if (RTC.readAll())
-    //     // {
-    //     //     Serial.println(String() + rtcd.day + " " + rtcd.date + "/" + rtcd.month + "/" + rtcd.year);
-    //     //     Serial.println(String() + rtcd.hour + ":" + rtcd.minute + ":" + rtcd.second);
-    //     // }
-    // }
     mtime.initOffset(data.getTimezone());
     return ret;
 }
@@ -138,11 +93,6 @@ bool StateMachine::initFlash(uint16_t memory)
     if (memory > MEMORY_SIZE)
         return false;
     return data.begin(memory);
-}
-
-bool StateMachine::setupInterruptTimer(void)
-{
-    return iTimer0.attachInterruptInterval(TIMER_INTERVAL_TIMER * 1000, TimerHandler0);
 }
 
 void StateMachine::setupPinIO(void)
@@ -202,11 +152,11 @@ uint8_t StateMachine::homeScreen(void)
 
     while (true)
     {
-        mtime.updateRTC_N_NTPTime(wifiConnected, &secondTriggered[0], &initTimeState, &syncroneRTC);
+        mtime.updateRTC_N_NTPTime();
 
         if (!sClockUpdate)
         {
-            if (interruptSeconds == 0)
+            if (rtos.interruptSeconds == 0)
             {
                 sClock = !sClock;
                 hmi.setIntegerToNextion("sClock.en", sClock);
@@ -218,28 +168,28 @@ uint8_t StateMachine::homeScreen(void)
                 sClockUpdate = true;
             }
         }
-        if (interruptSeconds != 0)
+        if (rtos.interruptSeconds != 0)
             sClockUpdate = false;
 
         if (!sClock)
         {
-            if (secondTriggered[1])
+            if (rtos.secondTriggered[0])
             {
                 mtime.getTimeStr(timeString);
                 // Serial.println(timeString);
                 hmi.setStringToNextion("clock.txt", timeString);
-                secondTriggered[1] = 0;
+                rtos.secondTriggered[0] = 0;
             }
         }
         else
         {
-            if (secondTriggered[2])
+            if (rtos.secondTriggered[1])
             {
                 mtime.getTimeAndDateStr(timeNDateString);
                 // tempString = String() + "00:" + interruptSeconds + " 18/03/2021";
                 // Serial.println(timeNDateString);
                 hmi.setStringToNextion("sClock.txt", timeNDateString);
-                secondTriggered[2] = 0;
+                rtos.secondTriggered[1] = 0;
             }
         }
 
@@ -366,15 +316,15 @@ uint8_t StateMachine::homeScreen(void)
         }
         updateWeightStringToNextion();
         updateExceedMaximumFlagToNextion();
-        if (net.checkConnection(&wifiSignal, &wifiConnectionTriggered))
+        if (net.checkConnection(&wifiSignal, &rtos.wifiConnectionTriggered))
         {
-            wifiConnected = true;
+            rtos.wifiConnected = true;
             updateSignalIndicatorToNextion(wifiSignal);
         }
         else
         {
             updateSignalIndicatorToNextion(0);
-            wifiConnected = false;
+            rtos.wifiConnected = false;
         }
         updateBatteryIndicatorToNextion(getBatteryPercent());
     }
@@ -465,7 +415,7 @@ void StateMachine::updateWeightStringToNextion(void)
 
     for (uint8_t i = 0; i < MAX_CHANNEL; i++)
     {
-        newWeightString[i] = String() + counterUpSeconds;
+        newWeightString[i] = String() + rtos.counterUpSeconds;
 
         if (data.getChannelEnDisStatus(i) && prevWeightString[i] != newWeightString[i])
         {
@@ -546,25 +496,25 @@ uint8_t StateMachine::getBatteryPercent(void)
 
 String StateMachine::getStringUnit(uint8_t unit)
 {
-    if (unit == 0)
+    if (unit == gram)
         return "[g]";
-    else if (unit == 1)
+    else if (unit == milligram)
         return "[mg]";
-    else if (unit == 2)
+    else if (unit == pound)
         return "[lb]";
-    else if (unit == 3)
+    else if (unit == ounce)
         return "[oz]";
-    else if (unit == 4)
+    else if (unit == troy_ounce)
         return "[ozt]";
-    else if (unit == 5)
+    else if (unit == carat)
         return "[ct]";
-    else if (unit == 6)
+    else if (unit == kilogram)
         return "[kg]";
-    else if (unit == 7)
+    else if (unit == newton)
         return "[N]";
-    else if (unit == 8)
+    else if (unit == dram)
         return "[d]";
-    else if (unit == 9)
+    else if (unit == grain)
         return "[GN]";
     else
         return "[g]";
@@ -589,7 +539,7 @@ void StateMachine::updateExceedMaximumFlagToNextion(void)
         2001,
         0};
     uint32_t temp;
-    if (secondTriggered[3])
+    if (rtos.secondTriggered[2])
     {
         for (uint8_t i = 0; i < MAX_CHANNEL; i++)
         {
@@ -615,7 +565,7 @@ void StateMachine::updateExceedMaximumFlagToNextion(void)
                 }
             }
         }
-        secondTriggered[3] = 0;
+        rtos.secondTriggered[2] = 0;
     }
 }
 

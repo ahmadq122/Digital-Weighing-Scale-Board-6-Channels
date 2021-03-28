@@ -12,11 +12,11 @@
 class MyTime : RTCDS1307
 {
 public:
-    void initTime(bool *initTimeState, bool *syncroneRTC);
+    void initTime(void);
     void initOffset(uint8_t timeZone);
-    void updateTime(bool wifiConnected, bool *secondTriggered, bool *initTimeState, bool *syncroneRTC);
-    bool getMyLocalTime(bool *initTimeState, bool *syncroneRTC);
-    bool updateRTC_N_NTPTime(bool wifiConnected, bool *secondTriggered, bool *initTimeState, bool *syncroneRTC);
+    void updateTime(void);
+    bool getMyLocalTime(void);
+    bool updateRTC_N_NTPTime(void);
     void getTimeStr(char *buffer);
     void getDateStr(char *buffer);
     void getTimeAndDateStr(char *buffer);

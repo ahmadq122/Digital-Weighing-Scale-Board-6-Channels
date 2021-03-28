@@ -846,27 +846,6 @@ uint8_t RTCDS1307::bcd2dec(uint8_t num)
     return ((num / 16 * 10) + (num % 16));
 }
 
-// void RTCDS1307::calculateSuperPIN(char *buffer)
-// {
-//     unsigned int digit[4];
-
-//     digit[0] = (rtc.day * rtc.date) + rtc.hour;
-//     digit[1] = rtc.date * rtc.month * rtc.hour;
-//     digit[2] = (rtc.month * rtc.year) + rtc.hour;
-//     digit[3] = rtc.hour * rtc.year * rtc.hour;
-//     for (byte i = 0; i < 4; i++)
-//     {
-//         while (digit[i] >= 10)
-//         {
-//             digit[i] %= 10;
-//         }
-//         buffer[i] = digit[i] + 48;
-//     }
-//     buffer[4] = '\0';
-//     //    printDebug(data.getDebugMode(),String()+"h"+rtc.hour+" d"+rtc.day+" dt"+rtc.date+" m"+rtc.month+" y"+rtc.year);
-//     //    printDebug(data.getDebugMode(),String()+digit[0]+digit[1]+digit[2]+digit[3]);
-// }
-
 void integerToString(uint32_t number, char *buffer, uint8_t len)
 {
     String tempStr = String() + number;

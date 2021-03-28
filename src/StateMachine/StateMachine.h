@@ -16,15 +16,7 @@ enum MachineState
     UNITS,
     DATALOG
 };
-enum Channel
-{
-    Channel1,
-    Channel2,
-    Channel3,
-    Channel4,
-    Channel5,
-    Channel6
-};
+
 
 class StateMachine
 {
@@ -41,7 +33,6 @@ private:
     float currentWeight[6];
     bool initFlash(uint16_t memory);
     bool initTime(void);
-    bool setupInterruptTimer(void);
     void setupPinIO(void);
     void initSDCard(void);
 

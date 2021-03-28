@@ -1,29 +1,30 @@
 #include "Arduino.h"
 #include "time.h"
 #include "MyTime.h"
+#include "RTOS/RTOS.h"
 
-void MyTime::initTime(bool *initTimeState, bool *syncroneRTC)
+void MyTime::initTime(void)
 {
     //init and get the time
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-    getMyLocalTime(initTimeState, syncroneRTC);
+    getMyLocalTime();
 }
 void MyTime::initOffset(uint8_t timeZone)
 {
     gmtOffset_sec = (timeZone == WIB ? WIB_OFFSET : (timeZone == WITA ? WITA_OFFSET : (timeZone == WIT ? WIT_OFFSET : WIB_OFFSET)));
     daylightOffset_sec = gmtOffset_sec;
 }
-void MyTime::updateTime(bool wifiConnected, bool *secondTriggered, bool *initTimeState, bool *syncroneRTC)
+void MyTime::updateTime(void)
 {
-    if (wifiConnected && *initTimeState)
-        initTime(initTimeState, syncroneRTC);
-    if (!*initTimeState && *secondTriggered)
+    if (rtos.wifiConnected && rtos.initTimeState)
+        initTime();
+    if (!rtos.initTimeState && rtos.secondTriggered[3])
     {
-        getMyLocalTime(initTimeState, syncroneRTC);
-        *secondTriggered = false;
+        getMyLocalTime();
+        rtos.secondTriggered[3] = false;
     }
 }
-bool MyTime::getMyLocalTime(bool *initTimeState, bool *syncroneRTC)
+bool MyTime::getMyLocalTime(void)
 {
     struct tm timeinfo;
     char temp[5];
@@ -76,27 +77,27 @@ bool MyTime::getMyLocalTime(bool *initTimeState, bool *syncroneRTC)
     // Serial.print(":");
     // Serial.println(ntp.ampm == AM ? "AM" : "PM");
 
-    *initTimeState = false;
+    rtos.initTimeState = false;
     ntpEnabled = true;
-    if (!*syncroneRTC)
+    if (!rtos.syncroneRTC)
     {
         if (syncWithNTPTimeNDate())
-            *syncroneRTC = true;
+            rtos.syncroneRTC = true;
     }
     return true;
 }
 
-bool MyTime::updateRTC_N_NTPTime(bool wifiConnected, bool *secondTriggered, bool *initTimeState, bool *syncroneRTC)
+bool MyTime::updateRTC_N_NTPTime(void)
 {
-    if (*secondTriggered)
+    if (rtos.secondTriggered[4])
     { //keep secondTriggered to be used only in this scope
         // Serial.println("Debug!");
-        // Serial.println(String() + "wifiConn: " + wifiConnected);
-        // Serial.println(String() + "initTime: " + *initTimeState);
-        // Serial.println(String() + "syncRTC : " + *syncroneRTC);
-        updateTime(wifiConnected, secondTriggered, initTimeState, syncroneRTC);
+        // Serial.println(String() + "wifiConn: " + rtos.wifiConnected);
+        // Serial.println(String() + "initTime: " + rtos.initTimeState);
+        // Serial.println(String() + "syncRTC : " + rtos.syncroneRTC);
+        updateTime();
         readAll();
-        *secondTriggered = false;
+        rtos.secondTriggered[4] = false;
         return true;
     }
     return false;
