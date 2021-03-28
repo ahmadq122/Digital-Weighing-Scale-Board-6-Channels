@@ -21,7 +21,7 @@ void RealTimeOS::setup(void)
     xTaskCreatePinnedToCore(
         Task_01,
         "Task_01", // A name just for humans
-        1024,       // This stack size can be checked & adjusted by reading the Stack Highwater
+        1024,      // This stack size can be checked & adjusted by reading the Stack Highwater
         NULL,
         configMAX_PRIORITIES - 1, // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
         NULL,
@@ -68,8 +68,11 @@ void Task_01(void *pvParameters) // This is a task.
                 rtos.dimmCounterDownSecond--;
             else
             {
-                rtos.currentBrightness = 10;
-                hmi.setIntegerToNextion("dim", rtos.currentBrightness);
+                if (rtos.currentBrightness != 10)
+                {
+                    rtos.currentBrightness = 10;
+                    hmi.setIntegerToNextion("dim", rtos.currentBrightness);
+                }
             }
         }
 
