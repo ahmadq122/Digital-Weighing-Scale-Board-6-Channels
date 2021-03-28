@@ -11,7 +11,6 @@
 #include "ADC/ADS1232.h"
 #include "RTOS/RTOS.h"
 
-
 /*****************************************************************************
  *******************************ESP32S-PIN************************************
  *                  ---------------------------------
@@ -139,6 +138,7 @@ uint8_t StateMachine::homeScreen(void)
     char timeNDateString[20];
 
     hmi.showPage("home");
+    // hmi.waitForPageRespon();
 
     for (uint8_t i = 0; i < MAX_CHANNEL; i++)
     {
@@ -204,22 +204,18 @@ uint8_t StateMachine::homeScreen(void)
             {
                 if (button[0])
                 {
-                    printDebug(data.getDebugMode(), "Network page opened");
                     return NETWORK;
                 }
                 else if (button[1])
                 {
-                    printDebug(data.getDebugMode(), "Settings page opened");
                     return SETTINGS;
                 }
                 else if (button[2])
                 {
-                    printDebug(data.getDebugMode(), "Measurement Unit page opened");
                     return UNITS;
                 }
                 else if (button[3])
                 {
-                    printDebug(data.getDebugMode(), "Datalog page opened");
                     return DATALOG;
                 }
                 else if (button[4])
@@ -332,19 +328,14 @@ uint8_t StateMachine::homeScreen(void)
 }
 uint8_t StateMachine::networkSettings(void)
 {
-    bool looping = true;
-    while (looping)
+    while (true)
     {
-        hmi.showPage("netconf");
-        hmi.waitForPageRespon();
         if (net.networkConfig())
         {
-            hmi.showPage("netscan");
-            hmi.waitForPageRespon();
             net.networkScanning();
         }
         else
-            looping = false;
+            break;
     }
     return 0;
 }
@@ -356,43 +347,44 @@ uint8_t StateMachine::settings(void)
 uint8_t StateMachine::measurementUnits(void)
 {
     uint8_t button;
-    bool state = true;
+
     hmi.showPage("meaunit");
     // hmi.setIntegerToNextion("unit.val", data.getMeasurementUnit());
     hmi.waitForPageRespon();
+    printDebug(data.getDebugMode(), "Measurement Unit page opened");
+
     updateSelectedUnitToNextion(data.getMeasurementUnit());
-    while (state)
+    while (true)
     {
         while (!hmi.checkAnyButtonPressed(&button))
         {
             // hmi.serialEvent_2();
         }
-        for (uint8_t i = 0; i < 11; i++)
+        if (hmi.getExitPageFlag())
         {
-            if (hmi.getDataButton(0))
-                state = false;
-            else
+            break;
+        }
+        for (uint8_t i = 0; i < 10; i++)
+        {
+            if (hmi.getDataButton(i))
             {
-                if (hmi.getDataButton(i))
+                if (data.setMeasurementUnit(i))
                 {
-                    if (data.setMeasurementUnit(i - 1))
-                    {
-                        updateSelectedUnitToNextion(data.getMeasurementUnit());
-                        // hmi.setIntegerToNextion("unit.val", data.getMeasurementUnit());
-                    }
+                    updateSelectedUnitToNextion(data.getMeasurementUnit());
+                    // hmi.setIntegerToNextion("unit.val", data.getMeasurementUnit());
                 }
             }
         }
     }
-    hmi.showPage("home");
-    hmi.waitForPageRespon();
     return 0;
 }
 uint8_t StateMachine::datalogSettings(void)
 {
     hmi.showPage("datalog");
     hmi.waitForPageRespon();
-    hmi.waitForPageRespon();
+    printDebug(data.getDebugMode(), "Datalog page opened");
+    while (!hmi.getExitPageFlag())
+        ;
     return 0;
 }
 
@@ -573,6 +565,6 @@ void StateMachine::updateSelectedUnitToNextion(uint8_t unit)
 {
     for (uint8_t i = 0; i < 10; i++)
     {
-        hmi.setIntegerToNextion(String() + "b" + (i + 1) + ".picc", unit == i ? 39 : 37);
+        hmi.setIntegerToNextion(String() + "b" + i + ".picc", unit == i ? 39 : 37);
     }
 }

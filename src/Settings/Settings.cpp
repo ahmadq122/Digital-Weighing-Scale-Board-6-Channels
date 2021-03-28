@@ -3,6 +3,7 @@
 #include "DebugSerial/DebugSerial.h"
 #include "FlashMemory/FlashMemory.h"
 #include "Time/MyTime.h"
+#include "RTOS/RTOS.h"
 
 void Settings::settingsMenu(void)
 {
@@ -11,11 +12,17 @@ void Settings::settingsMenu(void)
 start:
     hmi.showPage("settings");
     hmi.waitForPageRespon();
+    printDebug(data.getDebugMode(), "Settings page opened");
 
     while (true)
     {
         // hmi.serialEvent_2();
-        for (int i = 0; i < 7; i++)
+        if (hmi.getExitPageFlag())
+        {
+            printDebug(data.getDebugMode(), "Exit Settings page");
+            return;
+        }
+        for (int i = 0; i < 6; i++)
         {
             button[i] = hmi.getDataButton(i);
             if (button[i])
@@ -23,29 +30,26 @@ start:
                 switch (i)
                 {
                 case 0:
-                    printDebug(data.getDebugMode(), "Exit Settings page");
-                    return;
-                case 1:
                     printDebug(data.getDebugMode(), "Timezone page opened");
                     timeZone();
                     break;
-                case 2:
+                case 1:
                     printDebug(data.getDebugMode(), "Brightness page opened");
                     brightness();
                     break;
-                case 3:
+                case 2:
                     printDebug(data.getDebugMode(), "Maximum page opened");
                     maximumWeight();
                     break;
-                case 4:
+                case 3:
                     printDebug(data.getDebugMode(), "Set battery capacity");
                     batteryCapacity();
                     break;
-                case 5:
+                case 4:
                     printDebug(data.getDebugMode(), "Debug page opened");
                     debugMenu();
                     break;
-                case 6:
+                case 5:
                     printDebug(data.getDebugMode(), "Calibration page opened");
                     calibrationSensor();
                     break;
@@ -63,24 +67,24 @@ void Settings::updateSelectedTimezoneToNextion(void)
     switch (data.getTimezone())
     {
     case 0:
-        hmi.setIntegerToNextion("b1.picc", 29);
+        hmi.setIntegerToNextion("b0.picc", 29);
+        hmi.setIntegerToNextion("b1.picc", 27);
         hmi.setIntegerToNextion("b2.picc", 27);
-        hmi.setIntegerToNextion("b3.picc", 27);
         break;
     case 1:
-        hmi.setIntegerToNextion("b2.picc", 29);
-        hmi.setIntegerToNextion("b1.picc", 27);
-        hmi.setIntegerToNextion("b3.picc", 27);
+        hmi.setIntegerToNextion("b1.picc", 29);
+        hmi.setIntegerToNextion("b0.picc", 27);
+        hmi.setIntegerToNextion("b2.picc", 27);
         break;
     case 2:
-        hmi.setIntegerToNextion("b3.picc", 29);
+        hmi.setIntegerToNextion("b2.picc", 29);
+        hmi.setIntegerToNextion("b0.picc", 27);
         hmi.setIntegerToNextion("b1.picc", 27);
-        hmi.setIntegerToNextion("b2.picc", 27);
         break;
     default:
+        hmi.setIntegerToNextion("b0.picc", 27);
         hmi.setIntegerToNextion("b1.picc", 27);
         hmi.setIntegerToNextion("b2.picc", 27);
-        hmi.setIntegerToNextion("b3.picc", 27);
         break;
     }
     mtime.initOffset(data.getTimezone());
@@ -98,6 +102,11 @@ void Settings::timeZone(void)
     while (true)
     {
         // hmi.serialEvent_2();
+        if (hmi.getExitPageFlag())
+        {
+            printDebug(data.getDebugMode(), "Exit Timezone page");
+            return;
+        }
         for (int i = 0; i < 4; i++)
         {
             button[i] = hmi.getDataButton(i);
@@ -106,25 +115,86 @@ void Settings::timeZone(void)
                 switch (i)
                 {
                 case 0:
-                    printDebug(data.getDebugMode(), "Exit Timezone page");
-                    return;
-                case 1:
                     printDebug(data.getDebugMode(), "UTC 07:00 selected");
                     break;
-                case 2:
+                case 1:
                     printDebug(data.getDebugMode(), "UTC 08:00 selected");
                     break;
-                case 3:
+                case 2:
                     printDebug(data.getDebugMode(), "UTC 09:00 selected");
                     break;
                 default:
                     break;
                 }
-                data.setTimezone(i - 1);
+                data.setTimezone(i);
                 updateSelectedTimezoneToNextion();
             }
         }
     }
+}
+
+void Settings::brightness(void)
+{
+    bool button[7];
+    bool popup = false;
+
+    hmi.showPage("bright");
+    hmi.waitForPageRespon();
+    if (data.getDimScreenTimer() == 0)
+    {
+        hmi.setVisObjectNextion("q1", false);
+        hmi.setStringToNextion("b0.txt", "Never");
+    }
+    else
+    {
+        hmi.setStringToNextion("b0.txt", String() + data.getDimScreenTimer());
+        hmi.setVisObjectNextion("q1", true);
+    }
+
+    while (!hmi.getExitPageFlag())
+    {
+        if (rtos.dimmCounterDownSecond == 0 && data.getDimScreenTimer() > 0)
+        {
+            hmi.setIntegerToNextion("h0.val", rtos.currentBrightness);
+        }
+        for (int i = 0; i < 7; i++)
+        {
+            button[i] = hmi.getDataButton(i);
+            if (button[i])
+            {
+                switch (i)
+                {
+                case 0:
+                    popup = !popup;
+                    hmi.setVisObjectNextion("q2", popup);
+                    for (uint8_t i = 1; i <= 6; i++)
+                    {
+                        hmi.setVisObjectNextion(String() + "b" + i, popup);
+                    }
+                    break;
+                default:
+                    data.setDimScreenTimer(i - 1);
+                    hmi.setVisObjectNextion("q2", false);
+                    for (uint8_t i = 1; i <= 6; i++)
+                    {
+                        hmi.setVisObjectNextion(String() + "b" + i, false);
+                    }
+                    if (data.getDimScreenTimer() == 0)
+                    {
+                        hmi.setVisObjectNextion("q1", false);
+                        hmi.setStringToNextion("b0.txt", "Never");
+                    }
+                    else
+                    {
+                        hmi.setStringToNextion("b0.txt", String() + data.getDimScreenTimer());
+                        hmi.setVisObjectNextion("q1", true);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    data.setScreenBrightness(hmi.getDataInteger(0));
 }
 
 void Settings::updateMaximumValueToNextion(void)
@@ -134,19 +204,9 @@ void Settings::updateMaximumValueToNextion(void)
         hmi.setStringToNextion(String() + "b" + i + ".txt", String() + data.getGramMaximum(i));
     }
 }
-
-void Settings::brightness(void)
-{
-    hmi.showPage("bright");
-    hmi.waitForPageRespon();
-    while (!hmi.getDataButton(0))
-    {
-        // hmi.serialEvent_2();
-    }
-}
 void Settings::maximumWeight(void)
 {
-    bool button[7];
+    bool button[6];
     bool button1[2];
     String newValueStr;
     float newValue = 0;
@@ -163,35 +223,32 @@ start:
     while (true)
     {
         // hmi.serialEvent_2();
-        for (int i = 0; i < 7; i++)
+        if (hmi.getExitPageFlag())
+        {
+            printDebug(data.getDebugMode(), "Exit Maximum page");
+            return;
+        }
+        for (int i = 0; i < 6; i++)
         {
             button[i] = hmi.getDataButton(i);
             if (button[i])
             {
-                switch (i)
+                hmi.showPage("numpad");
+                hmi.waitForPageRespon();
+                hmi.setStringToNextion("num_string.txt", String() + data.getGramMaximum(i));
+                hmi.flushAvailableButton();
+                while (!button1[0] && !button1[1])
                 {
-                case 0:
-                    printDebug(data.getDebugMode(), "Exit Maximum page");
-                    return;
-                default:
-                    hmi.showPage("numpad");
-                    hmi.waitForPageRespon();
-                    hmi.setStringToNextion("num_string.txt", String() + data.getGramMaximum(i - 1));
-                    hmi.flushAvailableButton();
-                    while (!button1[0] && !button1[1])
-                    {
-                        // hmi.serialEvent_2();
-                        button1[0] = hmi.getDataButton(0);
-                        button1[1] = hmi.getDataButton(1);
-                    }
-                    if (button1[1])
-                    {
-                        newValueStr = hmi.getDataString(0);
-                        newValue = atof(newValueStr.c_str());
-                        printDebug(data.getDebugMode(), String() + "CH" + i + " Maximum set to " + newValueStr);
-                        data.setGramMaximum(i - 1, newValue);
-                    }
-                    break;
+                    // hmi.serialEvent_2();
+                    button1[0] = hmi.getDataButton(0);
+                    button1[1] = hmi.getDataButton(1);
+                }
+                if (button1[1])
+                {
+                    newValueStr = hmi.getDataString(0);
+                    newValue = atof(newValueStr.c_str());
+                    printDebug(data.getDebugMode(), String() + "CH" + (i + 1) + " Maximum set to " + newValueStr);
+                    data.setGramMaximum(i, newValue);
                 }
                 goto start;
             }
@@ -225,18 +282,10 @@ void Settings::showBaudrateOption(bool type, bool show)
     for (uint i = 0; i < 10; i++)
         hmi.setVisObjectNextion(String() + "b" + i, show);
 }
-uint8_t Settings::getIndexSelectedBaudrate(bool type)
-{
-    for (uint8_t i = 0; i < 10; i++)
-    {
-        if (data.getBaudrateSerial(type) == baudrate[i])
-            return i;
-    }
-    return UNKNOWN;
-}
+
 void Settings::updateSelectedBaudrateToNextion(bool type, uint8_t selected)
 {
-    data.setBaudrateSerial(type, baudrate[selected]);
+    data.setBaudrateSerial(type, selected);
     printDebug(data.getDebugMode(), String() + "Baudrate set: " + data.getBaudrateSerial(type));
 
     for (uint8_t i = 0; i < 10; i++)
@@ -258,11 +307,16 @@ void Settings::debugMenu(void)
     hmi.setIntegerToNextion("bt0.val", enDisDebug);
     showBaudrateOption(DEBUG, enDisDebug);
     if (enDisDebug)
-        updateSelectedBaudrateToNextion(DEBUG, getIndexSelectedBaudrate(DEBUG));
+        updateSelectedBaudrateToNextion(DEBUG, data.getBaudrateSerialIndex(DEBUG));
 
     while (true)
     {
         // hmi.serialEvent_2();
+        if (hmi.getExitPageFlag())
+        {
+            printDebug(data.getDebugMode(), "Exit Debug page");
+            return;
+        }
         for (int i = 0; i < 12; i++)
         {
             button[i] = hmi.getDataButton(i);
@@ -270,9 +324,6 @@ void Settings::debugMenu(void)
             {
                 switch (i)
                 {
-                case 11:
-                    printDebug(data.getDebugMode(), "Exit Debug page");
-                    return;
                 case 10:
                     enDisDebug = !enDisDebug;
                     data.setDebugMode(enDisDebug);
@@ -280,7 +331,7 @@ void Settings::debugMenu(void)
                     showBaudrateOption(DEBUG, enDisDebug);
                     if (enDisDebug)
                     {
-                        updateSelectedBaudrateToNextion(DEBUG, getIndexSelectedBaudrate(DEBUG));
+                        updateSelectedBaudrateToNextion(DEBUG, data.getBaudrateSerialIndex(DEBUG));
                         Serial.begin(data.getBaudrateSerial(DEBUG));
                         while (!Serial)
                             ;
@@ -300,7 +351,7 @@ void Settings::debugMenu(void)
 
 void Settings::calibrationSensor(void)
 {
-    bool button[4];
+    bool button[3];
 
 start:
     hmi.showPage("calib");
@@ -308,7 +359,12 @@ start:
     while (true)
     {
         // hmi.serialEvent_2();
-        for (int i = 0; i < 4; i++)
+        if (hmi.getExitPageFlag())
+        {
+            printDebug(data.getDebugMode(), "Exit Calibration page");
+            return;
+        }
+        for (int i = 0; i < 3; i++)
         {
             button[i] = hmi.getDataButton(i);
             if (button[i])
@@ -324,9 +380,6 @@ start:
                 case 2:
                     pointCalibration();
                     break;
-                case 3:
-                    printDebug(data.getDebugMode(), "Exit Calibration page");
-                    return;
                 default:
                     break;
                 }
@@ -346,7 +399,7 @@ void updateSetpointToNextion(uint8_t channel)
     for (i = 0; i < 7; i++)
     {
         if (i == 0)
-            valid[i] &= (data.getGramCalibrationPoint(channel, i) < data.getGramMaximum(channel));
+            valid[i] &= ((data.getGramCalibrationPoint(channel, i) > 0) && (data.getGramCalibrationPoint(channel, i) < data.getGramMaximum(channel)));
         else
         {
             if (data.getGramCalibrationPoint(channel, i) > 0 || ((data.getGramCalibrationPoint(channel, i + 1) > 0) && i < 6))
@@ -366,7 +419,7 @@ void updateSetpointToNextion(uint8_t channel)
 
 void Settings::setPoint(void)
 {
-    bool button[10];
+    bool button[9];
     bool button1[2];
     String newValueStr;
     float newValue = 0;
@@ -383,7 +436,12 @@ start:
     while (true)
     {
         // hmi.serialEvent_2();
-        for (int i = 0; i < 10; i++)
+        if (hmi.getExitPageFlag())
+        {
+            printDebug(data.getDebugMode(), "Exit Setpoint page");
+            return;
+        }
+        for (int i = 0; i < 9; i++)
         {
             button[i] = hmi.getDataButton(i);
             if (button[i])
@@ -398,9 +456,6 @@ start:
                     if (--channel < 1)
                         channel = 1;
                     break;
-                case 9:
-                    printDebug(data.getDebugMode(), "Exit Setpoint page");
-                    return;
                 default:
                     hmi.showPage("numpad");
                     hmi.waitForPageRespon();

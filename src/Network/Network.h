@@ -8,6 +8,7 @@ class Network
 public:
     void setup(void);
     bool checkConnection(uint8_t *wifiSignal, bool *wifiConnectionTriggered);
+    bool checkConnection(void);
     void networkScanning(void);
     bool networkConfig(void);
 

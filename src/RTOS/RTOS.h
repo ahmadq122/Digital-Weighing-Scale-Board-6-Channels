@@ -9,6 +9,8 @@ public:
     uint32_t counterUpSeconds = 0;
     uint32_t counterDownSeconds = 0;
     uint32_t interruptSeconds = 0;
+    uint16_t dimmCounterDownSecond = 0;
+    uint8_t currentBrightness = 100;
     bool secondBlink = false;
     bool secondTriggered[10] = {false};
     bool wifiConnectionTriggered = {false};

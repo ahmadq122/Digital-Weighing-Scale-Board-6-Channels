@@ -3,6 +3,7 @@
 #include "../DebugSerial/DebugSerial.h"
 #include "../FlashMemory/FlashMemory.h"
 #include "../Nextion/Nextion.h"
+#include "RTOS/RTOS.h"
 
 void Network::setup(void)
 {
@@ -97,19 +98,20 @@ bool Network::networkConfig(void)
     bool netEnDis = false;
     bool needToRefreshStatus = false;
 
+    hmi.showPage("netconf");
+    hmi.waitForPageRespon();
+    printDebug(data.getDebugMode(), "Network Config page opened");
     netEnDis = data.getNetworkEnable();
-    hmi.flushAvailableSerial();
 
     hmi.setIntegerToNextion("b1.val", netEnDis);
 
-    while (true)
+    while (!hmi.getExitPageFlag())
     {
         if (!WiFi.isConnected() && netEnDis)
         {
             needToRefreshStatus = true;
             WiFi.begin(data.getSSID(), data.getPassword());
             printDebug(data.getDebugMode(), String() + "Connecting to " + data.getSSID());
-            // WiFi.setAutoReconnect(true);
         }
 
         if (data.getNetworkEnable())
@@ -133,11 +135,7 @@ bool Network::networkConfig(void)
                 needToRefreshStatus = false;
             }
         }
-        if (hmi.getDataButton(0))
-        {
-            break;
-        }
-        else if (hmi.getDataButton(1))
+        if (hmi.getDataButton(1))
         {
             netEnDis = !netEnDis;
             data.setNetworkEnable(netEnDis);
@@ -157,7 +155,6 @@ bool Network::networkConfig(void)
         }
     }
     return false; //entering the scanning page;
-    // return false;//exit from page and go to home;
 }
 
 void Network::networkScanning(void)
@@ -171,8 +168,10 @@ void Network::networkScanning(void)
     uint8_t progress = 0;
     String str;
     uint8_t button;
-    bool networkState = true;
 
+    hmi.showPage("netscan");
+    hmi.waitForPageRespon();
+    printDebug(data.getDebugMode(), "Network Scan page opened");
     WiFi.mode(WIFI_STA);
     WiFi.disconnect();
 
@@ -212,16 +211,11 @@ __scan:
     {
         hmi.setVisObjectNextion("nonet", true);
         printDebug(data.getDebugMode(), "No networks found!");
-        while (networkState)
+        while (!hmi.getExitPageFlag())
         {
             while (!hmi.checkAnyButtonPressed(&button))
             {
                 // hmi.serialEvent_2();
-                if (hmi.getWaitingEndSignal())
-                {
-                    networkState = false;
-                    break;
-                }
             }
             if (hmi.getDataButton(0))
             {
@@ -235,7 +229,7 @@ __scan:
     {
         showNetworkList(numberOfNetworkFound[selectedScan]);
         printDebug(data.getDebugMode(), String() + numberOfNetworkFound[selectedScan] + " Networks found");
-        while (networkState)
+        while (!hmi.getExitPageFlag())
         {
             for (int i = 0; i < numberOfNetworkFound[selectedScan]; ++i)
             {
@@ -253,34 +247,33 @@ __scan:
                 // Serial.println("wait1");
             }
 
-            if (hmi.getDataButton(10))
-            {
-                // Serial.println("Break!");
-                networkState = false;
-                break;
-            }
-            else if (hmi.getDataButton(button))
+            if (hmi.getDataButton(button))
             {
                 if (data.setSSID(ssidScanned[selectedScan][button].c_str()))
+                {
                     showSelectedNetworkIndicator(button, numberOfNetworkFound[selectedScan]);
-                data.setEncryptType(encryptType[selectedScan][button]);
-                hmi.showPage("keyboard");
-                button = 0;
-                while (!hmi.checkAnyButtonPressed(&button))
-                {
-                    // Serial.println("wait2");
-                    // hmi.serialEvent_2();
+                    data.setEncryptType(encryptType[selectedScan][button]);
+                    WiFi.mode(WIFI_STA);
+                    WiFi.disconnect();
+                    delay(100);
                 }
-                if (hmi.getDataButton(1))
+                rtos.wifiConnected = checkConnection();
+                if (!rtos.wifiConnected)
                 {
-                    data.setPassword(hmi.getDataString(0));
+                    hmi.showPage("keyboard");
+                    button = 0;
+                    while (!hmi.checkAnyButtonPressed(&button))
+                    {
+                    }
+                    if (hmi.getDataButton(1))
+                    {
+                        data.setPassword(hmi.getDataString(0));
+                    }
+                    hmi.showPage("netscan");
+                    hmi.waitForPageRespon();
+                    showNetworkList(numberOfNetworkFound[selectedScan]);
                 }
-                hmi.showPage("netscan");
-                showNetworkList(numberOfNetworkFound[selectedScan]);
-
-                hmi.flushAvailableSerial();
             }
-            hmi.flushAvailableButton();
         }
     }
 }
@@ -316,6 +309,42 @@ bool Network::isStoredNetwork(String networkName)
         return true;
     else
         return false;
+}
+
+bool Network::checkConnection(void)
+{
+    String ssid = data.getSSID();
+    String password = data.getPassword();
+    uint8_t counter = 0;
+    if (ssid == "" || password == "")
+    {
+        return false;
+    }
+
+    if (!data.getNetworkEnable())
+    {
+        return false;
+    }
+
+    if (WiFi.isConnected())
+    {
+        printDebug(data.getDebugMode(), "Network connected!");
+    }
+    else
+    {
+        printDebug(data.getDebugMode(), "Network connection failed!");
+        WiFi.begin(data.getSSID(), data.getPassword());
+        while (!WiFi.isConnected() && counter <= 10)
+        {
+            delay(100);
+            counter++;
+        }
+        if (WiFi.isConnected())
+        {
+            printDebug(data.getDebugMode(), "Network connected!");
+        }
+    }
+    return WiFi.isConnected();
 }
 
 bool Network::checkConnection(uint8_t *wifiSignal, bool *wifiConnectionTriggered)
@@ -382,7 +411,5 @@ uint8_t Network::calculateRSSILevel(int value)
     else
         return 0;
 }
-
-
 
 Network net;

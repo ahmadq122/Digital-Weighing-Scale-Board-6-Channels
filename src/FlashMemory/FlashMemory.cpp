@@ -61,8 +61,10 @@ bool MemoryFlash::resetDefault()
         flash.periodDataLog[SERIAL1] = 1;
         flash.periodDataLog[LOCAL] = 1;
         flash.periodDataLog[WEB] = 180;
-        flash.baudrateSerial[DEBUG] = 115200;
-        flash.baudrateSerial[LOGGER] = 115200;
+        flash.baudrateSerial[DEBUG] = 6;
+        flash.baudrateSerial[LOGGER] = 6;
+        flash.dimScreenTimer = 0;
+        flash.screenBrightness = 100;
         storeDataToFlash();
     }
     else
@@ -416,13 +418,13 @@ bool MemoryFlash::setPeriodDatalog(uint8_t loggerType, uint32_t newValue)
 //     }
 //     return false;
 // }
-bool MemoryFlash::setBaudrateSerial(bool type, uint32_t newValue)
+bool MemoryFlash::setBaudrateSerial(bool type, uint8_t newValue)
 {
     if (newValue != flash.baudrateSerial[type])
     {
         flash.baudrateSerial[type] = newValue;
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + newValue + ": new data set!");
+        printDebug(getDebugMode(), String() + baudrate[newValue] + ": new data set!");
         return true;
     }
     else
@@ -581,6 +583,36 @@ bool MemoryFlash::setEnableScheduleOn(uint8_t loggerType, uint8_t index, bool ne
     }
     return false;
 }
+bool MemoryFlash::setDimScreenTimer(uint8_t newValue)
+{
+    if (newValue != flash.dimScreenTimer)
+    {
+        flash.dimScreenTimer = newValue;
+        storeDataToFlash();
+        printDebug(getDebugMode(), String() + dim[newValue] + ": new data set!");
+        return true;
+    }
+    else
+    {
+        printDebug(getDebugMode(), String() + "New data already in flash!");
+    }
+    return false;
+}
+bool MemoryFlash::setScreenBrightness(uint8_t newValue)
+{
+    if (newValue != flash.screenBrightness)
+    {
+        flash.screenBrightness = newValue;
+        storeDataToFlash();
+        printDebug(getDebugMode(), String() + newValue + ": new data set!");
+        return true;
+    }
+    else
+    {
+        printDebug(getDebugMode(), String() + "New data already in flash!");
+    }
+    return false;
+}
 
 ////reading data flash
 const char *MemoryFlash::getSSID(void)
@@ -670,6 +702,10 @@ uint32_t MemoryFlash::getPeriodDatalog(uint8_t loggerType)
 // }
 uint32_t MemoryFlash::getBaudrateSerial(bool type)
 {
+    return baudrate[flash.baudrateSerial[type]];
+}
+uint8_t MemoryFlash::getBaudrateSerialIndex(bool type)
+{
     return flash.baudrateSerial[type];
 }
 uint32_t MemoryFlash::getAdcCalibrationPoint(uint8_t channel, uint8_t point)
@@ -694,11 +730,19 @@ uint16_t MemoryFlash::getOnScheduleDatalog(uint8_t LoggerType, uint8_t index)
 }
 bool MemoryFlash::getEnableScheduleOn(uint8_t loggerType, uint8_t index)
 {
-return ((flash.onScheduleDatalog[loggerType][index] & 0x1000) > 0 ? true : false);
+    return ((flash.onScheduleDatalog[loggerType][index] & 0x1000) > 0 ? true : false);
 }
 bool MemoryFlash::getEnableScheduleOff(uint8_t loggerType, uint8_t index)
 {
-return ((flash.offScheduleDatalog[loggerType][index] & 0x1000) > 0 ? true : false);
+    return ((flash.offScheduleDatalog[loggerType][index] & 0x1000) > 0 ? true : false);
+}
+uint16_t MemoryFlash::getDimScreenTimer(void)
+{
+    return dim[flash.dimScreenTimer];
+}
+uint8_t MemoryFlash::getScreenBrightness(void)
+{
+    return flash.screenBrightness;
 }
 
 MemoryFlash data;

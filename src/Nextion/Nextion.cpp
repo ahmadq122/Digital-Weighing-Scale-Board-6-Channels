@@ -1,6 +1,7 @@
 #include "Nextion.h"
 #include "DebugSerial/DebugSerial.h"
 #include "FlashMemory/FlashMemory.h"
+#include "RTOS/RTOS.h"
 
 void Nextion::sendCommandToNextion(const char *cmd)
 {
@@ -103,6 +104,7 @@ bool Nextion::checkDataStringFromNextion(const char *stringData)
     id = atoi(dat[1]);
     if (type == BUTTON)
     {
+      presetScreenBrightness();
       dataButton[id] = atoi(dat[2]);
     }
     else if (type == STRING)
@@ -121,11 +123,24 @@ bool Nextion::checkDataStringFromNextion(const char *stringData)
     }
     else if (type == BUZZER)
     {
+      presetScreenBrightness();
       dataBuzzer = atoi(dat[2]);
     }
     else if (type == WAIT)
     {
-      waitingEndSignal = atoi(dat[2]);
+      waitingEndSignal = atoi(dat[2]) > 0 ? true : false;
+    }
+    else if (type == EXIT)
+    {
+      presetScreenBrightness();
+      exitPageFlag = atoi(dat[2]) > 0 ? true : false;
+      exitPageFlagCounter++;
+      if (exitPageFlagCounter > 5)
+        showPage("home");
+    }
+    else if (type == TOUCH)
+    {
+      presetScreenBrightness();
     }
     else
       valid = false;
@@ -148,12 +163,21 @@ uint8_t Nextion::getTypeOfDataFromNextion(const char *stringData)
     return BUZZER;
   else if (typeString == FLAG_WAIT)
     return WAIT;
+  else if (typeString == FLAG_EXIT)
+    return EXIT;
+  else if (typeString == FLAG_TOUCH)
+    return TOUCH;
   else
     return UNKNOWN;
 }
 
 bool Nextion::checkAnyButtonPressed(uint8_t *getId)
 {
+  if (exitPageFlag)
+  {
+    *getId = 0;
+    return true;
+  }
   for (uint8_t i = 0; i < 20; i++)
   {
     if (dataButton[i])
@@ -165,6 +189,13 @@ bool Nextion::checkAnyButtonPressed(uint8_t *getId)
   return false;
 }
 
+bool Nextion::getExitPageFlag(void)
+{
+  bool temp = exitPageFlag;
+  exitPageFlag = false;
+  exitPageFlagCounter = 0;
+  return temp;
+}
 uint8_t Nextion::getDataButton(uint8_t id)
 {
   uint8_t temp = dataButton[id];
@@ -192,9 +223,6 @@ bool Nextion::getDataBuzzer(void)
 bool Nextion::getWaitingEndSignal(void)
 {
   bool temp = waitingEndSignal;
-
-  // serialEvent_2();
-
   waitingEndSignal = false;
   return temp;
 }
@@ -205,11 +233,15 @@ void Nextion::flushAvailableSerial(void)
   {
     NexSerial.read();
   }
+  flushAvailableButton();
 }
 void Nextion::flushAvailableButton(void)
 {
   for (uint8_t i = 0; i < 20; i++)
     dataButton[i] = 0;
+  waitingEndSignal = 0;
+  exitPageFlag = 0;
+  exitPageFlagCounter = 0;
 }
 
 void Nextion::setVisObjectNextion(String object, bool visValue)
@@ -228,6 +260,7 @@ void Nextion::showPage(String page)
 {
   String cmd = String("page ");
   cmd += page;
+  flushAvailableSerial(); //clear all the previous serial receive data and button
   sendCommandToNextion(cmd.c_str());
 }
 
@@ -372,14 +405,14 @@ uint16_t Nextion::getText(const char *variableName, char *buffer, uint32_t len)
   return recvRetString(buffer, len);
 }
 
-
 void Nextion::waitForPageRespon(void)
 {
-    while (!getWaitingEndSignal())
-    {
-        // serialEvent_2();
-    }
-    printDebug(data.getDebugMode(), "Page ready!");
+  while (!getWaitingEndSignal())
+  {
+    printDebug(data.getDebugMode(), "Waiting for page ready");
+    delay(100);
+  }
+  printDebug(data.getDebugMode(), "Page ready!");
 }
 
 /*
@@ -411,6 +444,19 @@ void Nextion::serialEvent_2(void)
     else
     {
       printDebug(data.getDebugMode(), "Failed to get the data!");
+    }
+  }
+}
+
+void Nextion::presetScreenBrightness(void)
+{
+  if (data.getDimScreenTimer() != 0)
+  {
+    rtos.dimmCounterDownSecond = data.getDimScreenTimer();
+    if (rtos.currentBrightness != data.getScreenBrightness())
+    {
+      rtos.currentBrightness = data.getScreenBrightness();
+      setIntegerToNextion("dim", rtos.currentBrightness);
     }
   }
 }

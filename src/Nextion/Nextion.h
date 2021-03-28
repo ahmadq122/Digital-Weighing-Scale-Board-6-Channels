@@ -14,6 +14,8 @@
 #define FLAG_FLOAT "flo"
 #define FLAG_BUZZER "buz"
 #define FLAG_WAIT "wet"
+#define FLAG_EXIT "ext"
+#define FLAG_TOUCH "tch"
 
 //Type of Data get from nextion
 enum DataFromNextionFlag
@@ -24,6 +26,8 @@ enum DataFromNextionFlag
     FLOAT,         //"flo-"
     BUZZER,        //"buz-"
     WAIT,          //"wet-"
+    EXIT,          //"ext-"
+    TOUCH,          //"tch-"
     UNKNOWN = 0xFF //error
 };
 
@@ -37,6 +41,7 @@ public:
     bool checkDataStringFromNextion(const char *stringData);
 
     uint8_t getDataButton(uint8_t id);
+    bool getExitPageFlag(void);
     bool getDataBuzzer(void);
     const char *getDataString(uint8_t id);
     uint64_t getDataInteger(uint8_t id);
@@ -57,12 +62,15 @@ private:
     uint8_t getTypeOfDataFromNextion(const char *stringData);
     bool recvRetNumber(uint32_t *number, uint32_t timeout = 100);
     uint16_t recvRetString(char *buffer, uint16_t len, uint32_t timeout = 100);
+    void presetScreenBrightness(void);
     char dataString[10][20];
     uint8_t dataButton[20] = {0};
     uint64_t dataInteger[10] = {0};
     double dataFloat[10] = {0};
     uint8_t dataBuzzer = 0;
     bool waitingEndSignal = false;
+    bool exitPageFlag = false;
+    uint8_t exitPageFlagCounter = 0;
 };
 
 extern Nextion hmi;
