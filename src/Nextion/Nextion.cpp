@@ -439,7 +439,7 @@ void Nextion::presetScreenBrightness(void)
     if (rtos.currentBrightness != data.getScreenBrightness())
     {
       rtos.currentBrightness = data.getScreenBrightness();
-      setIntegerToNextion("dims", rtos.currentBrightness);
+      setIntegerToNextion("dim", rtos.currentBrightness);
     }
   }
 }
