@@ -3,7 +3,7 @@
 
 #include "Arduino.h"
 
-#define SAMPLE_MOV_AVERAGE 80
+#define SAMPLE_MOV_AVERAGE 10
 
 enum Channel
 {
@@ -38,15 +38,17 @@ enum BoardADS
 class ADS1232
 {
 public:
-    uint32_t adcRead[3][2];
-    String adcReadString[3][2];
+    uint32_t adcRead[3][2];     //ADC value after filtered
+    String adcReadString[3][2]; ////ADC value convert to 10 characters of String
 
-    void begin();
-    void init();
+    void begin(void);
+    bool init(uint8_t board);
     float getWeightInUnit(float gram, uint8_t unit);
+    bool dataRead(uint8_t board, bool channel, bool calibrating);
+    uint8_t PDWN[3];
 
 private:
-    uint8_t PDWN[3];
+    // uint8_t PDWN[3];
     uint8_t SCLK[3];
     uint8_t DOUT[3];
     uint8_t A0[3];
@@ -66,7 +68,6 @@ private:
     bool prevChannel[3];
 
     bool dataReady(uint8_t board);
-    bool dataRead(uint8_t board, bool channel, bool calibrating);
     void setChannel(uint8_t board, uint8_t channel);
     void powerUp(uint8_t board);
     void powerDown(uint8_t board);

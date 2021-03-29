@@ -5,14 +5,18 @@
 bool MemoryFlash::begin(uint16_t sizeOfMemory)
 {
     //init setup flash memory to use 512 byte storage
+    Serial.begin(115200);
     if (EEPROM.begin(sizeOfMemory))
     {
         readAll();
-        Serial.begin(115200);
-        printDebug(getDebugMode(), "Initialization of flash succesful!");
-        Serial.end();
+        printDebug("Initialization of flash succesful");
         return true;
     }
+    else
+    {
+        printDebug("Initialization of flash Failed!");
+    }
+    Serial.end();
     return false;
 }
 
@@ -77,7 +81,7 @@ void MemoryFlash::readAll()
 {
 
     EEPROM.get(0, flash);
-    printDebug(getDebugMode(), "All flash data read!");
+    printDebug("All flash data read!");
 }
 
 ////update data struct flash to flash memory
@@ -85,9 +89,9 @@ void MemoryFlash::storeDataToFlash(void)
 {
     EEPROM.put(0, flash);
     if (EEPROM.commit())
-        printDebug(getDebugMode(), "Stored succesfully!");
+        printDebug("Stored succesfully!");
     else
-        printDebug(getDebugMode(), "failed to stored!!!");
+        printDebug("failed to stored!!!");
 }
 
 ////setting data flash
@@ -95,7 +99,7 @@ bool MemoryFlash::setSSID(const char *newValue)
 {
     if (strcmp(newValue, "") == 0)
     {
-        printDebug(getDebugMode(), String() + "Data Failed to be stored!");
+        printDebug(String() + "Data Failed to be stored!");
         return false;
     }
 
@@ -103,12 +107,12 @@ bool MemoryFlash::setSSID(const char *newValue)
     {
         strcpy(flash.ssid, newValue);
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + newValue + ": new data set!");
+        printDebug(String() + newValue + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -116,19 +120,19 @@ bool MemoryFlash::setPassword(const char *newValue)
 {
     if (strcmp(newValue, "") == 0)
     {
-        printDebug(getDebugMode(), String() + "Data Failed to be stored!");
+        printDebug(String() + "Data Failed to be stored!");
         return false;
     }
     if (strcmp(newValue, flash.password)) //if data is different
     {
         strcpy(flash.password, newValue);
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + newValue + ": new data set!");
+        printDebug(String() + newValue + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -136,19 +140,19 @@ bool MemoryFlash::setKeyAPI(const char *newValue)
 {
     if (strcmp(newValue, "") == 0)
     {
-        printDebug(getDebugMode(), String() + "Data Failed to be stored!");
+        printDebug(String() + "Data Failed to be stored!");
         return false;
     }
     if (strcmp(newValue, flash.ssid)) //if data is different
     {
         strcpy(flash.keyAPI, newValue);
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + newValue + ": new data set!");
+        printDebug(String() + newValue + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -158,12 +162,12 @@ bool MemoryFlash::setEncryptType(uint8_t newValue)
     {
         flash.encryptType = newValue;
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + newValue + ": new data set!");
+        printDebug(String() + newValue + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -173,12 +177,12 @@ bool MemoryFlash::setTimezone(uint8_t newValue)
     {
         flash.timeZone = newValue;
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + newValue + ": new data set!");
+        printDebug(String() + newValue + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -188,12 +192,12 @@ bool MemoryFlash::setMeasurementUnit(uint8_t newValue)
     {
         flash.measurementUnit = newValue;
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + newValue + ": new data set!");
+        printDebug(String() + newValue + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -210,12 +214,12 @@ bool MemoryFlash::setChannelEnDisStatus(uint8_t channel, bool newValue)
             bitClear(flash.channelEnDisStatus, channel);
         }
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + newValue + ": new data set!");
+        printDebug(String() + newValue + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -228,12 +232,12 @@ bool MemoryFlash::setDebugMode(bool newValue)
         else
             bitClear(flash.generalStatus, DEBUG_ENABLE);
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + newValue + ": new data set!");
+        printDebug(String() + newValue + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -246,12 +250,12 @@ bool MemoryFlash::setNetworkEnable(bool newValue)
         else
             bitClear(flash.generalStatus, NETWORK_ENABLE);
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + newValue + ": new data set!");
+        printDebug(String() + newValue + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -276,12 +280,12 @@ bool MemoryFlash::setDatalogStatus(uint8_t loggerType, bool newValue)
         else
             bitClear(flash.generalStatus, type);
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + newValue + ": new data set!");
+        printDebug(String() + newValue + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -294,12 +298,12 @@ bool MemoryFlash::setDatalogStatus(uint8_t loggerType, bool newValue)
 //         else
 //             bitClear(flash.generalStatus, SERIAL_LOG_ENABLE);
 //         storeDataToFlash();
-//         printDebug(getDebugMode(), String() + newValue + ": new data set!");
+//         printDebug(String() + newValue + ": new data set!");
 //         return true;
 //     }
 //     else
 //     {
-//         printDebug(getDebugMode(), String() + "New data already in flash!");
+//         printDebug(String() + "New data already in flash!");
 //     }
 //     return false;
 // }
@@ -312,12 +316,12 @@ bool MemoryFlash::setDatalogStatus(uint8_t loggerType, bool newValue)
 //         else
 //             bitClear(flash.generalStatus, WEB_LOG_ENABLE);
 //         storeDataToFlash();
-//         printDebug(getDebugMode(), String() + newValue + ": new data set!");
+//         printDebug(String() + newValue + ": new data set!");
 //         return true;
 //     }
 //     else
 //     {
-//         printDebug(getDebugMode(), String() + "New data already in flash!");
+//         printDebug(String() + "New data already in flash!");
 //     }
 //     return false;
 // }
@@ -328,12 +332,12 @@ bool MemoryFlash::setBatteryCapacity(uint16_t newValue)
     {
         flash.batteryCapacity = newValue;
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + newValue + ": new data set!");
+        printDebug(String() + newValue + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -344,12 +348,12 @@ bool MemoryFlash::setFieldChannel(uint8_t channel, uint8_t newValue)
     {
         flash.fieldChannel[channel] = newValue;
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + newValue + ": new data set!");
+        printDebug(String() + newValue + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -362,12 +366,12 @@ bool MemoryFlash::setPointCalibrationStatus(uint8_t channel, uint8_t point, bool
         else
             bitClear(flash.pointCalibrationStatus[channel], point);
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + newValue + ": new data set!");
+        printDebug(String() + newValue + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -379,12 +383,12 @@ bool MemoryFlash::setPeriodDatalog(uint8_t loggerType, uint32_t newValue)
     {
         flash.periodDataLog[loggerType] = newValue;
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + newValue + ": new data set!");
+        printDebug(String() + newValue + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -394,12 +398,12 @@ bool MemoryFlash::setPeriodDatalog(uint8_t loggerType, uint32_t newValue)
 //     {
 //         flash.periodWebDataLog = newValue;
 //         storeDataToFlash();
-//         printDebug(getDebugMode(), String() + newValue + ": new data set!");
+//         printDebug(String() + newValue + ": new data set!");
 //         return true;
 //     }
 //     else
 //     {
-//         printDebug(getDebugMode(), String() + "New data already in flash!");
+//         printDebug(String() + "New data already in flash!");
 //     }
 //     return false;
 // }
@@ -409,12 +413,12 @@ bool MemoryFlash::setPeriodDatalog(uint8_t loggerType, uint32_t newValue)
 //     {
 //         flash.periodSerial1DataLog = newValue;
 //         storeDataToFlash();
-//         printDebug(getDebugMode(), String() + newValue + ": new data set!");
+//         printDebug(String() + newValue + ": new data set!");
 //         return true;
 //     }
 //     else
 //     {
-//         printDebug(getDebugMode(), String() + "New data already in flash!");
+//         printDebug(String() + "New data already in flash!");
 //     }
 //     return false;
 // }
@@ -424,12 +428,12 @@ bool MemoryFlash::setBaudrateSerial(bool type, uint8_t newValue)
     {
         flash.baudrateSerial[type] = newValue;
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + baudrate[newValue] + ": new data set!");
+        printDebug(String() + baudrate[newValue] + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -439,12 +443,12 @@ bool MemoryFlash::setAdcCalibrationPoint(uint8_t channel, uint8_t point, uint32_
     {
         flash.adcCalibrationPoint[channel][point] = newValue;
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + newValue + ": new data set!");
+        printDebug(String() + newValue + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -454,12 +458,12 @@ bool MemoryFlash::setGramCalibrationPoint(uint8_t channel, uint8_t point, float 
     {
         flash.gramCalibrationPoint[channel][point] = newValue;
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + newValue + ": new data set!");
+        printDebug(String() + newValue + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -470,12 +474,12 @@ bool MemoryFlash::setGramMaximum(uint8_t channel, float newValue)
     {
         flash.gramMaximum[channel] = newValue;
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + newValue + ": new data set!");
+        printDebug(String() + newValue + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -494,12 +498,12 @@ bool MemoryFlash::setOffScheduleDatalog(uint8_t loggerType, uint8_t index, uint1
         flash.offScheduleDatalog[loggerType][index] = temp3 | temp2;
 
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + temp2 + ": new data set!");
+        printDebug(String() + temp2 + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -516,12 +520,12 @@ bool MemoryFlash::setOnScheduleDatalog(uint8_t loggerType, uint8_t index, uint16
         temp2 = temp1;
         flash.onScheduleDatalog[loggerType][index] = temp3 | temp2;
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + temp2 + ": new data set!");
+        printDebug(String() + temp2 + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -545,12 +549,12 @@ bool MemoryFlash::setEnableScheduleOff(uint8_t loggerType, uint8_t index, bool n
             flash.offScheduleDatalog[loggerType][index] &= 0xEFFF;
 
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + oldValue + ": new data set!");
+        printDebug(String() + oldValue + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -574,12 +578,12 @@ bool MemoryFlash::setEnableScheduleOn(uint8_t loggerType, uint8_t index, bool ne
             flash.onScheduleDatalog[loggerType][index] &= 0xEFFF;
 
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + oldValue + ": new data set!");
+        printDebug(String() + oldValue + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -589,12 +593,12 @@ bool MemoryFlash::setDimScreenTimer(uint8_t newValue)
     {
         flash.dimScreenTimer = newValue;
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + dim[newValue] + ": new data set!");
+        printDebug(String() + dim[newValue] + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -604,12 +608,12 @@ bool MemoryFlash::setScreenBrightness(uint8_t newValue)
     {
         flash.screenBrightness = newValue;
         storeDataToFlash();
-        printDebug(getDebugMode(), String() + newValue + ": new data set!");
+        printDebug(String() + newValue + ": new data set!");
         return true;
     }
     else
     {
-        printDebug(getDebugMode(), String() + "New data already in flash!");
+        printDebug(String() + "New data already in flash!");
     }
     return false;
 }

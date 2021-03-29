@@ -7,6 +7,7 @@
 #define ADCsample 10
 
 #define rtcd RTC.data
+#define Buzzer_Pin 5
 
 enum MachineState
 {
@@ -51,6 +52,7 @@ private:
     String prevWeightString[6];
     uint8_t batteryValue = 0;
     uint8_t signalValue = 0;
+    bool buzzerState = false;
     bool maxState[6] = {0, 0, 0, 0, 0, 0};
 };
 

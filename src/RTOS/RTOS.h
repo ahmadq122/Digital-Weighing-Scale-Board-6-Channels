@@ -6,6 +6,7 @@
 class RealTimeOS
 {
 public:
+    uint64_t milliSeconds = 0;
     uint32_t counterUpSeconds = 0;
     uint32_t counterDownSeconds = 0;
     uint32_t interruptSeconds = 0;

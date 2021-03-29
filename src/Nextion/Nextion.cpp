@@ -64,7 +64,7 @@ bool Nextion::checkDataStringFromNextion(const char *stringData)
   uint8_t type = 0xFF;
   uint8_t id = 0;
 
-  printDebug(data.getDebugMode(), stringData);
+  printDebug(stringData);
 
   while (stringData[index] != '\0' && index < 20)
   {
@@ -392,10 +392,10 @@ void Nextion::waitForPageRespon(void)
 {
   while (!getWaitingEndSignal())
   {
-    printDebug(data.getDebugMode(), "Waiting for page ready");
+    printDebug("Waiting for page ready");
     delay(100);
   }
-  printDebug(data.getDebugMode(), "Page ready!");
+  printDebug("Page ready!");
 }
 
 /*
@@ -422,11 +422,11 @@ void Nextion::serialEvent_2(void)
   {
     if (checkDataStringFromNextion(inputString.c_str()))
     {
-      printDebug(data.getDebugMode(), "Data found!");
+      printDebug("Data found!");
     }
     else
     {
-      printDebug(data.getDebugMode(), "Failed to get the data!");
+      printDebug("Failed to get the data!");
     }
   }
 }

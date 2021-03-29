@@ -17,7 +17,7 @@ void Network::setup(void)
         WiFi.begin(data.getSSID(), data.getPassword());
         // WiFi.setAutoReconnect(true);
     }
-    printDebug(data.getDebugMode(), "Wifi Setup done");
+    printDebug("Wifi Setup done");
 }
 
 const char *getStringEncrypt(byte parameter)
@@ -100,7 +100,7 @@ bool Network::networkConfig(void)
 
     hmi.showPage("netconf");
     hmi.waitForPageRespon();
-    printDebug(data.getDebugMode(), "Network Config page opened");
+    printDebug("Network Config page opened");
     netEnDis = data.getNetworkEnable();
 
     hmi.setIntegerToNextion("b1.val", netEnDis);
@@ -111,7 +111,7 @@ bool Network::networkConfig(void)
         {
             needToRefreshStatus = true;
             WiFi.begin(data.getSSID(), data.getPassword());
-            printDebug(data.getDebugMode(), String() + "Connecting to " + data.getSSID());
+            printDebug(String() + "Connecting to " + data.getSSID());
         }
 
         if (data.getNetworkEnable())
@@ -145,7 +145,7 @@ bool Network::networkConfig(void)
                 if (WiFi.isConnected())
                 {
                     WiFi.disconnect();
-                    printDebug(data.getDebugMode(), "Network disconnected!");
+                    printDebug("Network disconnected!");
                 }
             }
         }
@@ -171,7 +171,7 @@ void Network::networkScanning(void)
 
     hmi.showPage("netscan");
     hmi.waitForPageRespon();
-    printDebug(data.getDebugMode(), "Network Scan page opened");
+    printDebug("Network Scan page opened");
     WiFi.mode(WIFI_STA);
     WiFi.disconnect();
 
@@ -210,7 +210,7 @@ __scan:
     if (numberOfNetworkFound[selectedScan] == 0)
     {
         hmi.setVisObjectNextion("nonet", true);
-        printDebug(data.getDebugMode(), "No networks found!");
+        printDebug("No networks found!");
         while (!hmi.getExitPageFlag())
         {
             while (!hmi.checkAnyButtonPressed(&button))
@@ -228,7 +228,7 @@ __scan:
     else
     {
         showNetworkList(numberOfNetworkFound[selectedScan]);
-        printDebug(data.getDebugMode(), String() + numberOfNetworkFound[selectedScan] + " Networks found");
+        printDebug(String() + numberOfNetworkFound[selectedScan] + " Networks found");
         while (!hmi.getExitPageFlag())
         {
             for (int i = 0; i < numberOfNetworkFound[selectedScan]; ++i)
@@ -238,7 +238,7 @@ __scan:
                 str = ssidScanned[selectedScan][i];
                 str += ":";
                 str += rssiScanned[selectedScan][i];
-                printDebug(data.getDebugMode(), String() + (i + 1) + ". " + str);
+                printDebug(String() + (i + 1) + ". " + str);
                 hmi.setStringToNextion(String() + "b" + i + ".txt", str);
             }
             while (!hmi.checkAnyButtonPressed(&button))
@@ -328,11 +328,11 @@ bool Network::checkConnection(void)
 
     if (WiFi.isConnected())
     {
-        printDebug(data.getDebugMode(), "Network connected!");
+        printDebug("Network connected!");
     }
     else
     {
-        printDebug(data.getDebugMode(), "Network connection failed!");
+        printDebug("Network connection failed!");
         WiFi.begin(data.getSSID(), data.getPassword());
         while (!WiFi.isConnected() && counter <= 10)
         {
@@ -341,7 +341,7 @@ bool Network::checkConnection(void)
         }
         if (WiFi.isConnected())
         {
-            printDebug(data.getDebugMode(), "Network connected!");
+            printDebug("Network connected!");
         }
     }
     return WiFi.isConnected();
@@ -373,7 +373,7 @@ bool Network::checkConnection(uint8_t *wifiSignal, bool *wifiConnectionTriggered
         if (*wifiConnectionTriggered && previousConnectionState != true)
         {
             previousConnectionState = true;
-            printDebug(data.getDebugMode(), "Network connected!");
+            printDebug("Network connected!");
         }
     }
     else
@@ -383,7 +383,7 @@ bool Network::checkConnection(uint8_t *wifiSignal, bool *wifiConnectionTriggered
         if (*wifiConnectionTriggered && previousConnectionState != false)
         {
             previousConnectionState = false;
-            printDebug(data.getDebugMode(), "Network connection failed!");
+            printDebug("Network connection failed!");
         }
     }
     if (*wifiConnectionTriggered)

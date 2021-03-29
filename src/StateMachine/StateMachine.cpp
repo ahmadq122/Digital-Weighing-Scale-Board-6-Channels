@@ -23,7 +23,7 @@
  *           DIO---|32      |               |     GND|---
  *           DIO---|33      |               |      19|---VSPI_MISO
  *           DIO---|25      |_______________|      18|---VSPI_SCK
- *           DIO---|26                              5|---DIO
+ *           DIO---|26                              5|---DIO-
  *           DIO---|27                             17|---TX2
  *           DIO---|14                             16|---RX2
  *           DIO---|12                              4|---DIO
@@ -46,23 +46,27 @@
 // 9,
 // 10,
 // 11,6,7,8
-uint8_t pin[10] = {
-    12,
-    13,
-    15,
-    2,
-    32,
-    33,
-    25,
-    26,
-    27,
-    14};
+// uint8_t pin[10] = {
+//     12,
+//     13,
+//     15,
+//     2,
+//     32,
+//     33,
+//     25,
+//     26,
+//     27,
+//     14};
 
 void StateMachine::setup(void)
 {
-    rtos.setup();
-    initFlash(MEMORY_SIZE);
-
+    bool flashBegin = false;
+    delay(100);
+    while (flashBegin == false)
+    {
+        flashBegin = initFlash(MEMORY_SIZE);
+        delay(250);
+    }
     if (data.getDebugMode())
     {
         Serial.begin(data.getBaudrateSerial(DEBUG));
@@ -75,7 +79,9 @@ void StateMachine::setup(void)
     NexSerial.begin(115200);
     while (!NexSerial)
         ;
-    setupPinIO();
+    pinMode(Buzzer_Pin, OUTPUT);
+    ads.begin();
+    rtos.setup();
     net.setup();
     initTime();
     initSDCard();
@@ -94,12 +100,6 @@ bool StateMachine::initFlash(uint16_t memory)
     if (memory > MEMORY_SIZE)
         return false;
     return data.begin(memory);
-}
-
-void StateMachine::setupPinIO(void)
-{
-    for (uint8_t i = 0; i < 10; i++)
-        pinMode(pin[i], OUTPUT);
 }
 
 void StateMachine::initSDCard(void)
@@ -164,9 +164,9 @@ uint8_t StateMachine::homeScreen(void)
                 hmi.setIntegerToNextion("sClock.en", sClock);
                 hmi.setVisObjectNextion("clock", !sClock);
                 if (sClock)
-                    printDebug(data.getDebugMode(), "Scrool text enabled");
+                    printDebug("Scrool text enabled");
                 else
-                    printDebug(data.getDebugMode(), "Scrool text disabled");
+                    printDebug("Scrool text disabled");
                 sClockUpdate = true;
             }
         }
@@ -226,9 +226,9 @@ uint8_t StateMachine::homeScreen(void)
                     data.setChannelEnDisStatus(Channel1, enDisChannel[Channel1]);
                     updateButtonToggleStateToNextion(Channel1);
                     if (enDisChannel[Channel1])
-                        printDebug(data.getDebugMode(), "Channel 1 : Enabled");
+                        printDebug("Channel 1 : Enabled");
                     else
-                        printDebug(data.getDebugMode(), "Channel 1 : Disabled");
+                        printDebug("Channel 1 : Disabled");
                 }
                 else if (button[5])
                 {
@@ -236,9 +236,9 @@ uint8_t StateMachine::homeScreen(void)
                     data.setChannelEnDisStatus(Channel2, enDisChannel[Channel2]);
                     updateButtonToggleStateToNextion(Channel2);
                     if (enDisChannel[Channel2])
-                        printDebug(data.getDebugMode(), "Channel 2 : Enabled");
+                        printDebug("Channel 2 : Enabled");
                     else
-                        printDebug(data.getDebugMode(), "Channel 2 : Disabled");
+                        printDebug("Channel 2 : Disabled");
                 }
                 else if (button[6])
                 {
@@ -246,9 +246,9 @@ uint8_t StateMachine::homeScreen(void)
                     data.setChannelEnDisStatus(Channel3, enDisChannel[Channel3]);
                     updateButtonToggleStateToNextion(Channel3);
                     if (enDisChannel[Channel3])
-                        printDebug(data.getDebugMode(), "Channel 3 : Enabled");
+                        printDebug("Channel 3 : Enabled");
                     else
-                        printDebug(data.getDebugMode(), "Channel 3 : Disabled");
+                        printDebug("Channel 3 : Disabled");
                 }
                 else if (button[7])
                 {
@@ -256,9 +256,9 @@ uint8_t StateMachine::homeScreen(void)
                     data.setChannelEnDisStatus(Channel4, enDisChannel[Channel4]);
                     updateButtonToggleStateToNextion(Channel4);
                     if (enDisChannel[Channel4])
-                        printDebug(data.getDebugMode(), "Channel 4 : Enabled");
+                        printDebug("Channel 4 : Enabled");
                     else
-                        printDebug(data.getDebugMode(), "Channel 4 : Disabled");
+                        printDebug("Channel 4 : Disabled");
                 }
                 else if (button[8])
                 {
@@ -266,9 +266,9 @@ uint8_t StateMachine::homeScreen(void)
                     data.setChannelEnDisStatus(Channel5, enDisChannel[Channel5]);
                     updateButtonToggleStateToNextion(Channel5);
                     if (enDisChannel[Channel5])
-                        printDebug(data.getDebugMode(), "Channel 5 : Enabled");
+                        printDebug("Channel 5 : Enabled");
                     else
-                        printDebug(data.getDebugMode(), "Channel 5 : Disabled");
+                        printDebug("Channel 5 : Disabled");
                 }
                 else if (button[9])
                 {
@@ -276,39 +276,39 @@ uint8_t StateMachine::homeScreen(void)
                     data.setChannelEnDisStatus(Channel6, enDisChannel[Channel6]);
                     updateButtonToggleStateToNextion(Channel6);
                     if (enDisChannel[Channel6])
-                        printDebug(data.getDebugMode(), "Channel 6 : Enabled");
+                        printDebug("Channel 6 : Enabled");
                     else
-                        printDebug(data.getDebugMode(), "Channel 6 : Disabled");
+                        printDebug("Channel 6 : Disabled");
                 }
                 else if (button[10])
                 {
                     tare[Channel1] = currentWeight[Channel1];
-                    printDebug(data.getDebugMode(), "Channel 1 Tare");
+                    printDebug("Channel 1 Tare");
                 }
                 else if (button[11])
                 {
                     tare[Channel2] = currentWeight[Channel2];
-                    printDebug(data.getDebugMode(), "Channel 2 Tare");
+                    printDebug("Channel 2 Tare");
                 }
                 else if (button[12])
                 {
                     tare[Channel3] = currentWeight[Channel3];
-                    printDebug(data.getDebugMode(), "Channel 3 Tare");
+                    printDebug("Channel 3 Tare");
                 }
                 else if (button[13])
                 {
                     tare[Channel4] = currentWeight[Channel4];
-                    printDebug(data.getDebugMode(), "Channel 4 Tare");
+                    printDebug("Channel 4 Tare");
                 }
                 else if (button[14])
                 {
                     tare[Channel5] = currentWeight[Channel5];
-                    printDebug(data.getDebugMode(), "Channel 5 Tare");
+                    printDebug("Channel 5 Tare");
                 }
                 else if (button[15])
                 {
                     tare[Channel6] = currentWeight[Channel6];
-                    printDebug(data.getDebugMode(), "Channel 6 Tare");
+                    printDebug("Channel 6 Tare");
                 }
             }
         }
@@ -353,7 +353,7 @@ uint8_t StateMachine::measurementUnits(void)
     hmi.showPage("meaunit");
     // hmi.setIntegerToNextion("unit.val", data.getMeasurementUnit());
     hmi.waitForPageRespon();
-    printDebug(data.getDebugMode(), "Measurement Unit page opened");
+    printDebug("Measurement Unit page opened");
 
     updateSelectedUnitToNextion(data.getMeasurementUnit());
     while (true)
@@ -384,7 +384,7 @@ uint8_t StateMachine::datalogSettings(void)
 {
     hmi.showPage("datalog");
     hmi.waitForPageRespon();
-    printDebug(data.getDebugMode(), "Datalog page opened");
+    printDebug("Datalog page opened");
     while (!hmi.getExitPageFlag())
         ;
     return 0;
@@ -414,7 +414,7 @@ void StateMachine::updateWeightStringToNextion(void)
         if (data.getChannelEnDisStatus(i) && prevWeightString[i] != newWeightString[i])
         {
             hmi.setStringToNextion((String() + "t_ch" + (i + 1) + ".txt"), newWeightString[i]);
-            printDebug(data.getDebugMode(), String() + "Updated: " + " Channel " + (i + 1) + " weight");
+            printDebug(String() + "Updated: " + " Channel " + (i + 1) + " weight");
         }
         prevWeightString[i] = newWeightString[i];
     }
@@ -424,16 +424,18 @@ void StateMachine::evenBuzzer(void)
 {
     if (hmi.getDataBuzzer())
     {
-        for (uint8_t i = 0; i < 10; i++)
+        if (!buzzerState)
         {
-            digitalWrite(pin[i], 1);
+            buzzerState = true;
+            digitalWrite(Buzzer_Pin, 1);
         }
     }
     else
     {
-        for (uint8_t i = 0; i < 10; i++)
+        if (buzzerState)
         {
-            digitalWrite(pin[i], 0);
+            buzzerState = false;
+            digitalWrite(Buzzer_Pin, 0);
         }
     }
 }
@@ -444,7 +446,7 @@ void StateMachine::updateSignalIndicatorToNextion(uint8_t newValue)
     {
         hmi.setIntegerToNextion("signal.val", newValue);
         signalValue = newValue;
-        printDebug(data.getDebugMode(), String() + "Updated: " + newValue + "%" + " signal");
+        printDebug(String() + "Updated: " + newValue + "%" + " signal");
     }
 }
 void StateMachine::updateBatteryIndicatorToNextion(uint8_t newValue)
@@ -453,7 +455,7 @@ void StateMachine::updateBatteryIndicatorToNextion(uint8_t newValue)
     {
         hmi.setIntegerToNextion("bat.val", newValue);
         batteryValue = newValue;
-        printDebug(data.getDebugMode(), String() + "Updated: " + newValue + "%" + " battery");
+        printDebug(String() + "Updated: " + newValue + "%" + " battery");
     }
 }
 

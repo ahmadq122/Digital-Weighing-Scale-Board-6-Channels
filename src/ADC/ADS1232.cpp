@@ -1,9 +1,13 @@
 #include "ADS1232.h"
+#include "DebugSerial/DebugSerial.h"
+#include "RTOS/RTOS.h"
 
 void integerToString(uint32_t number, char *buffer, uint8_t len);
 
-void ADS1232::begin()
+void ADS1232::begin(void)
 {
+    printDebug("ADS1232 Initial Pin");
+
     PDWN[0] = 32;
     SCLK[0] = 33;
     DOUT[0] = 25;
@@ -26,6 +30,7 @@ void ADS1232::begin()
         pinMode(DOUT[i], INPUT);
         pinMode(A0[i], OUTPUT);
     }
+    printDebug("Init Pin done!");
 }
 
 bool ADS1232::dataReady(uint8_t board)
@@ -35,9 +40,14 @@ bool ADS1232::dataReady(uint8_t board)
 
 void ADS1232::powerUp(uint8_t board)
 {
+    printDebug(String() + "Power up board " + (board + 1));
+    vTaskDelay(1);
     digitalWrite(PDWN[board], HIGH);
-    while (!dataReady(board))
-        ;
+    vTaskDelay(1);
+    digitalWrite(PDWN[board], LOW);
+    vTaskDelay(1);
+    digitalWrite(PDWN[board], HIGH);
+    printDebug(String() + "Power up board " + (board + 1) + " done");
 }
 
 void ADS1232::powerDown(uint8_t board)
@@ -53,19 +63,42 @@ void ADS1232::setChannel(uint8_t board, uint8_t channel)
 }
 
 //This function must be called in setup
-void ADS1232::init(void)
+bool ADS1232::init(uint8_t board)
 {
-    powerUp(ads1);
-    powerUp(ads2);
-    powerUp(ads3);
+    uint8_t timeOutCounter = 0;
+    powerUp(board);
 
-    index[0][0] = 0;
-    adcRead[0][0] = 0;
+    printDebug(String() + "Init ADS board " + (board + 1) + " Channel " + 0);
+    index[board][0] = 0;
+    adcRead[board][0] = 0;
+    while (adcRead[board][0] == 0)
+    {
+        if (!dataRead(board, 0, 1))
+            timeOutCounter++;
+        if (timeOutCounter > 3)
+        {
+            printDebug(String() + "Init ADS board " + (board + 1) + " Failed!");
+            return false;
+        }
+    }
+    timeOutCounter = 0;
+    printDebug(String() + "Init ADS board " + (board + 1) + " Channel " + 1);
+    index[board][1] = 0;
+    adcRead[board][1] = 0;
+    while (adcRead[board][1] == 0)
+    {
+        if (!dataRead(board, 1, 1))
+            timeOutCounter++;
+        if (timeOutCounter > 3)
+        {
+            printDebug(String() + "Init ADS board " + (board + 1) + " Failed!");
+            return false;
+        }
+    }
 
-    while (adcRead[0] == 0)
-        dataRead(0, 0, 0);
+    printDebug(String() + "Init ADS board " + (board + 1) + " Finished");
+    return true;
 }
-
 
 bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
 {
@@ -74,16 +107,15 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
     unsigned long start;
     unsigned int waitingTime;
     unsigned int SettlingTimeAfterChangeChannel = 0;
-    uint8_t samples_mov_average = SAMPLE_MOV_AVERAGE;
 
     if (channel != prevChannel[board])
     {
         setChannel(board, channel);
 
         ////if setting speedrate used 80SPS
-        SettlingTimeAfterChangeChannel = 55;
-        ////if setting speedrate use 10SPS
-        // SettlingTimeAfterChangeChannel = 405;
+        // SettlingTimeAfterChangeChannel = 55;
+        //// if setting speedrate use 10SPS
+        SettlingTimeAfterChangeChannel = 405;
         prevChannel[board] = channel;
     }
 
@@ -97,32 +129,32 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
     if (calibrating)
     {
         ////if setting speedrate used 80SPS
-        waitingTime = 150;
+        // waitingTime = 150;
         ////if setting speedrate use 10SPS
-        // waitingTime = 850;
+        waitingTime = 850;
     }
     else
     {
         ////if setting speedrate used 80SPS
-        waitingTime = 20;
+        // waitingTime = 20;
         ////if setting speedrate use 10SPS
-        // waitingTime = 150;
+        waitingTime = 150;
     }
 
     waitingTime += SettlingTimeAfterChangeChannel;
     waitingTime += 600; //[ms] Add some extra time ( sometimes takes longer than what datasheet claims! )
-    start = millis();
+    start = rtos.milliSeconds;
 
     while (dataReady(board))
     {
-        if (millis() - start > waitingTime)
+        if (rtos.milliSeconds - start > waitingTime)
             return false; // Timeout waiting for HIGH
     }
 
-    start = millis();
+    start = rtos.milliSeconds;
     while (!dataReady(board))
     {
-        if (millis() - start > waitingTime)
+        if (rtos.milliSeconds - start > waitingTime)
             return false; // Timeout waiting for LOW
     }
 
@@ -188,16 +220,16 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
             //push back the buffer value
             for (byte i = 0; i < SAMPLE_MOV_AVERAGE - 1; i++)
                 adcBuffer[board][channel][i] = adcBuffer[board][channel][i + 1];
-            index[board][channel] = samples_mov_average - 1;
+            index[board][channel] = SAMPLE_MOV_AVERAGE - 1;
             adcBuffer[board][channel][index[board][channel]] = ADC_value_read;
         }
         //////get the filter moving average value after all buffer have a value
-        if (index[board][channel] == samples_mov_average - 1)
+        if (index[board][channel] == SAMPLE_MOV_AVERAGE - 1)
         {
             adcRead[board][channel] = 0; //Reset the previous value
             for (byte i = 0; i < SAMPLE_MOV_AVERAGE; i++)
                 adcRead[board][channel] += static_cast<uint32_t>(adcBuffer[board][channel][i]);
-            adcRead[board][channel] /= samples_mov_average;
+            adcRead[board][channel] /= SAMPLE_MOV_AVERAGE;
         }
         char tempStr[15];
         integerToString(adcRead[board][channel], tempStr, 10);

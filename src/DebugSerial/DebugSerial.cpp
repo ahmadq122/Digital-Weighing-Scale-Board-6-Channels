@@ -1,19 +1,20 @@
 #include "DebugSerial.h"
+#include "FlashMemory/FlashMemory.h"
 
-void printDebug(bool enable, const char *string)
+void printDebug(const char *string)
 {
-    if (enable)
+    if (data.getDebugMode())
         Serial.println(F(string));
 }
 
-void printDebug(bool enable, String string)
+void printDebug(String string)
 {
-    if (enable)
+    if (data.getDebugMode())
         Serial.println(string);
 }
 
-void printDebug(bool enable, long number)
+void printDebug(long number)
 {
-    if (enable)
+    if (data.getDebugMode())
         Serial.println(String()+number);
 }
