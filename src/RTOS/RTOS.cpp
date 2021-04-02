@@ -9,6 +9,8 @@
 #include "FlashMemory/FlashMemory.h"
 #include "ADC/ADS1232.h"
 
+void integerToString(uint32_t number, char *buffer, uint8_t len);
+
 //Define the tasks
 void Task_01(void *pvParameters);
 void Task_02(void *pvParameters);
@@ -155,6 +157,7 @@ void Task_04(void *pvParameters) // This is a task.
 
     if (ads.init(board))
     {
+        ads.isAvailable[board] = true;
         for (;;) // A Task shall never return or exit.
         {
             if (ads.dataRead(board, channel, 1))
@@ -189,6 +192,7 @@ void Task_05(void *pvParameters) // This is a task.
 
     if (ads.init(board))
     {
+        ads.isAvailable[board] = true;
         for (;;) // A Task shall never return or exit.
         {
             if (ads.dataRead(board, channel, 1))
@@ -222,7 +226,9 @@ void Task_06(void *pvParameters) // This is a task.
 
     if (ads.init(board))
     {
-        for (;;) // A Task shall never return or exit.
+        ads.isAvailable[board] = true;
+        for (;;)
+        // A Task shall never return or exit.
         {
             if (ads.dataRead(board, channel, 1))
             {
@@ -244,6 +250,14 @@ void Task_06(void *pvParameters) // This is a task.
             //do noting
         }
     }
+}
+
+void RealTimeOS::updateStartProgressBar(uint8_t add)
+{
+    startProgressBar += add;
+    startProgressBar = constrain(startProgressBar, 0, 100);
+    hmi.setIntegerToNextion("init.val", startProgressBar);
+
 }
 
 RealTimeOS rtos;

@@ -4,6 +4,7 @@
 #include "FlashMemory/FlashMemory.h"
 #include "Time/MyTime.h"
 #include "RTOS/RTOS.h"
+#include "ADC/ADS1232.h"
 
 void Settings::settingsMenu(void)
 {
@@ -481,28 +482,55 @@ start:
         }
     }
 }
+
+void updateAllAdcValue(void)
+{
+    hmi.setStringToNextion("t0.txt", ads.adcReadString[ads1][0]);
+    hmi.setStringToNextion("t1.txt", ads.adcReadString[ads1][1]);
+    hmi.setStringToNextion("t2.txt", ads.adcReadString[ads2][0]);
+    hmi.setStringToNextion("t3.txt", ads.adcReadString[ads2][1]);
+    hmi.setStringToNextion("t4.txt", ads.adcReadString[ads3][0]);
+    hmi.setStringToNextion("t5.txt", ads.adcReadString[ads3][1]);
+}
+
 void Settings::zeroCalibration(void)
 {
-    bool button[2];
+    uint8_t setState = 0;
+    uint8_t progress = 0;
     hmi.showPage("zero");
     hmi.waitForPageRespon();
+
     while (true)
     {
         // hmi.serialEvent_2();
-        for (int i = 0; i < 2; i++)
+        if (hmi.getDataButton(0))
         {
-            button[i] = hmi.getDataButton(i);
-            if (button[i])
+            if (++setState >= 3)
+                setState = 3;
+            if (setState == 1)
             {
-                switch (i)
-                {
-                case 1:
-                    printDebug("Exit Zero Calibration page");
-                    return;
-                default:
-                    break;
-                }
+                hmi.setIntegerToNextion("b1.picc", 44);
+                hmi.setIntegerToNextion("b1.picc2", 45);
+                hmi.setIntegerToNextion("q1.picc", 44);
+                updateAllAdcValue();
             }
+            else if (setState == 2)
+            {
+                hmi.setVisObjectNextion("saving", true);
+                while (progress <= 100)
+                {
+                    hmi.setIntegerToNextion("saving.val", progress);
+                    progress += 10;
+                    delay(100);
+                }
+                delay(500);
+                hmi.setVisObjectNextion("saving", false);
+            }
+        }
+        if (hmi.getExitPageFlag())
+        {
+            printDebug("Exit Zero Calibration page");
+        break;
         }
     }
 }

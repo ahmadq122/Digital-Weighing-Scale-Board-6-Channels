@@ -1,6 +1,7 @@
 #include "FlashMemory.h"
 #include "EEPROM.h"
 #include "../DebugSerial/DebugSerial.h"
+#include "RTOS/RTOS.h"
 
 bool MemoryFlash::begin(uint16_t sizeOfMemory)
 {

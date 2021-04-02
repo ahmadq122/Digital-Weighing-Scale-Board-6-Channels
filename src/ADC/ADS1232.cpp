@@ -8,28 +8,28 @@ void ADS1232::begin(void)
 {
     printDebug("ADS1232 Initial Pin");
 
-    PDWN[0] = 32;
+    PDWN = 32;
     SCLK[0] = 33;
     DOUT[0] = 25;
     A0[0] = 26;
 
-    PDWN[1] = 27;
-    SCLK[1] = 14;
-    DOUT[1] = 12;
-    A0[1] = 13;
+    SCLK[1] = 27;
+    DOUT[1] = 14;
+    A0[1] = 12;
 
-    PDWN[2] = 15;
-    SCLK[2] = 2;
-    DOUT[2] = 0;
-    A0[2] = 4;
+    SCLK[2] = 13;
+    DOUT[2] = 15;
+    A0[2] = 2;
 
+    pinMode(PDWN, OUTPUT);
     for (uint8_t i = 0; i < 3; i++)
     {
-        pinMode(PDWN[i], OUTPUT);
         pinMode(SCLK[i], OUTPUT);
         pinMode(DOUT[i], INPUT);
         pinMode(A0[i], OUTPUT);
     }
+    delay(10);
+    powerUp();
     printDebug("Init Pin done!");
 }
 
@@ -38,21 +38,21 @@ bool ADS1232::dataReady(uint8_t board)
     return digitalRead(DOUT[board]) == LOW; //return true if meet the condition
 }
 
-void ADS1232::powerUp(uint8_t board)
+void ADS1232::powerUp(void)
 {
-    printDebug(String() + "Power up board " + (board + 1));
-    vTaskDelay(1);
-    digitalWrite(PDWN[board], HIGH);
-    vTaskDelay(1);
-    digitalWrite(PDWN[board], LOW);
-    vTaskDelay(1);
-    digitalWrite(PDWN[board], HIGH);
-    printDebug(String() + "Power up board " + (board + 1) + " done");
+    printDebug(String() + "Power up ADS boards");
+    delayMicroseconds(26);
+    digitalWrite(PDWN, HIGH);
+    delayMicroseconds(26);
+    digitalWrite(PDWN, LOW);
+    delayMicroseconds(26);
+    digitalWrite(PDWN, HIGH);
+    printDebug(String() + "ADS boards up");
 }
 
-void ADS1232::powerDown(uint8_t board)
+void ADS1232::powerDown(void)
 {
-    digitalWrite(PDWN[board], LOW);
+    digitalWrite(PDWN, LOW);
 }
 void ADS1232::setChannel(uint8_t board, uint8_t channel)
 {
@@ -66,7 +66,6 @@ void ADS1232::setChannel(uint8_t board, uint8_t channel)
 bool ADS1232::init(uint8_t board)
 {
     uint8_t timeOutCounter = 0;
-    powerUp(board);
 
     printDebug(String() + "Init ADS board " + (board + 1) + " Channel " + 0);
     index[board][0] = 0;
@@ -107,6 +106,7 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
     unsigned long start;
     unsigned int waitingTime;
     unsigned int SettlingTimeAfterChangeChannel = 0;
+    char tempStr[15];
 
     if (channel != prevChannel[board])
     {
@@ -148,14 +148,22 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
     while (dataReady(board))
     {
         if (rtos.milliSeconds - start > waitingTime)
-            return false; // Timeout waiting for HIGH
+        {
+            if (rtos.startProgressBar < 100)
+                rtos.updateStartProgressBar(10);
+            return false; // Timeout waiting for HIGH}
+        }
     }
 
     start = rtos.milliSeconds;
     while (!dataReady(board))
     {
         if (rtos.milliSeconds - start > waitingTime)
+        {
+            if (rtos.startProgressBar < 100)
+                rtos.updateStartProgressBar(10);
             return false; // Timeout waiting for LOW
+        }
     }
 
     byte data[3] = {0, 0, 0};
@@ -231,11 +239,14 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
                 adcRead[board][channel] += static_cast<uint32_t>(adcBuffer[board][channel][i]);
             adcRead[board][channel] /= SAMPLE_MOV_AVERAGE;
         }
-        char tempStr[15];
         integerToString(adcRead[board][channel], tempStr, 10);
         adcReadString[board][channel] = tempStr;
+        if (rtos.startProgressBar < 100)
+            rtos.updateStartProgressBar(10);
         return true;
     }
+    if (rtos.startProgressBar < 100)
+        rtos.updateStartProgressBar(10);
     return false;
 }
 

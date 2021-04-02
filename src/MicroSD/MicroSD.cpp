@@ -5,6 +5,7 @@
 #include "FlashMemory/FlashMemory.h"
 #include "Time/MyTime.h"
 #include "DebugSerial/DebugSerial.h"
+#include "RTOS/RTOS.h"
 
 /*
    Connect the SD card to the following pins:
@@ -246,7 +247,7 @@ bool MicroSDCard::setup(void)
     if (!SD.begin())
     {
         printDebug("Card Mount Failed");
-        cardMounted = false;
+        cardMounted = false;       
         return false;
     }
 
@@ -284,11 +285,11 @@ bool MicroSDCard::setup(void)
         Serial.printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
     if (data.getDebugMode())
         Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
- 
+
     cardMounted = true;
-    getCSVFileName(csvFileName);
-    if (data.getDatalogStatus(LOCAL))
-        writeFileCSV(csvFileName);
+    // getCSVFileName(csvFileName);
+    // if (data.getDatalogStatus(LOCAL))
+    //     writeFileCSV(csvFileName);
     return cardMounted;
 }
 
@@ -412,6 +413,5 @@ void MicroSDCard::writeTableHeader(String fileName)
     appendFileCSVWithName(fileName, title);
     appendFileCSVWithName(fileName, strHeader);
 }
-
 
 MicroSDCard card;

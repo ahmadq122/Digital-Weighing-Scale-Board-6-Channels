@@ -45,7 +45,8 @@ public:
     bool init(uint8_t board);
     float getWeightInUnit(float gram, uint8_t unit);
     bool dataRead(uint8_t board, bool channel, bool calibrating);
-    uint8_t PDWN[3];
+    uint8_t PDWN;
+    bool isAvailable[3];
 
 private:
     // uint8_t PDWN[3];
@@ -69,8 +70,8 @@ private:
 
     bool dataReady(uint8_t board);
     void setChannel(uint8_t board, uint8_t channel);
-    void powerUp(uint8_t board);
-    void powerDown(uint8_t board);
+    void powerUp(void);
+    void powerDown(void);
 };
 
 extern ADS1232 ads;

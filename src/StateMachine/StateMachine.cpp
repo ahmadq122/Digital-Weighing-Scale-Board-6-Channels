@@ -23,11 +23,11 @@
  *           DIO---|32      |               |     GND|---
  *           DIO---|33      |               |      19|---VSPI_MISO
  *           DIO---|25      |_______________|      18|---VSPI_SCK
- *           DIO---|26                              5|---DIO-
+ *           DIO---|26                              5|---DIO
  *           DIO---|27                             17|---TX2
  *           DIO---|14                             16|---RX2
- *           DIO---|12                              4|---DIO
- *              ---|GND                             0|---DIO
+ *           DIO---|12                             -4|---DIO
+ *              ---|GND                            -0|---DIO
  *           DIO---|13                              2|---DIO
  *           RX1---|9                              15|---DIO
  *           TX1---|10           _______            8|---SD1*
@@ -61,12 +61,34 @@
 void StateMachine::setup(void)
 {
     bool flashBegin = false;
+    uint8_t counter = 0;
     delay(100);
+
+    Serial.begin(115200);
+    NexSerial.begin(115200);
+    while (!NexSerial)
+        ;
+    hmi.showPage("start");
+    //waiting for Nextion page ready
+    while (!hmi.getWaitingEndSignal())
+    {
+        hmi.serialEvent_2();
+        delay(100);
+        if (++counter > 10)
+        {
+            hmi.showPage("start"); //call back start page if still no respons from LCD
+            counter = 0;
+        }
+    }
+    Serial.end();
+
     while (flashBegin == false)
     {
         flashBegin = initFlash(MEMORY_SIZE);
-        delay(250);
+        delay(200);
     }
+    delay(10);
+    rtos.updateStartProgressBar(10);
     if (data.getDebugMode())
     {
         Serial.begin(data.getBaudrateSerial(DEBUG));
@@ -76,16 +98,23 @@ void StateMachine::setup(void)
     Serial1.begin(115200);
     while (!Serial1)
         ;
-    NexSerial.begin(115200);
-    while (!NexSerial)
-        ;
+
     pinMode(Buzzer_Pin, OUTPUT);
+    rtos.updateStartProgressBar(10);
     ads.begin();
     rtos.setup();
     net.setup();
     initTime();
+    rtos.updateStartProgressBar(10);
     initSDCard();
+    rtos.updateStartProgressBar(10);
     hmi.init();
+    while (rtos.startProgressBar < 100)
+    {
+        printDebug(String() + "Progress: " + rtos.startProgressBar + " %");
+        rtos.updateStartProgressBar(10);
+        delay(100);
+    }
 }
 
 bool StateMachine::initTime(void)
@@ -104,7 +133,6 @@ bool StateMachine::initFlash(uint16_t memory)
 
 void StateMachine::initSDCard(void)
 {
-    data.setDatalogStatus(LOCAL, true);
     card.setup();
 }
 
@@ -140,7 +168,7 @@ uint8_t StateMachine::homeScreen(void)
     char timeNDateString[20];
 
     hmi.showPage("home");
-    // hmi.waitForPageRespon();
+    hmi.waitForPageRespon();
 
     for (uint8_t i = 0; i < MAX_CHANNEL; i++)
     {
