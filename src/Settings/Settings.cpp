@@ -519,9 +519,18 @@ void Settings::zeroCalibration(void)
                 hmi.setVisObjectNextion("saving", true);
                 while (progress <= 100)
                 {
+                    if (progress < 10)
+                    {
+                        data.setAdcCalibrationPoint(0, 0, ads.adcRead[0][0]);
+                        data.setAdcCalibrationPoint(1, 0, ads.adcRead[0][1]);
+                        data.setAdcCalibrationPoint(2, 0, ads.adcRead[1][0]);
+                        data.setAdcCalibrationPoint(3, 0, ads.adcRead[1][1]);
+                        data.setAdcCalibrationPoint(4, 0, ads.adcRead[2][0]);
+                        data.setAdcCalibrationPoint(5, 0, ads.adcRead[2][1]);
+                    }
                     hmi.setIntegerToNextion("saving.val", progress);
                     progress += 10;
-                    delay(100);
+                    delay(50);
                 }
                 delay(500);
                 hmi.setVisObjectNextion("saving", false);
@@ -530,19 +539,76 @@ void Settings::zeroCalibration(void)
         if (hmi.getExitPageFlag())
         {
             printDebug("Exit Zero Calibration page");
-        break;
+            break;
         }
     }
 }
+
+void updatePointCalibParameter(uint8_t channel, uint8_t point)
+{
+    if (point > 0)
+    {
+        hmi.setStringToNextion("t0.txt", String() + data.getGramCalibrationPoint(channel, point - 1));
+    }
+    else
+    {
+        hmi.setStringToNextion("t0.txt", String() + static_cast<float>(0));
+    }
+    if (data.getPointCalibrationStatus(channel, point))
+    {
+        hmi.setIntegerToNextion("t2.picc", 49);
+        hmi.setIntegerToNextion("t2.picc2", 51);
+    }
+    else
+    {
+        hmi.setIntegerToNextion("t2.picc", 48);
+        hmi.setIntegerToNextion("t2.picc2", 50);
+    }
+}
+
 void Settings::pointCalibration(void)
 {
     bool button[6];
+    int8_t channelState = 0;
+    int8_t pointState = 0;
+    uint8_t settingState = 0;
+    uint8_t temp = 0;
+    String prevStr = "";
+    String newStr = "";
+    uint32_t temp_adc = 0;
 
     hmi.showPage("pointcal");
     hmi.waitForPageRespon();
+
+    updatePointCalibParameter(channelState, pointState);
+
     while (true)
     {
-        // hmi.serialEvent_2();
+        if (settingState)
+        {
+            if (channelState % 2)
+            {
+                temp = channelState == 1 ? 0 : channelState == 3 ? 1
+                                           : channelState == 5   ? 2
+                                                                 : 0;
+                newStr = ads.adcReadString[temp][1];
+                temp_adc = ads.adcRead[temp][1];
+            }
+            else
+            {
+                temp = channelState == 0 ? 0 : channelState == 2 ? 1
+                                           : channelState == 4   ? 2
+                                                                 : 0;
+                newStr = ads.adcReadString[temp][0];
+                temp_adc = ads.adcRead[temp][0];
+            }
+            if (newStr != prevStr)
+            {
+                hmi.setStringToNextion("t5.txt", newStr);
+                prevStr = newStr;
+            }
+        }
+
         for (int i = 0; i < 6; i++)
         {
             button[i] = hmi.getDataButton(i);
@@ -550,13 +616,82 @@ void Settings::pointCalibration(void)
             {
                 switch (i)
                 {
+                case 0:
+                    if (++channelState >= (MAX_CHANNEL - 1))
+                        channelState = (MAX_CHANNEL - 1);
+                    hmi.setStringToNextion("t1.txt", String() + (channelState + 1));
+                    printDebug(String() + "Channel " + (channelState + 1) + " selected");
+                    settingState = 0;
+                    break;
+                case 1:
+                    if (--channelState <= 0)
+                        channelState = 0;
+                    hmi.setStringToNextion("t1.txt", String() + (channelState + 1));
+                    printDebug(String() + "Channel " + (channelState + 1) + " selected");
+                    settingState = 0;
+                    break;
+                case 2:
+                    if (++pointState >= (MAX_POINT_CAL - 1))
+                        pointState = (MAX_POINT_CAL - 1);
+                    hmi.setStringToNextion("t2.txt", String() + (pointState + 1));
+                    printDebug(String() + "Point " + (pointState + 1) + " selected");
+                    settingState = 0;
+                    break;
+                case 3:
+                    if (--pointState <= 0)
+                        pointState = 0;
+                    hmi.setStringToNextion("t2.txt", String() + (pointState + 1));
+                    printDebug(String() + "Point " + (pointState + 1) + " selected");
+                    settingState = 0;
+                    break;
+                case 4:
+                    if (settingState == 0)
+                    {
+                        settingState = 1;
+                        hmi.setIntegerToNextion("b4.picc", 49);
+                        hmi.setIntegerToNextion("b4.picc2", 51);
+                        hmi.setIntegerToNextion("q0.picc", 49);
+                    }
+                    else if (settingState == 1)
+                    {
+                        settingState = 0;
+
+                        data.setAdcCalibrationPoint(channelState, pointState, temp_adc);
+                        if ((((data.getAdcCalibrationPoint(channelState, pointState) > data.getAdcCalibrationPoint(channelState, pointState - 1)) && pointState > 0) &&
+                             ((data.getAdcCalibrationPoint(channelState, pointState) < data.getAdcCalibrationPoint(channelState, pointState + 1)) && pointState < (MAX_CHANNEL - 1))) ||
+                            ((data.getAdcCalibrationPoint(channelState, pointState) > data.getAdcCalibrationPoint(channelState, pointState - 1)) && pointState == (MAX_CHANNEL - 1)) ||
+                            ((pointState == 0) && (data.getAdcCalibrationPoint(channelState, pointState) > 0)))
+                            data.setPointCalibrationStatus(channelState, pointState, true);
+                        else
+                            data.setPointCalibrationStatus(channelState, pointState, false);
+
+                        hmi.setIntegerToNextion("b4.picc", 48);
+                        hmi.setIntegerToNextion("b4.picc2", 50);
+                        hmi.setIntegerToNextion("q0.picc", 48);
+                    }
+                    break;
                 case 5:
-                    printDebug("Exit Point Calibration page");
-                    return;
+                    data.setPointCalibrationStatus(channelState, pointState, false);
+                    break;
                 default:
                     break;
                 }
+                updatePointCalibParameter(channelState, pointState);
+                if (i != 4)
+                {
+                    if (settingState == 0)
+                    {
+                        hmi.setIntegerToNextion("b4.picc", 48);
+                        hmi.setIntegerToNextion("b4.picc2", 50);
+                        hmi.setIntegerToNextion("q0.picc", 48);
+                    }
+                }
             }
+        }
+        if (hmi.getExitPageFlag())
+        {
+            printDebug("Exit Point Calibration page");
+            break;
         }
     }
 }

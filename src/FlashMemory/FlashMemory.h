@@ -101,6 +101,7 @@ public:
     bool getDatalogStatus(uint8_t loggerType);
     uint8_t getFieldChannel(uint8_t channel);
     bool getPointCalibrationStatus(uint8_t channel, uint8_t point);
+    uint8_t getPointCalibrationStatus(uint8_t channel);
     uint16_t getBatteryCapacity(void);
     uint32_t getPeriodDatalog(uint8_t loggerType);
     uint32_t getBaudrateSerial(bool type);

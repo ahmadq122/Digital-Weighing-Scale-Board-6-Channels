@@ -687,6 +687,10 @@ bool MemoryFlash::getPointCalibrationStatus(uint8_t channel, uint8_t point)
 {
     return bitRead(flash.pointCalibrationStatus[channel], point);
 }
+uint8_t MemoryFlash::getPointCalibrationStatus(uint8_t channel)
+{
+    return flash.pointCalibrationStatus[channel];
+}
 uint16_t MemoryFlash::getBatteryCapacity(void)
 {
     return flash.batteryCapacity;
