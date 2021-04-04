@@ -6,7 +6,7 @@
 #include "RTOS/RTOS.h"
 #include "ADC/ADS1232.h"
 
-void Settings::settingsMenu(void)
+void Settings::mainMenu(void)
 {
     bool button[7];
 
@@ -278,7 +278,7 @@ void Settings::batteryCapacity(void)
 
 void Settings::showBaudrateOption(bool type, bool show)
 {
-    if (type == DEBUG)
+    if (type == debugging)
         hmi.setVisObjectNextion("q1", show);
     for (uint i = 0; i < 10; i++)
         hmi.setVisObjectNextion(String() + "b" + i, show);
@@ -306,9 +306,9 @@ void Settings::debugMenu(void)
     hmi.waitForPageRespon();
 
     hmi.setIntegerToNextion("bt0.val", enDisDebug);
-    showBaudrateOption(DEBUG, enDisDebug);
+    showBaudrateOption(debugging, enDisDebug);
     if (enDisDebug)
-        updateSelectedBaudrateToNextion(DEBUG, data.getBaudrateSerialIndex(DEBUG));
+        updateSelectedBaudrateToNextion(debugging, data.getBaudrateSerialIndex(debugging));
 
     while (true)
     {
@@ -329,11 +329,11 @@ void Settings::debugMenu(void)
                     enDisDebug = !enDisDebug;
                     data.setDebugMode(enDisDebug);
                     hmi.setIntegerToNextion("bt0.val", enDisDebug);
-                    showBaudrateOption(DEBUG, enDisDebug);
+                    showBaudrateOption(debugging, enDisDebug);
                     if (enDisDebug)
                     {
-                        updateSelectedBaudrateToNextion(DEBUG, data.getBaudrateSerialIndex(DEBUG));
-                        Serial.begin(data.getBaudrateSerial(DEBUG));
+                        updateSelectedBaudrateToNextion(debugging, data.getBaudrateSerialIndex(debugging));
+                        Serial.begin(data.getBaudrateSerial(debugging));
                         while (!Serial)
                             ;
                     }
@@ -342,7 +342,11 @@ void Settings::debugMenu(void)
                     printDebug(String() + "Debug mode " + (enDisDebug ? "Enabled" : "Disabled"));
                     break;
                 default:
-                    updateSelectedBaudrateToNextion(DEBUG, i);
+                    Serial.end();
+                    updateSelectedBaudrateToNextion(debugging, i);
+                    Serial.begin(data.getBaudrateSerial(debugging));
+                    while (!Serial)
+                        ;
                     break;
                 }
             }

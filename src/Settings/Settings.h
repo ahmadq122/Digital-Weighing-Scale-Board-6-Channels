@@ -6,10 +6,7 @@
 class Settings
 {
 public:
-    void settingsMenu(void);
-    // uint8_t getIndexSelectedBaudrate(bool type);
-    void showBaudrateOption(bool type, bool show);
-    void updateSelectedBaudrateToNextion(bool type, uint8_t selected);
+    void mainMenu(void);    
 
 private:
     void timeZone(void);
@@ -24,6 +21,8 @@ private:
 
     void updateSelectedTimezoneToNextion(void);
     void updateMaximumValueToNextion(void);
+    void showBaudrateOption(bool type, bool show);
+    void updateSelectedBaudrateToNextion(bool type, uint8_t selected);
 };
 
 extern Settings setting;

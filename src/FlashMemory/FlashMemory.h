@@ -3,34 +3,14 @@
 
 #include "Arduino.h"
 
-#define MAX_SSID_CHAR 20
+#define MAX_SSID_CHAR 16
 #define MAX_PASSWORD_CHAR 15
+#define MAX_APIKEY_CHAR 18
 
 #define MEMORY_SIZE 512
 
 #define MAX_CHANNEL 6
 #define MAX_POINT_CAL 8
-
-// #define DEBUG_ENABLE 0x01
-// #define DEBUG_ENABLE 0x01
-// #define DEBUG_ENABLE 0x01
-
-// #define PT_0 0x0001
-// #define PT_1 0x0002
-// #define PT_2 0x0004
-// #define PT_3 0x0008
-// #define PT_4 0x0010
-// #define PT_5 0x0020
-// #define PT_6 0x0040
-// #define PT_7 0x0080
-// #define PT_8 0x0100
-
-// #define CH_1_EN 0x01
-// #define CH_2_EN 0x02
-// #define CH_3_EN 0x04
-// #define CH_4_EN 0x08
-// #define CH_5_EN 0x10
-// #define CH_6_EN 0x20
 
 enum GeneralStatus
 {
@@ -42,14 +22,19 @@ enum GeneralStatus
 };
 enum BaudrateSerial
 {
-    DEBUG,
-    LOGGER
+    debugging,
+    logging
 };
 enum LoggerType
 {
-    SERIAL1,
-    LOCAL,
-    WEB
+    serial,
+    local,
+    remote
+};
+enum Schedule
+{
+    _off_,
+    _on_
 };
 
 #define DATA_V_BEEN_WRITTEN_FLAG 0xAA
@@ -81,10 +66,8 @@ public:
     bool setAdcCalibrationPoint(uint8_t channel, uint8_t point, uint32_t newValue);
     bool setGramCalibrationPoint(uint8_t channel, uint8_t point, float newValue);
     bool setGramMaximum(uint8_t channel, float newValue);
-    bool setOffScheduleDatalog(uint8_t loggerType, uint8_t index, uint16_t newValue);
-    bool setOnScheduleDatalog(uint8_t loggerType, uint8_t index, uint16_t newValue);
-    bool setEnableScheduleOn(uint8_t loggerType, uint8_t index, bool newValue);
-    bool setEnableScheduleOff(uint8_t loggerType, uint8_t index, bool newValue);
+    bool setScheduleDatalog(bool scheduleType, uint8_t loggerType, uint8_t index, uint16_t newValue);
+    bool setEnableSchedule(bool scheduleType, uint8_t loggerType, uint8_t index, bool newValue);
     bool setDimScreenTimer(uint8_t newValue);
     bool setScreenBrightness(uint8_t newValue);
 
@@ -109,10 +92,8 @@ public:
     uint32_t getAdcCalibrationPoint(uint8_t channel, uint8_t point);
     float getGramCalibrationPoint(uint8_t channel, uint8_t point);
     float getGramMaximum(uint8_t channel);
-    uint16_t getOffScheduleDatalog(uint8_t loggerType, uint8_t index);
-    uint16_t getOnScheduleDatalog(uint8_t loggerType, uint8_t index);
-    bool getEnableScheduleOn(uint8_t loggerType, uint8_t index);
-    bool getEnableScheduleOff(uint8_t loggerType, uint8_t index);
+    uint16_t getScheduleDatalog(bool scheduleType, uint8_t loggerType, uint8_t index);
+    bool getEnableSchedule(bool scheduleType, uint8_t loggerType, uint8_t index);
     uint16_t getDimScreenTimer(void);
     uint8_t getScreenBrightness(void);
 
@@ -121,7 +102,7 @@ private:
     {
         char ssid[MAX_SSID_CHAR];
         char password[MAX_PASSWORD_CHAR];
-        char keyAPI[20];
+        char keyAPI[MAX_APIKEY_CHAR];
         uint8_t encryptType;
         uint8_t timeZone = 0;
         uint8_t measurementUnit = 0;
@@ -135,11 +116,9 @@ private:
         uint32_t adcCalibrationPoint[MAX_CHANNEL][MAX_POINT_CAL];
         float gramCalibrationPoint[MAX_CHANNEL][MAX_POINT_CAL - 1];
         float gramMaximum[MAX_CHANNEL];
-        uint16_t offScheduleDatalog[3][2];
-        uint16_t onScheduleDatalog[3][2];
+        uint16_t scheduleDatalog[2][3][3]; //[scheduleType][loggerType][index]
         uint8_t dimScreenTimer = 0;
         uint8_t screenBrightness = 100;
-
     } flash;
 
     uint32_t baudrate[10] = {

@@ -27,6 +27,9 @@ void loop()
   // Serial.println(String() + "float:" + sizeof(float));
   // Serial.println(String() + "double:" + sizeof(double));
   // Serial.println(String() + "uint64_t:" + sizeof(uint64_t));
+  // Serial.end();
+  // Serial.begin(115200);
+  // delay(1000);
   // Serial.println(sizeof(data.flash));
   // Serial.println(String()+ "Free memory: "+(MEMORY_SIZE-sizeof(data.flash))+" bytes");
 

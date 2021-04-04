@@ -63,11 +63,11 @@ bool MemoryFlash::resetDefault()
                 flash.gramCalibrationPoint[i][k] = 0.0;
         }
         flash.batteryCapacity = 1000;
-        flash.periodDataLog[SERIAL1] = 1;
-        flash.periodDataLog[LOCAL] = 1;
-        flash.periodDataLog[WEB] = 180;
-        flash.baudrateSerial[DEBUG] = 6;
-        flash.baudrateSerial[LOGGER] = 6;
+        flash.periodDataLog[serial] = 1;
+        flash.periodDataLog[serial] = 1;
+        flash.periodDataLog[remote] = 180;
+        flash.baudrateSerial[debugging] = 6;
+        flash.baudrateSerial[logging] = 6;
         flash.dimScreenTimer = 0;
         flash.screenBrightness = 100;
         storeDataToFlash();
@@ -98,13 +98,14 @@ void MemoryFlash::storeDataToFlash(void)
 ////setting data flash
 bool MemoryFlash::setSSID(const char *newValue)
 {
+    String _ssid = newValue;
     if (strcmp(newValue, "") == 0)
     {
         printDebug(String() + "Data Failed to be stored!");
         return false;
     }
 
-    if (strcmp(newValue, flash.ssid)) //if data is different
+    if (strcmp(newValue, flash.ssid) && _ssid.length() < MAX_SSID_CHAR) //if data is different
     {
         strcpy(flash.ssid, newValue);
         storeDataToFlash();
@@ -113,18 +114,22 @@ bool MemoryFlash::setSSID(const char *newValue)
     }
     else
     {
-        printDebug(String() + "New data already in flash!");
+        if (_ssid.length() >= MAX_SSID_CHAR)
+            printDebug(String() + "SSID char length exceeds the maximum limit " + (MAX_SSID_CHAR - 1));
+        else
+            printDebug(String() + "New data already in flash!");
     }
     return false;
 }
 bool MemoryFlash::setPassword(const char *newValue)
 {
+    String _password = newValue;
     if (strcmp(newValue, "") == 0)
     {
         printDebug(String() + "Data Failed to be stored!");
         return false;
     }
-    if (strcmp(newValue, flash.password)) //if data is different
+    if (strcmp(newValue, flash.password) && _password.length() < MAX_PASSWORD_CHAR) //if data is different
     {
         strcpy(flash.password, newValue);
         storeDataToFlash();
@@ -133,18 +138,23 @@ bool MemoryFlash::setPassword(const char *newValue)
     }
     else
     {
-        printDebug(String() + "New data already in flash!");
+        if (_password.length() >= MAX_PASSWORD_CHAR)
+            printDebug(String() + "Password char length exceeds the maximum limit " + (MAX_PASSWORD_CHAR - 1));
+        else
+            printDebug(String() + "New data already in flash!");
     }
     return false;
 }
 bool MemoryFlash::setKeyAPI(const char *newValue)
 {
+    String _apiKey = newValue;
+
     if (strcmp(newValue, "") == 0)
     {
         printDebug(String() + "Data Failed to be stored!");
         return false;
     }
-    if (strcmp(newValue, flash.ssid)) //if data is different
+    if (strcmp(newValue, flash.keyAPI) && _apiKey.length() <= MAX_APIKEY_CHAR) //if data is different
     {
         strcpy(flash.keyAPI, newValue);
         storeDataToFlash();
@@ -153,7 +163,10 @@ bool MemoryFlash::setKeyAPI(const char *newValue)
     }
     else
     {
-        printDebug(String() + "New data already in flash!");
+        if (_apiKey.length() >= MAX_APIKEY_CHAR)
+            printDebug(String() + "API Key char length exceeds the maximum limit " + (MAX_APIKEY_CHAR - 1));
+        else
+            printDebug(String() + "New data already in flash!");
     }
     return false;
 }
@@ -264,14 +277,14 @@ bool MemoryFlash::setDatalogStatus(uint8_t loggerType, bool newValue)
 {
     uint8_t type = 0;
 
-    if (loggerType > WEB)
+    if (loggerType > remote)
         return false;
 
-    if (loggerType == SERIAL1)
+    if (loggerType == serial)
         type = SERIAL_LOG_ENABLE;
-    else if (loggerType == LOCAL)
+    else if (loggerType == local)
         type = LOCAL_LOG_ENABLE;
-    else if (loggerType == WEB)
+    else if (loggerType == remote)
         type = WEB_LOG_ENABLE;
 
     if (newValue != bitRead(flash.generalStatus, type))
@@ -290,42 +303,6 @@ bool MemoryFlash::setDatalogStatus(uint8_t loggerType, bool newValue)
     }
     return false;
 }
-// bool MemoryFlash::setSerialDatalogStatus(bool newValue)
-// {
-//     if (newValue != bitRead(flash.generalStatus, SERIAL_LOG_ENABLE))
-//     {
-//         if (newValue)
-//             bitSet(flash.generalStatus, SERIAL_LOG_ENABLE);
-//         else
-//             bitClear(flash.generalStatus, SERIAL_LOG_ENABLE);
-//         storeDataToFlash();
-//         printDebug(String() + newValue + ": new data set!");
-//         return true;
-//     }
-//     else
-//     {
-//         printDebug(String() + "New data already in flash!");
-//     }
-//     return false;
-// }
-// bool MemoryFlash::setWebDatalogStatus(bool newValue)
-// {
-//     if (newValue != bitRead(flash.generalStatus, WEB_LOG_ENABLE))
-//     {
-//         if (newValue)
-//             bitSet(flash.generalStatus, WEB_LOG_ENABLE);
-//         else
-//             bitClear(flash.generalStatus, WEB_LOG_ENABLE);
-//         storeDataToFlash();
-//         printDebug(String() + newValue + ": new data set!");
-//         return true;
-//     }
-//     else
-//     {
-//         printDebug(String() + "New data already in flash!");
-//     }
-//     return false;
-// }
 
 bool MemoryFlash::setBatteryCapacity(uint16_t newValue)
 {
@@ -378,7 +355,7 @@ bool MemoryFlash::setPointCalibrationStatus(uint8_t channel, uint8_t point, bool
 }
 bool MemoryFlash::setPeriodDatalog(uint8_t loggerType, uint32_t newValue)
 {
-    if (loggerType > WEB)
+    if (loggerType > remote)
         return false;
     if (newValue != flash.periodDataLog[loggerType])
     {
@@ -393,36 +370,7 @@ bool MemoryFlash::setPeriodDatalog(uint8_t loggerType, uint32_t newValue)
     }
     return false;
 }
-// bool MemoryFlash::setPeriodWebDatalog(uint32_t newValue)
-// {
-//     if (newValue != flash.periodWebDataLog)
-//     {
-//         flash.periodWebDataLog = newValue;
-//         storeDataToFlash();
-//         printDebug(String() + newValue + ": new data set!");
-//         return true;
-//     }
-//     else
-//     {
-//         printDebug(String() + "New data already in flash!");
-//     }
-//     return false;
-// }
-// bool MemoryFlash::setPeriodSerialDatalog(uint32_t newValue)
-// {
-//     if (newValue != flash.periodSerial1DataLog)
-//     {
-//         flash.periodSerial1DataLog = newValue;
-//         storeDataToFlash();
-//         printDebug(String() + newValue + ": new data set!");
-//         return true;
-//     }
-//     else
-//     {
-//         printDebug(String() + "New data already in flash!");
-//     }
-//     return false;
-// }
+
 bool MemoryFlash::setBaudrateSerial(bool type, uint8_t newValue)
 {
     if (newValue != flash.baudrateSerial[type])
@@ -484,73 +432,18 @@ bool MemoryFlash::setGramMaximum(uint8_t channel, float newValue)
     }
     return false;
 }
-
-bool MemoryFlash::setOffScheduleDatalog(uint8_t loggerType, uint8_t index, uint16_t newValue)
+bool MemoryFlash::setScheduleDatalog(bool scheduleType, uint8_t loggerType, uint8_t index, uint16_t newValue)
 {
-    uint16_t temp1 = newValue & 0x0FFF;
-    uint16_t temp2 = flash.offScheduleDatalog[loggerType][index] & 0x0FFF;
-    uint16_t temp3 = (flash.offScheduleDatalog[loggerType][index] & 0x1000);
-
-    if (newValue > 0x0FFF)
-        return false;
-    if (temp1 != temp2)
-    {
-        temp2 = temp1;
-        flash.offScheduleDatalog[loggerType][index] = temp3 | temp2;
-
-        storeDataToFlash();
-        printDebug(String() + temp2 + ": new data set!");
-        return true;
-    }
-    else
-    {
-        printDebug(String() + "New data already in flash!");
-    }
-    return false;
-}
-bool MemoryFlash::setOnScheduleDatalog(uint8_t loggerType, uint8_t index, uint16_t newValue)
-{
-    uint16_t temp1 = newValue & 0x0FFF;
-    uint16_t temp2 = flash.onScheduleDatalog[loggerType][index] & 0x0FFF;
-    uint16_t temp3 = (flash.onScheduleDatalog[loggerType][index] & 0x1000);
-
-    if (newValue > 0x0FFF)
-        return false;
-    if (temp1 != temp2)
-    {
-        temp2 = temp1;
-        flash.onScheduleDatalog[loggerType][index] = temp3 | temp2;
-        storeDataToFlash();
-        printDebug(String() + temp2 + ": new data set!");
-        return true;
-    }
-    else
-    {
-        printDebug(String() + "New data already in flash!");
-    }
-    return false;
-}
-
-bool MemoryFlash::setEnableScheduleOff(uint8_t loggerType, uint8_t index, bool newValue)
-{
-    bool oldValue = false;
-    uint16_t temp1 = flash.offScheduleDatalog[loggerType][index] & 0x1000;
-
-    if (temp1 > 0)
-        oldValue = true;
-    else
-        oldValue = false;
+    uint16_t enable = 0x1000 & flash.scheduleDatalog[scheduleType][loggerType][index];
+    uint16_t oldValue = 0x0FFF & flash.scheduleDatalog[scheduleType][loggerType][index];
+    newValue = newValue & 0x0FFF;
 
     if (newValue != oldValue)
     {
-        oldValue = newValue;
-        if (oldValue)
-            flash.offScheduleDatalog[loggerType][index] |= 0x1000;
-        else
-            flash.offScheduleDatalog[loggerType][index] &= 0xEFFF;
+        flash.scheduleDatalog[scheduleType][loggerType][index] = newValue | enable;
 
         storeDataToFlash();
-        printDebug(String() + oldValue + ": new data set!");
+        printDebug(String() + newValue + ": new data set!");
         return true;
     }
     else
@@ -560,26 +453,24 @@ bool MemoryFlash::setEnableScheduleOff(uint8_t loggerType, uint8_t index, bool n
     return false;
 }
 
-bool MemoryFlash::setEnableScheduleOn(uint8_t loggerType, uint8_t index, bool newValue)
+bool MemoryFlash::setEnableSchedule(bool scheduleType, uint8_t loggerType, uint8_t index, bool newValue)
 {
-    bool oldValue = false;
-    uint16_t temp1 = flash.onScheduleDatalog[loggerType][index] & 0x1000;
-
-    if (temp1 > 0)
-        oldValue = true;
-    else
-        oldValue = false;
+    uint16_t schedule = 0x0FFF & flash.scheduleDatalog[scheduleType][loggerType][index];
+    bool oldValue = ((0x1000 & flash.scheduleDatalog[scheduleType][loggerType][index]) > 0) ? true : false;
 
     if (newValue != oldValue)
     {
-        oldValue = newValue;
-        if (oldValue)
-            flash.onScheduleDatalog[loggerType][index] |= 0x1000;
+        if (newValue)
+        {
+            flash.scheduleDatalog[scheduleType][loggerType][index] = schedule | 0x1000;
+        }
         else
-            flash.onScheduleDatalog[loggerType][index] &= 0xEFFF;
+        {
+            flash.scheduleDatalog[scheduleType][loggerType][index] = schedule & 0xEFFF;
+        }
 
         storeDataToFlash();
-        printDebug(String() + oldValue + ": new data set!");
+        printDebug(String() + newValue + ": new data set!");
         return true;
     }
     else
@@ -588,6 +479,7 @@ bool MemoryFlash::setEnableScheduleOn(uint8_t loggerType, uint8_t index, bool ne
     }
     return false;
 }
+
 bool MemoryFlash::setDimScreenTimer(uint8_t newValue)
 {
     if (newValue != flash.dimScreenTimer)
@@ -659,26 +551,18 @@ bool MemoryFlash::getNetworkEnable(void)
 bool MemoryFlash::getDatalogStatus(uint8_t loggerType)
 {
     uint8_t type;
-    if (loggerType > WEB)
+    if (loggerType > remote)
         return false;
 
-    if (loggerType == SERIAL1)
+    if (loggerType == serial)
         type = SERIAL_LOG_ENABLE;
-    else if (loggerType == LOCAL)
+    else if (loggerType == local)
         type = LOCAL_LOG_ENABLE;
-    else if (loggerType == WEB)
+    else if (loggerType == remote)
         type = WEB_LOG_ENABLE;
 
     return bitRead(flash.generalStatus, type);
 }
-// bool MemoryFlash::getSerialDatalogStatus(void)
-// {
-//     return bitRead(flash.generalStatus, SERIAL_LOG_ENABLE);
-// }
-// bool MemoryFlash::getWebDatalogStatus(void)
-// {
-//     return bitRead(flash.generalStatus, WEB_LOG_ENABLE);
-// }
 uint8_t MemoryFlash::getFieldChannel(uint8_t channel)
 {
     return flash.fieldChannel[channel];
@@ -697,18 +581,11 @@ uint16_t MemoryFlash::getBatteryCapacity(void)
 }
 uint32_t MemoryFlash::getPeriodDatalog(uint8_t loggerType)
 {
-    if (loggerType > WEB)
+    if (loggerType > remote)
         return 0;
     return flash.periodDataLog[loggerType];
 }
-// uint32_t MemoryFlash::getPeriodWebDatalog(void)
-// {
-//     return flash.periodWebDataLog;
-// }
-// uint32_t MemoryFlash::getPeriodSerialDatalog(void)
-// {
-//     return flash.periodSerial1DataLog;
-// }
+
 uint32_t MemoryFlash::getBaudrateSerial(bool type)
 {
     return baudrate[flash.baudrateSerial[type]];
@@ -729,22 +606,16 @@ float MemoryFlash::getGramMaximum(uint8_t channel)
 {
     return flash.gramMaximum[channel];
 }
-uint16_t MemoryFlash::getOffScheduleDatalog(uint8_t LoggerType, uint8_t index)
+
+uint16_t MemoryFlash::getScheduleDatalog(bool scheduleType, uint8_t loggerType, uint8_t index)
 {
-    return flash.offScheduleDatalog[LoggerType][index] & 0x0FFF;
+    return (flash.scheduleDatalog[scheduleType][loggerType][index] & 0x0FFF);
 }
-uint16_t MemoryFlash::getOnScheduleDatalog(uint8_t LoggerType, uint8_t index)
+bool MemoryFlash::getEnableSchedule(bool scheduleType, uint8_t loggerType, uint8_t index)
 {
-    return flash.onScheduleDatalog[LoggerType][index] & 0x0FFF;
+    return (((flash.scheduleDatalog[scheduleType][loggerType][index] & 0x1000) > 0) ? true : false);
 }
-bool MemoryFlash::getEnableScheduleOn(uint8_t loggerType, uint8_t index)
-{
-    return ((flash.onScheduleDatalog[loggerType][index] & 0x1000) > 0 ? true : false);
-}
-bool MemoryFlash::getEnableScheduleOff(uint8_t loggerType, uint8_t index)
-{
-    return ((flash.offScheduleDatalog[loggerType][index] & 0x1000) > 0 ? true : false);
-}
+
 uint16_t MemoryFlash::getDimScreenTimer(void)
 {
     return dim[flash.dimScreenTimer];

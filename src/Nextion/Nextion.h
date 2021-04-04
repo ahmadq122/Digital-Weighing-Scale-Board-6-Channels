@@ -5,6 +5,7 @@
 
 #define NEX_RET_NUMBER_HEAD (0x71)
 #define NEX_RET_CMD_FINISHED (0x01)
+#define PAGE_TIMEOUT 5000 //ms
 
 #define NexSerial Serial2
 
@@ -43,7 +44,7 @@ public:
 
     uint8_t getDataButton(uint8_t id);
     bool getExitPageFlag(void);
-    bool getDataBuzzer(void);
+    uint8_t getDataBuzzer(void);
     const char *getDataString(uint8_t id);
     uint64_t getDataInteger(uint8_t id);
     double getDataFloat(uint8_t id);

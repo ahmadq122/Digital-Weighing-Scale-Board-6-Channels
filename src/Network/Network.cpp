@@ -215,7 +215,6 @@ __scan:
         {
             while (!hmi.checkAnyButtonPressed(&button))
             {
-                // hmi.serialEvent_2();
             }
             if (hmi.getDataButton(0))
             {
@@ -261,6 +260,7 @@ __scan:
                 if (!rtos.wifiConnected)
                 {
                     hmi.showPage("keyboard");
+                    hmi.waitForPageRespon();
                     button = 0;
                     while (!hmi.checkAnyButtonPressed(&button))
                     {

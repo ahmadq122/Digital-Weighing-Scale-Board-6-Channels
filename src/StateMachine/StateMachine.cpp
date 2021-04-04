@@ -10,6 +10,7 @@
 #include "Settings/Settings.h"
 #include "ADC/ADS1232.h"
 #include "RTOS/RTOS.h"
+#include "Datalogger/Datalogger.h"
 
 /*****************************************************************************
  *******************************ESP32S-PIN************************************
@@ -91,14 +92,13 @@ void StateMachine::setup(void)
     rtos.updateStartProgressBar(10);
     if (data.getDebugMode())
     {
-        Serial.begin(data.getBaudrateSerial(DEBUG));
+        Serial.begin(data.getBaudrateSerial(debugging));
         while (!Serial)
             ;
     }
     Serial1.begin(115200);
     while (!Serial1)
         ;
-
     pinMode(Buzzer_Pin, OUTPUT);
     rtos.updateStartProgressBar(10);
     ads.begin();
@@ -222,10 +222,6 @@ uint8_t StateMachine::homeScreen(void)
                 rtos.secondTriggered[1] = 0;
             }
         }
-
-        evenBuzzer();
-
-        // hmi.serialEvent_2();
 
         for (int i = 0; i < 16; i++)
         {
@@ -353,6 +349,7 @@ uint8_t StateMachine::homeScreen(void)
             rtos.wifiConnected = false;
         }
         updateBatteryIndicatorToNextion(getBatteryPercent());
+        evenBuzzer();
     }
     return 0;
 }
@@ -371,7 +368,7 @@ uint8_t StateMachine::networkSettings(void)
 }
 uint8_t StateMachine::settings(void)
 {
-    setting.settingsMenu();
+    setting.mainMenu();
     return 0;
 }
 uint8_t StateMachine::measurementUnits(void)
@@ -410,11 +407,28 @@ uint8_t StateMachine::measurementUnits(void)
 }
 uint8_t StateMachine::datalogSettings(void)
 {
+__start:
     hmi.showPage("datalog");
     hmi.waitForPageRespon();
     printDebug("Datalog page opened");
     while (!hmi.getExitPageFlag())
-        ;
+    {
+        if (hmi.getDataButton(0))
+        {
+            logger.setting(serial);
+            goto __start;
+        }
+        else if (hmi.getDataButton(1))
+        {
+            logger.setting(local);
+            goto __start;
+        }
+        else if (hmi.getDataButton(2))
+        {
+            logger.setting(remote);
+            goto __start;
+        }
+    }
     return 0;
 }
 
@@ -450,7 +464,7 @@ void StateMachine::updateWeightStringToNextion(void)
 
 void StateMachine::evenBuzzer(void)
 {
-    if (hmi.getDataBuzzer())
+    if (hmi.getDataBuzzer() == 2)
     {
         if (!buzzerState)
         {
@@ -458,13 +472,17 @@ void StateMachine::evenBuzzer(void)
             digitalWrite(Buzzer_Pin, 1);
         }
     }
-    else
+    else if (hmi.getDataBuzzer() == 1)
     {
         if (buzzerState)
         {
             buzzerState = false;
             digitalWrite(Buzzer_Pin, 0);
         }
+    }
+    else
+    {
+        digitalWrite(Buzzer_Pin, 0);
     }
 }
 

@@ -200,9 +200,9 @@ double Nextion::getDataFloat(uint8_t id)
   return dataFloat[id];
 }
 
-bool Nextion::getDataBuzzer(void)
+uint8_t Nextion::getDataBuzzer(void)
 {
-  return dataBuzzer ? true : false;
+  return dataBuzzer;
 }
 
 bool Nextion::getWaitingEndSignal(void)
@@ -390,12 +390,19 @@ uint16_t Nextion::getText(const char *variableName, char *buffer, uint32_t len)
 
 void Nextion::waitForPageRespon(void)
 {
+  uint64_t startTime = rtos.milliSeconds;
   while (!getWaitingEndSignal())
   {
     printDebug("Waiting for page ready");
     delay(100);
+    if ((rtos.milliSeconds - startTime) > PAGE_TIMEOUT)
+    {
+      printDebug("Waiting for page timeout!");
+      break;
+    }
   }
-  printDebug("Page ready!");
+  if ((rtos.milliSeconds - startTime) <= PAGE_TIMEOUT)
+    printDebug("Page ready!");
 }
 
 /*
