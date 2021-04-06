@@ -13,6 +13,7 @@ public:
     uint32_t interruptSeconds = 0;
     uint16_t dimmCounterDownSecond = 30;
     uint8_t currentBrightness = 0;
+    bool remoteLogTriggered[6] = {false};
     bool secondBlink = false;
     bool secondTriggered[10] = {false};
     bool wifiConnectionTriggered = {false};

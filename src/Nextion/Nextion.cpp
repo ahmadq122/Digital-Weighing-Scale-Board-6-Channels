@@ -56,69 +56,75 @@ void Nextion::setIntegerToNextion(String variableName, uint64_t newValue)
 
 bool Nextion::checkDataStringFromNextion(const char *stringData)
 {
-  char dat[3][20]; //type-id-data//"str-0-off"
+  // char dat[3][20]; //type-id-data//"str-0-off"
+  // char str[20];
+  String dataStr[3];
   char split = '-';
   uint8_t splitState = 0;
-  uint8_t index = 0, index1 = 0;
+  uint8_t index = 0;
   bool valid = false;
   uint8_t type = 0xFF;
   uint8_t id = 0;
 
   printDebugln(stringData);
 
-  while (stringData[index] != '\0' && index < 20)
+  while (stringData[index] != '\0' && index < 30)
   {
     if (stringData[index] == split)
     {
-      dat[splitState][index1] = '\0';
+      // dat[splitState][index1] = '\0';
+      // dataStr[splitState] +='\0';
       splitState++;
-      index1 = 0;
+      // index1 = 0;
       index += 1;
     }
-    dat[splitState][index1] = stringData[index];
+    // dat[splitState][index1] = stringData[index];
+    dataStr[splitState] += stringData[index];
     index++;
-    index1++;
+    // index1++;
   }
-  dat[splitState][index1] = stringData[index];
+  dataStr[splitState] += stringData[index];
+  // dat[splitState][index1] = stringData[index];
 
   if (splitState == 2)
     valid = true;
 
   if (valid)
   {
-    type = getTypeOfDataFromNextion(dat[0]);
-    id = atoi(dat[1]);
+    type = getTypeOfDataFromNextion(dataStr[0].c_str());
+    id = atoi(dataStr[1].c_str());
     if (type == BUTTON)
     {
       presetScreenBrightness();
-      dataButton[id] = atoi(dat[2]);
+      dataButton[id] = atoi(dataStr[2].c_str());
     }
     else if (type == STRING)
     {
-      strcpy(dataString[id], dat[2]);
+      strcpy(dataString[id], dataStr[2].c_str());
+      Serial.println(String() + dataStr[2]);
     }
     else if (type == INTEGER)
     {
-      dataInteger[id] = atol(dat[2]);
+      dataInteger[id] = atol(dataStr[2].c_str());
     }
     else if (type == FLOAT)
     {
-      dataFloat[id] = atof(dat[2]);
+      dataFloat[id] = atof(dataStr[2].c_str());
     }
     else if (type == BUZZER)
     {
       presetScreenBrightness();
-      dataBuzzer = atoi(dat[2]);
+      dataBuzzer = atoi(dataStr[2].c_str());
     }
     else if (type == WAIT)
     {
-      waitingEndSignal = atoi(dat[2]) > 0 ? true : false;
+      waitingEndSignal = atoi(dataStr[2].c_str()) > 0 ? true : false;
       presetScreenBrightness();
     }
     else if (type == EXIT)
     {
       presetScreenBrightness();
-      exitPageFlag = atoi(dat[2]) > 0 ? true : false;
+      exitPageFlag = atoi(dataStr[2].c_str()) > 0 ? true : false;
       exitPageFlagCounter++;
       if (exitPageFlagCounter > 5)
         showPage("home");

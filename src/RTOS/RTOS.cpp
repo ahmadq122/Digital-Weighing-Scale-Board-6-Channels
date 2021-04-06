@@ -8,6 +8,7 @@
 #include "Nextion/Nextion.h"
 #include "FlashMemory/FlashMemory.h"
 #include "ADC/ADS1232.h"
+#include "Datalogger/Datalogger.h"
 
 void integerToString(uint32_t number, char *buffer, uint8_t len);
 
@@ -18,6 +19,7 @@ void Task_03(void *pvParameters); //millis()
 void Task_04(void *pvParameters); //ADS Board 1
 void Task_05(void *pvParameters); //ADS Board 2
 void Task_06(void *pvParameters); //ADS Board 3
+void Task_07(void *pvParameters); //Remote log
 
 // the setup function runs once when you press reset or power the board
 void RealTimeOS::setup(void)
@@ -26,7 +28,7 @@ void RealTimeOS::setup(void)
     xTaskCreatePinnedToCore(
         Task_01,
         "Task_01", // A name just for humans
-        1024*2,      // This stack size can be checked & adjusted by reading the Stack Highwater
+        1024 * 2,  // This stack size can be checked & adjusted by reading the Stack Highwater
         NULL,
         configMAX_PRIORITIES - 1, // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
         NULL,
@@ -74,6 +76,15 @@ void RealTimeOS::setup(void)
         1024 * 4, // Stack size
         NULL,
         configMAX_PRIORITIES - 6, // Priority
+        NULL,
+        ARDUINO_RUNNING_CORE);
+
+    xTaskCreatePinnedToCore(
+        Task_07,
+        "Task_07",
+        1024 * 10, // Stack size
+        NULL,
+        configMAX_PRIORITIES - 7, // Priority
         NULL,
         ARDUINO_RUNNING_CORE);
 }
@@ -258,6 +269,24 @@ void Task_06(void *pvParameters) // This is a task.
             vTaskDelay(10000);
             //do noting
         }
+    }
+}
+
+void Task_07(void *pvParameters) // This is a task.
+{
+    (void)pvParameters;
+
+    for (;;) // A Task shall never return or exit.
+    {
+        for (uint8_t i = 0; i < 6; i++)
+        {
+            if (rtos.remoteLogTriggered[i])
+            {
+                logger.remoteLogging(i);
+                rtos.remoteLogTriggered[i] = false;
+            }
+        }
+        vTaskDelay(1000); // Delay for 1 second
     }
 }
 

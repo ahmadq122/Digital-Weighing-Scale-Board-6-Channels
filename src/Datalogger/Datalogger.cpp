@@ -5,6 +5,7 @@
 #include "RTC/RTCDS1307.h"
 #include "RTOS/RTOS.h"
 #include "Time/MyTime.h"
+#include <HTTPClient.h>
 
 void integerToString(uint32_t number, char *buffer, uint8_t len);
 
@@ -457,10 +458,65 @@ void Datalogger::logData(uint8_t loggerType)
             }
             else if (loggerType == remote)
             {
-                printDebugln("Remote data logging triggered!");
+                if (data.getChannelEnDisStatus(0) || data.getChannelEnDisStatus(1) || data.getChannelEnDisStatus(2) ||
+                    data.getChannelEnDisStatus(3) || data.getChannelEnDisStatus(4) || data.getChannelEnDisStatus(5))
+                {
+                    while (!data.getChannelEnDisStatus(remoteUpdateForChannel))
+                    {
+                        if (++remoteUpdateForChannel > 6)
+                            remoteUpdateForChannel = 0;
+                    }
+                    if (!rtos.remoteLogTriggered[remoteUpdateForChannel])
+                    {
+                        rtos.remoteLogTriggered[remoteUpdateForChannel] = true;
+                    }
+                    if (++remoteUpdateForChannel > 6)
+                        remoteUpdateForChannel = 0;
+                    printDebugln("Remote data logging triggered!");
+                }
             }
             rtos.counterDownSecondsLog[loggerType] = data.getPeriodDatalog(loggerType);
         }
+    }
+}
+
+///////////THINKSPEAK DATA LOGGER
+void Datalogger::remoteLogging(uint8_t channel)
+{
+    String serverPath = thingSpeakServer + data.getKeyAPI() + "&field" + (channel + 1) + "=" + rtos.counterUpSeconds;
+    String payload = "Payload : ";
+    int httpResponseCode = 0;
+
+    HTTPClient http;
+
+    if (rtos.wifiConnected)
+    {
+        printDebugln(String() + "Log data Thingspeak: Channel " + (channel + 1));
+        // Your Domain name with URL path or IP address with path
+        http.begin(serverPath.c_str());
+
+        // Send HTTP GET request
+        httpResponseCode = http.GET();
+
+        if (httpResponseCode > 0)
+        {
+            printDebug(String() + "Channel " + (channel + 1) + " -> HTTP Response code: ");
+            printDebugln(httpResponseCode);
+            payload += http.getString();
+            printDebugln(payload);
+        }
+        else
+        {
+            printDebug("Error code: ");
+            printDebugln(httpResponseCode);
+        }
+
+        // Free resources
+        http.end();
+    }
+    else
+    {
+        printDebugln("WiFi Disconnected");
     }
 }
 

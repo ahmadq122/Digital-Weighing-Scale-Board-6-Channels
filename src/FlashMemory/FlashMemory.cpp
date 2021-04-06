@@ -2,6 +2,7 @@
 #include "EEPROM.h"
 #include "../DebugSerial/DebugSerial.h"
 #include "RTOS/RTOS.h"
+#include "Utility/Utility.h"
 
 bool MemoryFlash::begin(uint16_t sizeOfMemory)
 {
@@ -98,14 +99,16 @@ void MemoryFlash::storeDataToFlash(void)
 ////setting data flash
 bool MemoryFlash::setSSID(const char *newValue)
 {
-    String _ssid = newValue;
+    // String _ssid = newValue;
+    uint8_t size = utils.charArraySize(newValue);
+
     if (strcmp(newValue, "") == 0)
     {
         printDebugln(String() + "Data Failed to be stored!");
         return false;
     }
 
-    if (strcmp(newValue, flash.ssid) && _ssid.length() < MAX_SSID_CHAR) //if data is different
+    if (strcmp(newValue, flash.ssid) && size < MAX_SSID_CHAR) //if data is different
     {
         strcpy(flash.ssid, newValue);
         storeDataToFlash();
@@ -114,8 +117,8 @@ bool MemoryFlash::setSSID(const char *newValue)
     }
     else
     {
-        if (_ssid.length() >= MAX_SSID_CHAR)
-            printDebugln(String() + "SSID char length exceeds the maximum limit " + (MAX_SSID_CHAR - 1));
+        if (size >= MAX_SSID_CHAR)
+            printDebugln(String() + "SSID char length " + size + " exceeds the maximum limit " + (MAX_SSID_CHAR - 1));
         else
             printDebugln(String() + "New data already in flash!");
     }
@@ -123,13 +126,15 @@ bool MemoryFlash::setSSID(const char *newValue)
 }
 bool MemoryFlash::setPassword(const char *newValue)
 {
-    String _password = newValue;
+    // String _password = newValue;
+    uint8_t size = utils.charArraySize(newValue);
+
     if (strcmp(newValue, "") == 0)
     {
         printDebugln(String() + "Data Failed to be stored!");
         return false;
     }
-    if (strcmp(newValue, flash.password) && _password.length() < MAX_PASSWORD_CHAR) //if data is different
+    if (strcmp(newValue, flash.password) && size < MAX_PASSWORD_CHAR) //if data is different
     {
         strcpy(flash.password, newValue);
         storeDataToFlash();
@@ -138,8 +143,8 @@ bool MemoryFlash::setPassword(const char *newValue)
     }
     else
     {
-        if (_password.length() >= MAX_PASSWORD_CHAR)
-            printDebugln(String() + "Password char length exceeds the maximum limit " + (MAX_PASSWORD_CHAR - 1));
+        if (size >= MAX_PASSWORD_CHAR)
+            printDebugln(String() + "Password char length " + size + " exceeds the maximum limit " + (MAX_PASSWORD_CHAR - 1));
         else
             printDebugln(String() + "New data already in flash!");
     }
@@ -147,14 +152,15 @@ bool MemoryFlash::setPassword(const char *newValue)
 }
 bool MemoryFlash::setKeyAPI(const char *newValue)
 {
-    String _apiKey = newValue;
+    // String _apiKey = newValue;
+    uint8_t size = utils.charArraySize(newValue);
 
     if (strcmp(newValue, "") == 0)
     {
         printDebugln(String() + "Data Failed to be stored!");
         return false;
     }
-    if (strcmp(newValue, flash.keyAPI) && _apiKey.length() <= MAX_APIKEY_CHAR) //if data is different
+    if (strcmp(newValue, flash.keyAPI) && size < MAX_APIKEY_CHAR) //if data is different
     {
         strcpy(flash.keyAPI, newValue);
         storeDataToFlash();
@@ -163,8 +169,8 @@ bool MemoryFlash::setKeyAPI(const char *newValue)
     }
     else
     {
-        if (_apiKey.length() >= MAX_APIKEY_CHAR)
-            printDebugln(String() + "API Key char length exceeds the maximum limit " + (MAX_APIKEY_CHAR - 1));
+        if (size >= MAX_APIKEY_CHAR)
+            printDebugln(String() + "API Key char length " + size + " exceeds the maximum limit " + (MAX_APIKEY_CHAR - 1));
         else
             printDebugln(String() + "New data already in flash!");
     }
