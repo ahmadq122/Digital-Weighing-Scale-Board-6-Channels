@@ -13,14 +13,14 @@ void Settings::mainMenu(void)
 start:
     hmi.showPage("settings");
     hmi.waitForPageRespon();
-    printDebug("Settings page opened");
+    printDebugln("Settings page opened");
 
     while (true)
     {
         // hmi.serialEvent_2();
         if (hmi.getExitPageFlag())
         {
-            printDebug("Exit Settings page");
+            printDebugln("Exit Settings page");
             return;
         }
         for (int i = 0; i < 6; i++)
@@ -31,27 +31,27 @@ start:
                 switch (i)
                 {
                 case 0:
-                    printDebug("Timezone page opened");
+                    printDebugln("Timezone page opened");
                     timeZone();
                     break;
                 case 1:
-                    printDebug("Brightness page opened");
+                    printDebugln("Brightness page opened");
                     brightness();
                     break;
                 case 2:
-                    printDebug("Maximum page opened");
+                    printDebugln("Maximum page opened");
                     maximumWeight();
                     break;
                 case 3:
-                    printDebug("Set battery capacity");
+                    printDebugln("Set battery capacity");
                     batteryCapacity();
                     break;
                 case 4:
-                    printDebug("Debug page opened");
+                    printDebugln("Debug page opened");
                     debugMenu();
                     break;
                 case 5:
-                    printDebug("Calibration page opened");
+                    printDebugln("Calibration page opened");
                     calibrationSensor();
                     break;
                 default:
@@ -105,7 +105,7 @@ void Settings::timeZone(void)
         // hmi.serialEvent_2();
         if (hmi.getExitPageFlag())
         {
-            printDebug("Exit Timezone page");
+            printDebugln("Exit Timezone page");
             return;
         }
         for (int i = 0; i < 4; i++)
@@ -116,13 +116,13 @@ void Settings::timeZone(void)
                 switch (i)
                 {
                 case 0:
-                    printDebug("UTC 07:00 selected");
+                    printDebugln("UTC 07:00 selected");
                     break;
                 case 1:
-                    printDebug("UTC 08:00 selected");
+                    printDebugln("UTC 08:00 selected");
                     break;
                 case 2:
-                    printDebug("UTC 09:00 selected");
+                    printDebugln("UTC 09:00 selected");
                     break;
                 default:
                     break;
@@ -226,7 +226,7 @@ start:
         // hmi.serialEvent_2();
         if (hmi.getExitPageFlag())
         {
-            printDebug("Exit Maximum page");
+            printDebugln("Exit Maximum page");
             return;
         }
         for (int i = 0; i < 6; i++)
@@ -248,7 +248,7 @@ start:
                 {
                     newValueStr = hmi.getDataString(0);
                     newValue = atof(newValueStr.c_str());
-                    printDebug(String() + "CH" + (i + 1) + " Maximum set to " + newValueStr);
+                    printDebugln(String() + "CH" + (i + 1) + " Maximum set to " + newValueStr);
                     data.setGramMaximum(i, newValue);
                 }
                 goto start;
@@ -272,7 +272,7 @@ void Settings::batteryCapacity(void)
     if (button[1])
     {
         data.setBatteryCapacity(static_cast<uint16_t>(atoi(hmi.getDataString(0))));
-        printDebug(String() + "Battery capacity set: " + data.getBatteryCapacity() + " mAh");
+        printDebugln(String() + "Battery capacity set: " + data.getBatteryCapacity() + " mAh");
     }
 }
 
@@ -287,7 +287,7 @@ void Settings::showBaudrateOption(bool type, bool show)
 void Settings::updateSelectedBaudrateToNextion(bool type, uint8_t selected)
 {
     data.setBaudrateSerial(type, selected);
-    printDebug(String() + "Baudrate set: " + data.getBaudrateSerial(type));
+    printDebugln(String() + "Baudrate set: " + data.getBaudrateSerial(type));
 
     for (uint8_t i = 0; i < 10; i++)
     {
@@ -315,7 +315,7 @@ void Settings::debugMenu(void)
         // hmi.serialEvent_2();
         if (hmi.getExitPageFlag())
         {
-            printDebug("Exit Debug page");
+            printDebugln("Exit Debug page");
             return;
         }
         for (int i = 0; i < 12; i++)
@@ -339,7 +339,7 @@ void Settings::debugMenu(void)
                     }
                     else
                         Serial.end();
-                    printDebug(String() + "Debug mode " + (enDisDebug ? "Enabled" : "Disabled"));
+                    printDebugln(String() + "Debug mode " + (enDisDebug ? "Enabled" : "Disabled"));
                     break;
                 default:
                     Serial.end();
@@ -366,7 +366,7 @@ start:
         // hmi.serialEvent_2();
         if (hmi.getExitPageFlag())
         {
-            printDebug("Exit Calibration page");
+            printDebugln("Exit Calibration page");
             return;
         }
         for (int i = 0; i < 3; i++)
@@ -443,7 +443,7 @@ start:
         // hmi.serialEvent_2();
         if (hmi.getExitPageFlag())
         {
-            printDebug("Exit Setpoint page");
+            printDebugln("Exit Setpoint page");
             return;
         }
         for (int i = 0; i < 9; i++)
@@ -476,7 +476,7 @@ start:
                     {
                         newValueStr = hmi.getDataString(0);
                         newValue = atof(newValueStr.c_str());
-                        printDebug(String() + "Ch" + channel + " Point " + (i + 1) + " set to " + newValueStr + " grams");
+                        printDebugln(String() + "Ch" + channel + " Point " + (i + 1) + " set to " + newValueStr + " grams");
                         data.setGramCalibrationPoint(channel - 1, i, newValue);
                     }
                     break;
@@ -542,7 +542,7 @@ void Settings::zeroCalibration(void)
         }
         if (hmi.getExitPageFlag())
         {
-            printDebug("Exit Zero Calibration page");
+            printDebugln("Exit Zero Calibration page");
             break;
         }
     }
@@ -624,28 +624,28 @@ void Settings::pointCalibration(void)
                     if (++channelState >= (MAX_CHANNEL - 1))
                         channelState = (MAX_CHANNEL - 1);
                     hmi.setStringToNextion("t1.txt", String() + (channelState + 1));
-                    printDebug(String() + "Channel " + (channelState + 1) + " selected");
+                    printDebugln(String() + "Channel " + (channelState + 1) + " selected");
                     settingState = 0;
                     break;
                 case 1:
                     if (--channelState <= 0)
                         channelState = 0;
                     hmi.setStringToNextion("t1.txt", String() + (channelState + 1));
-                    printDebug(String() + "Channel " + (channelState + 1) + " selected");
+                    printDebugln(String() + "Channel " + (channelState + 1) + " selected");
                     settingState = 0;
                     break;
                 case 2:
                     if (++pointState >= (MAX_POINT_CAL - 1))
                         pointState = (MAX_POINT_CAL - 1);
                     hmi.setStringToNextion("t2.txt", String() + (pointState + 1));
-                    printDebug(String() + "Point " + (pointState + 1) + " selected");
+                    printDebugln(String() + "Point " + (pointState + 1) + " selected");
                     settingState = 0;
                     break;
                 case 3:
                     if (--pointState <= 0)
                         pointState = 0;
                     hmi.setStringToNextion("t2.txt", String() + (pointState + 1));
-                    printDebug(String() + "Point " + (pointState + 1) + " selected");
+                    printDebugln(String() + "Point " + (pointState + 1) + " selected");
                     settingState = 0;
                     break;
                 case 4:
@@ -694,7 +694,7 @@ void Settings::pointCalibration(void)
         }
         if (hmi.getExitPageFlag())
         {
-            printDebug("Exit Point Calibration page");
+            printDebugln("Exit Point Calibration page");
             break;
         }
     }

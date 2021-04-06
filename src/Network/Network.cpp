@@ -17,7 +17,7 @@ void Network::setup(void)
         WiFi.begin(data.getSSID(), data.getPassword());
         // WiFi.setAutoReconnect(true);
     }
-    printDebug("Wifi Setup done");
+    printDebugln("Wifi Setup done");
 }
 
 const char *getStringEncrypt(byte parameter)
@@ -100,7 +100,7 @@ bool Network::networkConfig(void)
 
     hmi.showPage("netconf");
     hmi.waitForPageRespon();
-    printDebug("Network Config page opened");
+    printDebugln("Network Config page opened");
     netEnDis = data.getNetworkEnable();
 
     hmi.setIntegerToNextion("b1.val", netEnDis);
@@ -111,7 +111,7 @@ bool Network::networkConfig(void)
         {
             needToRefreshStatus = true;
             WiFi.begin(data.getSSID(), data.getPassword());
-            printDebug(String() + "Connecting to " + data.getSSID());
+            printDebugln(String() + "Connecting to " + data.getSSID());
         }
 
         if (data.getNetworkEnable())
@@ -145,7 +145,7 @@ bool Network::networkConfig(void)
                 if (WiFi.isConnected())
                 {
                     WiFi.disconnect();
-                    printDebug("Network disconnected!");
+                    printDebugln("Network disconnected!");
                 }
             }
         }
@@ -171,7 +171,7 @@ void Network::networkScanning(void)
 
     hmi.showPage("netscan");
     hmi.waitForPageRespon();
-    printDebug("Network Scan page opened");
+    printDebugln("Network Scan page opened");
     WiFi.mode(WIFI_STA);
     WiFi.disconnect();
 
@@ -210,7 +210,7 @@ __scan:
     if (numberOfNetworkFound[selectedScan] == 0)
     {
         hmi.setVisObjectNextion("nonet", true);
-        printDebug("No networks found!");
+        printDebugln("No networks found!");
         while (!hmi.getExitPageFlag())
         {
             while (!hmi.checkAnyButtonPressed(&button))
@@ -227,7 +227,7 @@ __scan:
     else
     {
         showNetworkList(numberOfNetworkFound[selectedScan]);
-        printDebug(String() + numberOfNetworkFound[selectedScan] + " Networks found");
+        printDebugln(String() + numberOfNetworkFound[selectedScan] + " Networks found");
         while (!hmi.getExitPageFlag())
         {
             for (int i = 0; i < numberOfNetworkFound[selectedScan]; ++i)
@@ -237,7 +237,7 @@ __scan:
                 str = ssidScanned[selectedScan][i];
                 str += ":";
                 str += rssiScanned[selectedScan][i];
-                printDebug(String() + (i + 1) + ". " + str);
+                printDebugln(String() + (i + 1) + ". " + str);
                 hmi.setStringToNextion(String() + "b" + i + ".txt", str);
             }
             while (!hmi.checkAnyButtonPressed(&button))
@@ -328,11 +328,11 @@ bool Network::checkConnection(void)
 
     if (WiFi.isConnected())
     {
-        printDebug("Network connected!");
+        printDebugln("Network connected!");
     }
     else
     {
-        printDebug("Network connection failed!");
+        printDebugln("Network connection failed!");
         WiFi.begin(data.getSSID(), data.getPassword());
         while (!WiFi.isConnected() && counter <= 10)
         {
@@ -341,7 +341,7 @@ bool Network::checkConnection(void)
         }
         if (WiFi.isConnected())
         {
-            printDebug("Network connected!");
+            printDebugln("Network connected!");
         }
     }
     return WiFi.isConnected();
@@ -373,7 +373,7 @@ bool Network::checkConnection(uint8_t *wifiSignal, bool *wifiConnectionTriggered
         if (*wifiConnectionTriggered && previousConnectionState != true)
         {
             previousConnectionState = true;
-            printDebug("Network connected!");
+            printDebugln("Network connected!");
         }
     }
     else
@@ -383,7 +383,7 @@ bool Network::checkConnection(uint8_t *wifiSignal, bool *wifiConnectionTriggered
         if (*wifiConnectionTriggered && previousConnectionState != false)
         {
             previousConnectionState = false;
-            printDebug("Network connection failed!");
+            printDebugln("Network connection failed!");
         }
     }
     if (*wifiConnectionTriggered)

@@ -6,7 +6,7 @@ void integerToString(uint32_t number, char *buffer, uint8_t len);
 
 void ADS1232::begin(void)
 {
-    printDebug("ADS1232 Initial Pin");
+    printDebugln("ADS1232 Initial Pin");
 
     PDWN = 32;
     SCLK[0] = 33;
@@ -30,7 +30,7 @@ void ADS1232::begin(void)
     }
     delay(10);
     powerUp();
-    printDebug("Init Pin done!");
+    printDebugln("Init Pin done!");
 }
 
 bool ADS1232::dataReady(uint8_t board)
@@ -40,14 +40,14 @@ bool ADS1232::dataReady(uint8_t board)
 
 void ADS1232::powerUp(void)
 {
-    printDebug(String() + "Power up ADS boards");
+    printDebugln(String() + "Power up ADS boards");
     delayMicroseconds(26);
     digitalWrite(PDWN, HIGH);
     delayMicroseconds(26);
     digitalWrite(PDWN, LOW);
     delayMicroseconds(26);
     digitalWrite(PDWN, HIGH);
-    printDebug(String() + "ADS boards up");
+    printDebugln(String() + "ADS boards up");
 }
 
 void ADS1232::powerDown(void)
@@ -67,7 +67,7 @@ bool ADS1232::init(uint8_t board)
 {
     uint8_t timeOutCounter = 0;
 
-    printDebug(String() + "Init ADS board " + (board + 1) + " Channel " + 0);
+    printDebugln(String() + "Init ADS board " + (board + 1) + " Channel " + 0);
     index[board][0] = 0;
     adcRead[board][0] = 0;
     while (adcRead[board][0] == 0)
@@ -76,12 +76,12 @@ bool ADS1232::init(uint8_t board)
             timeOutCounter++;
         if (timeOutCounter > 3)
         {
-            printDebug(String() + "Init ADS board " + (board + 1) + " Failed!");
+            printDebugln(String() + "Init ADS board " + (board + 1) + " Failed!");
             return false;
         }
     }
     timeOutCounter = 0;
-    printDebug(String() + "Init ADS board " + (board + 1) + " Channel " + 1);
+    printDebugln(String() + "Init ADS board " + (board + 1) + " Channel " + 1);
     index[board][1] = 0;
     adcRead[board][1] = 0;
     while (adcRead[board][1] == 0)
@@ -90,12 +90,12 @@ bool ADS1232::init(uint8_t board)
             timeOutCounter++;
         if (timeOutCounter > 3)
         {
-            printDebug(String() + "Init ADS board " + (board + 1) + " Failed!");
+            printDebugln(String() + "Init ADS board " + (board + 1) + " Failed!");
             return false;
         }
     }
 
-    printDebug(String() + "Init ADS board " + (board + 1) + " Finished");
+    printDebugln(String() + "Init ADS board " + (board + 1) + " Finished");
     return true;
 }
 

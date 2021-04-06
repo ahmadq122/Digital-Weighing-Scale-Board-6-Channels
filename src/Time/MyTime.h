@@ -20,6 +20,7 @@ public:
     void getTimeStr(char *buffer);
     void getDateStr(char *buffer);
     void getTimeAndDateStr(char *buffer);
+    void getActualTimeInMinute(uint16_t* timeMinute);
     const char *ntpServer = "asia.pool.ntp.org";
     long gmtOffset_sec = WIB_OFFSET;
     int daylightOffset_sec = WIB_OFFSET;

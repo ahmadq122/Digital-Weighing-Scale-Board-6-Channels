@@ -123,4 +123,16 @@ void MyTime::getTimeAndDateStr(char *buffer)
     strcat(buffer, buff);
 }
 
+void MyTime::getActualTimeInMinute(uint16_t *timeMinute)
+{
+    if (ntpEnabled)
+    {
+        *timeMinute = (ntp.hour * 60) + ntp.minute;
+    }
+    else
+    {
+        *timeMinute = (rtc.hour * 60) + rtc.minute;
+    }
+}
+
 MyTime mtime;

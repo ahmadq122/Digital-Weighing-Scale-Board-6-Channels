@@ -6,7 +6,6 @@
 #define AI_Battery 35
 #define ADCsample 10
 
-#define rtcd RTC.data
 #define Buzzer_Pin 5
 
 enum MachineState
@@ -17,7 +16,6 @@ enum MachineState
     UNITS,
     DATALOG
 };
-
 
 class StateMachine
 {
@@ -54,6 +52,7 @@ private:
     uint8_t signalValue = 0;
     bool buzzerState = false;
     bool maxState[6] = {0, 0, 0, 0, 0, 0};
+    bool dataLoggingState[3] = {false};
 };
 
 #endif

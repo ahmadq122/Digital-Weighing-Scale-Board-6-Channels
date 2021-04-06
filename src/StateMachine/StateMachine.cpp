@@ -111,7 +111,7 @@ void StateMachine::setup(void)
     hmi.init();
     while (rtos.startProgressBar < 100)
     {
-        printDebug(String() + "Progress: " + rtos.startProgressBar + " %");
+        printDebugln(String() + "Progress: " + rtos.startProgressBar + " %");
         rtos.updateStartProgressBar(10);
         delay(100);
     }
@@ -192,9 +192,9 @@ uint8_t StateMachine::homeScreen(void)
                 hmi.setIntegerToNextion("sClock.en", sClock);
                 hmi.setVisObjectNextion("clock", !sClock);
                 if (sClock)
-                    printDebug("Scrool text enabled");
+                    printDebugln("Scrool text enabled");
                 else
-                    printDebug("Scrool text disabled");
+                    printDebugln("Scrool text disabled");
                 sClockUpdate = true;
             }
         }
@@ -250,9 +250,9 @@ uint8_t StateMachine::homeScreen(void)
                     data.setChannelEnDisStatus(Channel1, enDisChannel[Channel1]);
                     updateButtonToggleStateToNextion(Channel1);
                     if (enDisChannel[Channel1])
-                        printDebug("Channel 1 : Enabled");
+                        printDebugln("Channel 1 : Enabled");
                     else
-                        printDebug("Channel 1 : Disabled");
+                        printDebugln("Channel 1 : Disabled");
                 }
                 else if (button[5])
                 {
@@ -260,9 +260,9 @@ uint8_t StateMachine::homeScreen(void)
                     data.setChannelEnDisStatus(Channel2, enDisChannel[Channel2]);
                     updateButtonToggleStateToNextion(Channel2);
                     if (enDisChannel[Channel2])
-                        printDebug("Channel 2 : Enabled");
+                        printDebugln("Channel 2 : Enabled");
                     else
-                        printDebug("Channel 2 : Disabled");
+                        printDebugln("Channel 2 : Disabled");
                 }
                 else if (button[6])
                 {
@@ -270,9 +270,9 @@ uint8_t StateMachine::homeScreen(void)
                     data.setChannelEnDisStatus(Channel3, enDisChannel[Channel3]);
                     updateButtonToggleStateToNextion(Channel3);
                     if (enDisChannel[Channel3])
-                        printDebug("Channel 3 : Enabled");
+                        printDebugln("Channel 3 : Enabled");
                     else
-                        printDebug("Channel 3 : Disabled");
+                        printDebugln("Channel 3 : Disabled");
                 }
                 else if (button[7])
                 {
@@ -280,9 +280,9 @@ uint8_t StateMachine::homeScreen(void)
                     data.setChannelEnDisStatus(Channel4, enDisChannel[Channel4]);
                     updateButtonToggleStateToNextion(Channel4);
                     if (enDisChannel[Channel4])
-                        printDebug("Channel 4 : Enabled");
+                        printDebugln("Channel 4 : Enabled");
                     else
-                        printDebug("Channel 4 : Disabled");
+                        printDebugln("Channel 4 : Disabled");
                 }
                 else if (button[8])
                 {
@@ -290,9 +290,9 @@ uint8_t StateMachine::homeScreen(void)
                     data.setChannelEnDisStatus(Channel5, enDisChannel[Channel5]);
                     updateButtonToggleStateToNextion(Channel5);
                     if (enDisChannel[Channel5])
-                        printDebug("Channel 5 : Enabled");
+                        printDebugln("Channel 5 : Enabled");
                     else
-                        printDebug("Channel 5 : Disabled");
+                        printDebugln("Channel 5 : Disabled");
                 }
                 else if (button[9])
                 {
@@ -300,39 +300,39 @@ uint8_t StateMachine::homeScreen(void)
                     data.setChannelEnDisStatus(Channel6, enDisChannel[Channel6]);
                     updateButtonToggleStateToNextion(Channel6);
                     if (enDisChannel[Channel6])
-                        printDebug("Channel 6 : Enabled");
+                        printDebugln("Channel 6 : Enabled");
                     else
-                        printDebug("Channel 6 : Disabled");
+                        printDebugln("Channel 6 : Disabled");
                 }
                 else if (button[10])
                 {
                     tare[Channel1] = currentWeight[Channel1];
-                    printDebug("Channel 1 Tare");
+                    printDebugln("Channel 1 Tare");
                 }
                 else if (button[11])
                 {
                     tare[Channel2] = currentWeight[Channel2];
-                    printDebug("Channel 2 Tare");
+                    printDebugln("Channel 2 Tare");
                 }
                 else if (button[12])
                 {
                     tare[Channel3] = currentWeight[Channel3];
-                    printDebug("Channel 3 Tare");
+                    printDebugln("Channel 3 Tare");
                 }
                 else if (button[13])
                 {
                     tare[Channel4] = currentWeight[Channel4];
-                    printDebug("Channel 4 Tare");
+                    printDebugln("Channel 4 Tare");
                 }
                 else if (button[14])
                 {
                     tare[Channel5] = currentWeight[Channel5];
-                    printDebug("Channel 5 Tare");
+                    printDebugln("Channel 5 Tare");
                 }
                 else if (button[15])
                 {
                     tare[Channel6] = currentWeight[Channel6];
-                    printDebug("Channel 6 Tare");
+                    printDebugln("Channel 6 Tare");
                 }
             }
         }
@@ -350,6 +350,28 @@ uint8_t StateMachine::homeScreen(void)
         }
         updateBatteryIndicatorToNextion(getBatteryPercent());
         evenBuzzer();
+
+        if (rtos.secondTriggered[5])
+        {
+            for (uint8_t i = 0; i < 3; i++)
+            {
+                if (data.getDatalogStatus(i))
+                {
+                    if (!dataLoggingState[i])
+                    {
+                        if (logger.checkSchedule(_on_, i))
+                            dataLoggingState[i] = true;
+                    }
+                    else
+                    {
+                        logger.logData(i);
+                        if (logger.checkSchedule(_off_, i))
+                            dataLoggingState[i] = false;
+                    }
+                }
+            }
+            rtos.secondTriggered[5] = 0;
+        }
     }
     return 0;
 }
@@ -378,7 +400,7 @@ uint8_t StateMachine::measurementUnits(void)
     hmi.showPage("meaunit");
     // hmi.setIntegerToNextion("unit.val", data.getMeasurementUnit());
     hmi.waitForPageRespon();
-    printDebug("Measurement Unit page opened");
+    printDebugln("Measurement Unit page opened");
 
     updateSelectedUnitToNextion(data.getMeasurementUnit());
     while (true)
@@ -410,7 +432,7 @@ uint8_t StateMachine::datalogSettings(void)
 __start:
     hmi.showPage("datalog");
     hmi.waitForPageRespon();
-    printDebug("Datalog page opened");
+    printDebugln("Datalog page opened");
     while (!hmi.getExitPageFlag())
     {
         if (hmi.getDataButton(0))
@@ -456,7 +478,7 @@ void StateMachine::updateWeightStringToNextion(void)
         if (data.getChannelEnDisStatus(i) && prevWeightString[i] != newWeightString[i])
         {
             hmi.setStringToNextion((String() + "t_ch" + (i + 1) + ".txt"), newWeightString[i]);
-            printDebug(String() + "Updated: " + " Channel " + (i + 1) + " weight");
+            printDebugln(String() + "Updated: " + " Channel " + (i + 1) + " weight");
         }
         prevWeightString[i] = newWeightString[i];
     }
@@ -492,7 +514,7 @@ void StateMachine::updateSignalIndicatorToNextion(uint8_t newValue)
     {
         hmi.setIntegerToNextion("signal.val", newValue);
         signalValue = newValue;
-        printDebug(String() + "Updated: " + newValue + "%" + " signal");
+        printDebugln(String() + "Updated: " + newValue + "%" + " signal");
     }
 }
 void StateMachine::updateBatteryIndicatorToNextion(uint8_t newValue)
@@ -501,7 +523,7 @@ void StateMachine::updateBatteryIndicatorToNextion(uint8_t newValue)
     {
         hmi.setIntegerToNextion("bat.val", newValue);
         batteryValue = newValue;
-        printDebug(String() + "Updated: " + newValue + "%" + " battery");
+        printDebugln(String() + "Updated: " + newValue + "%" + " battery");
     }
 }
 

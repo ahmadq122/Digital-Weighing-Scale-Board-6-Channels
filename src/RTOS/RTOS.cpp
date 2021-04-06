@@ -26,7 +26,7 @@ void RealTimeOS::setup(void)
     xTaskCreatePinnedToCore(
         Task_01,
         "Task_01", // A name just for humans
-        1024,      // This stack size can be checked & adjusted by reading the Stack Highwater
+        1024*2,      // This stack size can be checked & adjusted by reading the Stack Highwater
         NULL,
         configMAX_PRIORITIES - 1, // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
         NULL,
@@ -90,8 +90,17 @@ void Task_01(void *pvParameters) // This is a task.
     {
         if (++rtos.counterUpSeconds == 0xFFFFFFFFFF)
             rtos.counterUpSeconds = 0;
+
         if (rtos.counterDownSeconds)
             rtos.counterDownSeconds--;
+
+        if (rtos.counterDownSecondsLog[serial])
+            rtos.counterDownSecondsLog[serial]--;
+        if (rtos.counterDownSecondsLog[local])
+            rtos.counterDownSecondsLog[local]--;
+        if (rtos.counterDownSecondsLog[remote])
+            rtos.counterDownSecondsLog[remote]--;
+
         if (++rtos.interruptSeconds > 59)
             rtos.interruptSeconds = 0;
 
@@ -257,7 +266,6 @@ void RealTimeOS::updateStartProgressBar(uint8_t add)
     startProgressBar += add;
     startProgressBar = constrain(startProgressBar, 0, 100);
     hmi.setIntegerToNextion("init.val", startProgressBar);
-
 }
 
 RealTimeOS rtos;

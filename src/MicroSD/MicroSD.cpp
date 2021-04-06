@@ -30,12 +30,12 @@ void listDir(fs::FS &fs, const char *dirname, uint8_t levels)
     File root = fs.open(dirname);
     if (!root)
     {
-        printDebug("Failed to open directory");
+        printDebugln("Failed to open directory");
         return;
     }
     if (!root.isDirectory())
     {
-        printDebug("Not a directory");
+        printDebugln("Not a directory");
         return;
     }
 
@@ -45,7 +45,7 @@ void listDir(fs::FS &fs, const char *dirname, uint8_t levels)
         if (file.isDirectory())
         {
             Serial.print("  DIR : ");
-            printDebug(file.name());
+            printDebugln(file.name());
             if (levels)
             {
                 listDir(fs, file.name(), levels - 1);
@@ -56,7 +56,7 @@ void listDir(fs::FS &fs, const char *dirname, uint8_t levels)
             Serial.print("  FILE: ");
             Serial.print(file.name());
             Serial.print("  SIZE: ");
-            printDebug(file.size());
+            printDebugln(file.size());
         }
         file = root.openNextFile();
     }
@@ -68,11 +68,11 @@ void createDir(fs::FS &fs, const char *path)
         Serial.printf("Creating Dir: %s\n", path);
     if (fs.mkdir(path))
     {
-        printDebug("Dir created");
+        printDebugln("Dir created");
     }
     else
     {
-        printDebug("mkdir failed");
+        printDebugln("mkdir failed");
     }
 }
 
@@ -82,11 +82,11 @@ void removeDir(fs::FS &fs, const char *path)
         Serial.printf("Removing Dir: %s\n", path);
     if (fs.rmdir(path))
     {
-        printDebug("Dir removed");
+        printDebugln("Dir removed");
     }
     else
     {
-        printDebug("rmdir failed");
+        printDebugln("rmdir failed");
     }
 }
 
@@ -98,7 +98,7 @@ void readFile(fs::FS &fs, const char *path)
     File file = fs.open(path);
     if (!file)
     {
-        printDebug("Failed to open file for reading");
+        printDebugln("Failed to open file for reading");
         return;
     }
 
@@ -118,16 +118,16 @@ void writeFile(fs::FS &fs, const char *path, const char *message)
     File file = fs.open(path, FILE_WRITE);
     if (!file)
     {
-        printDebug("Failed to open file for writing");
+        printDebugln("Failed to open file for writing");
         return;
     }
     if (file.print(message))
     {
-        printDebug("File written");
+        printDebugln("File written");
     }
     else
     {
-        printDebug("Write failed");
+        printDebugln("Write failed");
     }
     file.close();
 }
@@ -140,16 +140,16 @@ void appendFile(fs::FS &fs, const char *path, const char *message)
     File file = fs.open(path, FILE_APPEND);
     if (!file)
     {
-        printDebug("Failed to open file for appending");
+        printDebugln("Failed to open file for appending");
         return;
     }
     if (file.print(message))
     {
-        printDebug("Message appended");
+        printDebugln("Message appended");
     }
     else
     {
-        printDebug("Append failed");
+        printDebugln("Append failed");
     }
     file.close();
 }
@@ -160,11 +160,11 @@ void renameFile(fs::FS &fs, const char *path1, const char *path2)
         Serial.printf("Renaming file %s to %s\n", path1, path2);
     if (fs.rename(path1, path2))
     {
-        printDebug("File renamed");
+        printDebugln("File renamed");
     }
     else
     {
-        printDebug("Rename failed");
+        printDebugln("Rename failed");
     }
 }
 
@@ -174,11 +174,11 @@ void deleteFile(fs::FS &fs, const char *path)
         Serial.printf("Deleting file: %s\n", path);
     if (fs.remove(path))
     {
-        printDebug("File deleted");
+        printDebugln("File deleted");
     }
     else
     {
-        printDebug("Delete failed");
+        printDebugln("Delete failed");
     }
 }
 
@@ -211,13 +211,13 @@ void testFileIO(fs::FS &fs, const char *path)
     }
     else
     {
-        printDebug("Failed to open file for reading");
+        printDebugln("Failed to open file for reading");
     }
 
     file = fs.open(path, FILE_WRITE);
     if (!file)
     {
-        printDebug("Failed to open file for writing");
+        printDebugln("Failed to open file for writing");
         return;
     }
 
@@ -246,7 +246,7 @@ bool MicroSDCard::setup(void)
 {
     if (!SD.begin())
     {
-        printDebug("Card Mount Failed");
+        printDebugln("Card Mount Failed");
         cardMounted = false;       
         return false;
     }
@@ -254,7 +254,7 @@ bool MicroSDCard::setup(void)
     uint8_t cardType = SD.cardType();
     if (cardType == CARD_NONE)
     {
-        printDebug("No SD card attached");
+        printDebugln("No SD card attached");
         cardMounted = false;
         return false;
     }
@@ -262,19 +262,19 @@ bool MicroSDCard::setup(void)
     Serial.print("SD Card Type: ");
     if (cardType == CARD_MMC)
     {
-        printDebug("MMC");
+        printDebugln("MMC");
     }
     else if (cardType == CARD_SD)
     {
-        printDebug("SDSC");
+        printDebugln("SDSC");
     }
     else if (cardType == CARD_SDHC)
     {
-        printDebug("SDHC");
+        printDebugln("SDHC");
     }
     else
     {
-        printDebug("UNKNOWN");
+        printDebugln("UNKNOWN");
     }
 
     uint64_t cardSize = SD.cardSize() / (1024 * 1024);
@@ -406,9 +406,9 @@ void MicroSDCard::writeTableHeader(String fileName)
     strHeader += strTemp;
 
     getFileTitle(title);
-    printDebug(String() + fileName + ".csv");
-    printDebug(title);
-    printDebug(strHeader);
+    printDebugln(String() + fileName + ".csv");
+    printDebugln(title);
+    printDebugln(strHeader);
 
     appendFileCSVWithName(fileName, title);
     appendFileCSVWithName(fileName, strHeader);

@@ -799,7 +799,7 @@ bool RTCDS1307::syncWithNTPTime()
     }
     else
     {
-        printDebug(String() + ntp.hour + ":" + ntp.minute + ":" + ntp.second);
+        printDebugln(String() + ntp.hour + ":" + ntp.minute + ":" + ntp.second);
         a = setTime(ntp.hour, ntp.minute, ntp.second);
     }
     return a;
@@ -809,7 +809,7 @@ bool RTCDS1307::syncWithNTPDate()
 {
     char dayStr[4];
     getDayString(ntp.day, dayStr);
-    printDebug(String() + dayStr + " " + ntp.date + "-" + ntp.month + "-" + ntp.year);
+    printDebugln(String() + dayStr + " " + ntp.date + "-" + ntp.month + "-" + ntp.year);
     return setDayNDate(ntp.day, ntp.date, ntp.month, 2000 + ntp.year);
 }
 
@@ -818,8 +818,8 @@ bool RTCDS1307::syncWithNTPTimeNDate()
     char dayStr[4];
     bool a;
 
-    printDebug("Syncronizing RTC and NTP...");
-    printDebug("NTP Time:");
+    printDebugln("Syncronizing RTC and NTP...");
+    printDebugln("NTP Time:");
     a = syncWithNTPTime();
     a = syncWithNTPDate();
     delay(500);
@@ -827,9 +827,9 @@ bool RTCDS1307::syncWithNTPTimeNDate()
     readAll();
 
     getDayString(rtc.day, dayStr);
-    printDebug("RTC Time:");
-    printDebug(String() + rtc.hour + ":" + rtc.minute + ":" + rtc.second);
-    printDebug(String() + dayStr + " " + rtc.date + "-" + rtc.month + "-" + rtc.year);
+    printDebugln("RTC Time:");
+    printDebugln(String() + rtc.hour + ":" + rtc.minute + ":" + rtc.second);
+    printDebugln(String() + dayStr + " " + rtc.date + "-" + rtc.month + "-" + rtc.year);
     return a;
 }
 

@@ -7,6 +7,8 @@ class Datalogger
 {
 public:
     void setting(uint8_t loggerType);
+    bool checkSchedule(bool scheduleType, uint8_t loggerType);
+    void logData(uint8_t loggerType);
 
 private:
     void scheduler(uint8_t loggerType);

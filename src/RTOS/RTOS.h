@@ -9,6 +9,7 @@ public:
     uint64_t milliSeconds = 0;
     uint32_t counterUpSeconds = 0;
     uint32_t counterDownSeconds = 0;
+    uint32_t counterDownSecondsLog[3] = {0};
     uint32_t interruptSeconds = 0;
     uint16_t dimmCounterDownSecond = 30;
     uint8_t currentBrightness = 0;

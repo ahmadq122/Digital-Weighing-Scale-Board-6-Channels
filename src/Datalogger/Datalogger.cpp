@@ -2,6 +2,9 @@
 #include "FlashMemory/FlashMemory.h"
 #include "Nextion/Nextion.h"
 #include "DebugSerial/DebugSerial.h"
+#include "RTC/RTCDS1307.h"
+#include "RTOS/RTOS.h"
+#include "Time/MyTime.h"
 
 void integerToString(uint32_t number, char *buffer, uint8_t len);
 
@@ -79,11 +82,11 @@ __start:
     updateStrPeriod(hourPeriod, minutePeriod, secondPeriod);
 
     if (loggerType == serial)
-        printDebug("Datalog Serial page opened");
+        printDebugln("Datalog Serial page opened");
     else if (loggerType == local)
-        printDebug("Datalog Local page opened");
+        printDebugln("Datalog Local page opened");
     else if (loggerType == remote)
-        printDebug("Datalog Remote page opened");
+        printDebugln("Datalog Remote page opened");
 
     while (true)
     {
@@ -147,7 +150,7 @@ __start:
                 case 2:
                     hmi.showPage("scheduler");
                     hmi.waitForPageRespon();
-                    printDebug("Scheduler page opened");
+                    printDebugln("Scheduler page opened");
                     scheduler(loggerType);
                     goto __start;
                     break;
@@ -202,7 +205,7 @@ __start:
         }
         if (hmi.getExitPageFlag())
         {
-            printDebug("Exit Datalog page");
+            printDebugln("Exit Datalog page");
             break;
         }
     }
@@ -383,7 +386,7 @@ void Datalogger::scheduler(uint8_t loggerType)
 
         if (hmi.getExitPageFlag())
         {
-            printDebug("Exit Scheduler page");
+            printDebugln("Exit Scheduler page");
             break;
         }
     }
@@ -403,7 +406,7 @@ void Datalogger::showBaudrateOption(bool type, bool show)
 void Datalogger::updateSelectedBaudrateToNextion(bool type, uint8_t selected)
 {
     data.setBaudrateSerial(type, selected);
-    printDebug(String() + "Baudrate 1 set: " + data.getBaudrateSerial(type));
+    printDebugln(String() + "Baudrate 1 set: " + data.getBaudrateSerial(type));
 
     for (uint8_t i = 10; i <= 19; i++)
     {
@@ -411,6 +414,53 @@ void Datalogger::updateSelectedBaudrateToNextion(bool type, uint8_t selected)
             hmi.setIntegerToNextion(String() + "b" + i + ".picc", 59);
         else
             hmi.setIntegerToNextion(String() + "b" + i + ".picc", 57);
+    }
+}
+
+bool Datalogger::checkSchedule(bool scheduleType, uint8_t loggerType)
+{
+    uint16_t timeMinute = 0;
+
+    mtime.getActualTimeInMinute(&timeMinute);
+
+    printDebug(String() + (timeMinute / 60) + ":" + (timeMinute % 60) + " && " + (data.getScheduleDatalog(scheduleType, loggerType, 0) / 60) + ":" + (data.getScheduleDatalog(scheduleType, loggerType, 0) % 60) + " || ");
+    printDebug(String() + (timeMinute / 60) + ":" + (timeMinute % 60) + " && " + (data.getScheduleDatalog(scheduleType, loggerType, 1) / 60) + ":" + (data.getScheduleDatalog(scheduleType, loggerType, 1) % 60) + " || ");
+    printDebug(String() + (timeMinute / 60) + ":" + (timeMinute % 60) + " && " + (data.getScheduleDatalog(scheduleType, loggerType, 2) / 60) + ":" + (data.getScheduleDatalog(scheduleType, loggerType, 2) % 60) + " -> ");
+    printDebug(loggerType == 0 ? "Serial " : loggerType == 1 ? "Local "
+                                                             : "Remote ");
+    printDebug(scheduleType ? "On " : "Off ");
+
+    if ((timeMinute == data.getScheduleDatalog(scheduleType, loggerType, 0) && data.getEnableSchedule(scheduleType, loggerType, 0)) ||
+        (timeMinute == data.getScheduleDatalog(scheduleType, loggerType, 1) && data.getEnableSchedule(scheduleType, loggerType, 1)) ||
+        (timeMinute == data.getScheduleDatalog(scheduleType, loggerType, 2) && data.getEnableSchedule(scheduleType, loggerType, 2)))
+    {
+        printDebugln("true");
+        return true;
+    }
+    printDebugln("false");
+    return false;
+}
+
+void Datalogger::logData(uint8_t loggerType)
+{
+    if (data.getDatalogStatus(loggerType))
+    {
+        if (!rtos.counterDownSecondsLog[loggerType])
+        {
+            if (loggerType == serial)
+            {
+                printDebugln("Serial data logging triggered!");
+            }
+            else if (loggerType == local)
+            {
+                printDebugln("Local data logging triggered!");
+            }
+            else if (loggerType == remote)
+            {
+                printDebugln("Remote data logging triggered!");
+            }
+            rtos.counterDownSecondsLog[loggerType] = data.getPeriodDatalog(loggerType);
+        }
     }
 }
 

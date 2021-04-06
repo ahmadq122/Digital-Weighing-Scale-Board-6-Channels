@@ -64,7 +64,7 @@ bool Nextion::checkDataStringFromNextion(const char *stringData)
   uint8_t type = 0xFF;
   uint8_t id = 0;
 
-  printDebug(stringData);
+  printDebugln(stringData);
 
   while (stringData[index] != '\0' && index < 20)
   {
@@ -393,16 +393,16 @@ void Nextion::waitForPageRespon(void)
   uint64_t startTime = rtos.milliSeconds;
   while (!getWaitingEndSignal())
   {
-    printDebug("Waiting for page ready");
+    printDebugln("Waiting for page ready");
     delay(100);
     if ((rtos.milliSeconds - startTime) > PAGE_TIMEOUT)
     {
-      printDebug("Waiting for page timeout!");
+      printDebugln("Waiting for page timeout!");
       break;
     }
   }
   if ((rtos.milliSeconds - startTime) <= PAGE_TIMEOUT)
-    printDebug("Page ready!");
+    printDebugln("Page ready!");
 }
 
 /*
@@ -429,11 +429,11 @@ void Nextion::serialEvent_2(void)
   {
     if (checkDataStringFromNextion(inputString.c_str()))
     {
-      printDebug("Data found!");
+      printDebugln("Data found!");
     }
     else
     {
-      printDebug("Failed to get the data!");
+      printDebugln("Failed to get the data!");
     }
   }
 }
