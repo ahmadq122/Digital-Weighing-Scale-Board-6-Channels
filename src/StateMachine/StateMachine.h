@@ -3,10 +3,8 @@
 
 #include "Arduino.h"
 
-#define AI_Battery 35
 #define ADCsample 10
 
-#define Buzzer_Pin 5
 
 enum MachineState
 {

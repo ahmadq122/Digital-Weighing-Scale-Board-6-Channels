@@ -1,25 +1,25 @@
 #include "ADS1232.h"
 #include "DebugSerial/DebugSerial.h"
 #include "RTOS/RTOS.h"
-
-void integerToString(uint32_t number, char *buffer, uint8_t len);
+#include "PinMap.h"
+#include "Utility/Utility.h"
 
 void ADS1232::begin(void)
 {
     printDebugln("ADS1232 Initial Pin");
 
-    PDWN = 32;
-    SCLK[0] = 33;
-    DOUT[0] = 25;
-    A0[0] = 26;
+    PDWN = Pin_PowerDown;
+    SCLK[0] = Pin_SCLK_ADS1;
+    DOUT[0] = Pin_DOUT_ADS1;
+    A0[0] = Pin_A0_ADS1;
 
-    SCLK[1] = 27;
-    DOUT[1] = 14;
-    A0[1] = 12;
+    SCLK[1] = Pin_SCLK_ADS2;
+    DOUT[1] = Pin_DOUT_ADS2;
+    A0[1] = Pin_A0_ADS2;
 
-    SCLK[2] = 13;
-    DOUT[2] = 15;
-    A0[2] = 2;
+    SCLK[2] = Pin_SCLK_ADS3;
+    DOUT[2] = Pin_DOUT_ADS3;
+    A0[2] = Pin_A0_ADS3;
 
     pinMode(PDWN, OUTPUT);
     for (uint8_t i = 0; i < 3; i++)
@@ -107,6 +107,7 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
     unsigned int waitingTime;
     unsigned int SettlingTimeAfterChangeChannel = 0;
     char tempStr[15];
+    uint8_t data[3] = {0, 0, 0};
 
     if (channel != prevChannel[board])
     {
@@ -165,8 +166,6 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
             return false; // Timeout waiting for LOW
         }
     }
-
-    byte data[3] = {0, 0, 0};
 
     /* From datasheet (page 19): The data must be retrieved before
              * new data are updated or else it will be overwritten
@@ -239,7 +238,7 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
                 adcRead[board][channel] += static_cast<uint32_t>(adcBuffer[board][channel][i]);
             adcRead[board][channel] /= SAMPLE_MOV_AVERAGE;
         }
-        integerToString(adcRead[board][channel], tempStr, 10);
+        utils.integerToString(adcRead[board][channel], tempStr, 10);
         adcReadString[board][channel] = tempStr;
         if (rtos.startProgressBar < 100)
             rtos.updateStartProgressBar(10);

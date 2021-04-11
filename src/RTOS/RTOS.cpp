@@ -10,8 +10,6 @@
 #include "ADC/ADS1232.h"
 #include "Datalogger/Datalogger.h"
 
-void integerToString(uint32_t number, char *buffer, uint8_t len);
-
 //Define the tasks
 void Task_01(void *pvParameters);
 void Task_02(void *pvParameters);
@@ -247,8 +245,7 @@ void Task_06(void *pvParameters) // This is a task.
     if (ads.init(board))
     {
         ads.isAvailable[board] = true;
-        for (;;)
-        // A Task shall never return or exit.
+        for (;;) // A Task shall never return or exit.
         {
             if (ads.dataRead(board, channel, 1))
             {

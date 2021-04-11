@@ -18,7 +18,6 @@
 #define AM (0x00)
 #define PM (0x01)
 
-void integerToString(uint32_t number, char *buffer, uint8_t len);
 
 // library interface description
 class RTCDS1307

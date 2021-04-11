@@ -9,6 +9,7 @@
 #include "RTCDS1307.h"
 #include "FlashMemory/FlashMemory.h"
 #include "DebugSerial/DebugSerial.h"
+#include "Utility/Utility.h"
 
 #define DS1307_CTRL_ID 0x68
 #define SEC_ADDRS 0x00
@@ -703,20 +704,20 @@ void RTCDS1307::getTimeString(char *string)
 {
     if (rtc.timeFormat == HOUR_24)
     {
-        integerToString(ntpEnabled ? ntp.hour : rtc.hour, string, 2);
+        utils.integerToString(ntpEnabled ? ntp.hour : rtc.hour, string, 2);
         string[2] = ':';
-        integerToString(ntpEnabled ? ntp.minute : rtc.minute, &string[3], 2);
+        utils.integerToString(ntpEnabled ? ntp.minute : rtc.minute, &string[3], 2);
         string[5] = ':';
-        integerToString(ntpEnabled ? ntp.second : rtc.second, &string[6], 2);
+        utils.integerToString(ntpEnabled ? ntp.second : rtc.second, &string[6], 2);
         string[8] = '\0';
     }
     else
     {
-        integerToString(ntpEnabled ? ntp.hour : rtc.hour, string, 2);
+        utils.integerToString(ntpEnabled ? ntp.hour : rtc.hour, string, 2);
         string[2] = ':';
-        integerToString(ntpEnabled ? ntp.minute : rtc.minute, &string[3], 2);
+        utils.integerToString(ntpEnabled ? ntp.minute : rtc.minute, &string[3], 2);
         string[5] = ':';
-        integerToString(ntpEnabled ? ntp.second : rtc.second, &string[6], 2);
+        utils.integerToString(ntpEnabled ? ntp.second : rtc.second, &string[6], 2);
         string[8] = ' ';
         if (!ntpEnabled)
         {
@@ -770,11 +771,11 @@ void RTCDS1307::getDayString(byte day, char *string)
 
 void RTCDS1307::getDateString(char *string)
 {
-    integerToString(ntpEnabled ? ntp.date : rtc.date, string, 2);
+    utils.integerToString(ntpEnabled ? ntp.date : rtc.date, string, 2);
     string[2] = '/';
-    integerToString(ntpEnabled ? ntp.month : rtc.month, &string[3], 2);
+    utils.integerToString(ntpEnabled ? ntp.month : rtc.month, &string[3], 2);
     string[5] = '/';
-    integerToString((ntpEnabled ? ntp.year : rtc.year), &string[6], 2);
+    utils.integerToString((ntpEnabled ? ntp.year : rtc.year), &string[6], 2);
     string[8] = '\0';
 }
 
@@ -846,31 +847,6 @@ uint8_t RTCDS1307::bcd2dec(uint8_t num)
     return ((num / 16 * 10) + (num % 16));
 }
 
-void integerToString(uint32_t number, char *buffer, uint8_t len)
-{
-    String tempStr = String() + number;
-    String numbStr;
-    char charFirstZero[10];
-    uint8_t a = 0, b = 0;
 
-    if (tempStr.length() < len)
-    {
-        a = len - tempStr.length();
-        while (a)
-        {
-            charFirstZero[b] = '0';
-            a--;
-            b++;
-        }
-        charFirstZero[b] = '\0';
-        numbStr = String() + charFirstZero;
-        numbStr += tempStr;
-    }
-    else
-    {
-        numbStr = tempStr;
-    }
-    strcpy(buffer, numbStr.c_str());
-}
 
 RTCDS1307 RTC;

@@ -11,6 +11,7 @@
 #include "ADC/ADS1232.h"
 #include "RTOS/RTOS.h"
 #include "Datalogger/Datalogger.h"
+#include "PinMap.h"
 
 /*****************************************************************************
  *******************************ESP32S-PIN************************************
@@ -99,7 +100,7 @@ void StateMachine::setup(void)
     Serial1.begin(115200);
     while (!Serial1)
         ;
-    pinMode(Buzzer_Pin, OUTPUT);
+    pinMode(Pin_Buzzer, OUTPUT);
     rtos.updateStartProgressBar(10);
     ads.begin();
     rtos.setup();
@@ -491,7 +492,7 @@ void StateMachine::evenBuzzer(void)
         if (!buzzerState)
         {
             buzzerState = true;
-            digitalWrite(Buzzer_Pin, 1);
+            digitalWrite(Pin_Buzzer, 1);
         }
     }
     else if (hmi.getDataBuzzer() == 1)
@@ -499,12 +500,12 @@ void StateMachine::evenBuzzer(void)
         if (buzzerState)
         {
             buzzerState = false;
-            digitalWrite(Buzzer_Pin, 0);
+            digitalWrite(Pin_Buzzer, 0);
         }
     }
     else
     {
-        digitalWrite(Buzzer_Pin, 0);
+        digitalWrite(Pin_Buzzer, 0);
     }
 }
 
@@ -537,7 +538,7 @@ uint8_t StateMachine::getBatteryPercent(void)
 
     if (index < ADCsample)
     {
-        adcBatteryContainer[index] = analogRead(AI_Battery);
+        adcBatteryContainer[index] = analogRead(Pin_VBat_Sense);
         index++;
     }
     else
@@ -546,7 +547,7 @@ uint8_t StateMachine::getBatteryPercent(void)
         {
             adcBatteryContainer[i] = adcBatteryContainer[i + 1];
         }
-        adcBatteryContainer[ADCsample - 1] = analogRead(AI_Battery);
+        adcBatteryContainer[ADCsample - 1] = analogRead(Pin_VBat_Sense);
         for (uint8_t i = 0; i < ADCsample; i++)
         {
             adcBattery += adcBatteryContainer[i];

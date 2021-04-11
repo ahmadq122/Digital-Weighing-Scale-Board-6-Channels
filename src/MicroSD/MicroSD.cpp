@@ -6,6 +6,7 @@
 #include "Time/MyTime.h"
 #include "DebugSerial/DebugSerial.h"
 #include "RTOS/RTOS.h"
+#include "Utility/Utility.h"
 
 /*
    Connect the SD card to the following pins:
@@ -236,9 +237,9 @@ void testFileIO(fs::FS &fs, const char *path)
 void MicroSDCard::getCSVFileName(char *buffer)
 {
     char name[20];
-    integerToString(RTC.rtc.date, name, 2);
-    integerToString(RTC.rtc.month, &name[2], 2);
-    integerToString(RTC.rtc.year + 2000, &name[4], 4);
+    utils.integerToString(RTC.rtc.date, name, 2);
+    utils.integerToString(RTC.rtc.month, &name[2], 2);
+    utils.integerToString(RTC.rtc.year + 2000, &name[4], 4);
     strcpy(buffer, name);
 }
 

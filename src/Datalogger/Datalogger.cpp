@@ -6,8 +6,7 @@
 #include "RTOS/RTOS.h"
 #include "Time/MyTime.h"
 #include <HTTPClient.h>
-
-void integerToString(uint32_t number, char *buffer, uint8_t len);
+#include "Utility/Utility.h"
 
 void Datalogger::showObjDatalogPage(uint8_t loggerType, bool show)
 {
@@ -39,9 +38,9 @@ void Datalogger::updateStrPeriod(uint8_t hourPeriod, uint8_t minutePeriod, uint8
     char strMinute[3];
     char strSecond[3];
 
-    integerToString(hourPeriod, strHour, 2);
-    integerToString(minutePeriod, strMinute, 2);
-    integerToString(secondPeriod, strSecond, 2);
+    utils.integerToString(hourPeriod, strHour, 2);
+    utils.integerToString(minutePeriod, strMinute, 2);
+    utils.integerToString(secondPeriod, strSecond, 2);
 
     hmi.setStringToNextion("t0.txt", strHour);
     hmi.setStringToNextion("t1.txt", strMinute);
@@ -242,8 +241,8 @@ void updateStrOfAllSchedule(uint8_t loggerType)
             hourSchedule = data.getScheduleDatalog(_off_, loggerType, i - 3) / 60;
             minuteSchedule = data.getScheduleDatalog(_off_, loggerType, i - 3) % 60;
         }
-        integerToString(hourSchedule, strHour, 2);
-        integerToString(minuteSchedule, strMinute, 2);
+        utils.integerToString(hourSchedule, strHour, 2);
+        utils.integerToString(minuteSchedule, strMinute, 2);
         hmi.setStringToNextion(String() + "b" + i + ".txt", String() + strHour + ":" + strMinute);
     }
 }
@@ -263,8 +262,8 @@ void updateStrOfSetSchedule(uint8_t hourSchedule, uint8_t minuteSchedule)
     char strHour[3];
     char strMinute[3];
 
-    integerToString(hourSchedule, strHour, 2);
-    integerToString(minuteSchedule, strMinute, 2);
+    utils.integerToString(hourSchedule, strHour, 2);
+    utils.integerToString(minuteSchedule, strMinute, 2);
 
     hmi.setStringToNextion("t0.txt", strHour);
     hmi.setStringToNextion("t1.txt", strMinute);
