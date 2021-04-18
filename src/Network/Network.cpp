@@ -4,6 +4,7 @@
 #include "../FlashMemory/FlashMemory.h"
 #include "../Nextion/Nextion.h"
 #include "RTOS/RTOS.h"
+#include "PictureListID.h"
 
 void Network::setup(void)
 {
@@ -210,7 +211,7 @@ __scan:
     if (numberOfNetworkFound[selectedScan] == 0)
     {
         hmi.setVisObjectNextion("nonet", true);
-        printDebugln("No networks found!");
+        printDebugln("No network found!");
         while (!hmi.getExitPageFlag())
         {
             while (!hmi.checkAnyButtonPressed(&button))
@@ -293,13 +294,13 @@ void Network::showSelectedNetworkIndicator(uint8_t selected, uint8_t noOfList)
 {
     if (noOfList > 10)
         return;
-    hmi.setIntegerToNextion(String() + "b" + selected + ".picc", 12);
+    hmi.setIntegerToNextion(String() + "b" + selected + ".picc", Network_List_Select);
     for (uint8_t i = 0; i < noOfList; i++)
     {
         if (i == selected)
             continue;
         else
-            hmi.setIntegerToNextion(String() + "b" + i + ".picc", 10);
+            hmi.setIntegerToNextion(String() + "b" + i + ".picc", Network_List_Bkg);
     }
 }
 

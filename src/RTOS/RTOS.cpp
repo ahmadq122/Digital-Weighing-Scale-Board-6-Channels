@@ -129,7 +129,7 @@ void Task_01(void *pvParameters) // This is a task.
             {
                 if (rtos.currentBrightness != 10)
                 {
-                    rtos.currentBrightness = 10;
+                    rtos.currentBrightness = 0;
                     hmi.setIntegerToNextion("dim", rtos.currentBrightness);
                 }
             }

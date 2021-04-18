@@ -55,6 +55,7 @@ private:
     uint8_t A0[3];
     uint32_t adcBuffer[3][2][SAMPLE_MOV_AVERAGE];
     uint8_t index[3][2];
+    uint8_t speed;
     float dividerUnits[11] = {
         1,
         0.001,

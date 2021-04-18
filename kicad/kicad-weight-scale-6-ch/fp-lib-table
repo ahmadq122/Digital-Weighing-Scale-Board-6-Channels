@@ -1,0 +1,3 @@
+(fp_lib_table
+  (lib (name kicad-weight-scale-6-ch)(type KiCad)(uri ${KIPRJMOD}/kicad-weight-scale-6-ch.pretty)(options "")(descr ""))
+)

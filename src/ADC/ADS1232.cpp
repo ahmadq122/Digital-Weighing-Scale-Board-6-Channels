@@ -21,7 +21,10 @@ void ADS1232::begin(void)
     DOUT[2] = Pin_DOUT_ADS3;
     A0[2] = Pin_A0_ADS3;
 
+    speed = Pin_Speedrate;
+
     pinMode(PDWN, OUTPUT);
+    pinMode(speed, OUTPUT);
     for (uint8_t i = 0; i < 3; i++)
     {
         pinMode(SCLK[i], OUTPUT);

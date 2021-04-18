@@ -12,6 +12,7 @@
 #include "RTOS/RTOS.h"
 #include "Datalogger/Datalogger.h"
 #include "PinMap.h"
+#include "PictureListID.h"
 
 /*****************************************************************************
  *******************************ESP32S-PIN************************************
@@ -175,6 +176,7 @@ uint8_t StateMachine::homeScreen(void)
     {
         enDisChannel[i] = data.getChannelEnDisStatus(i);
         updateButtonToggleStateToNextion(i);
+        hmi.setStringToNextion((String() + "t_ch" + (i + 1) + ".txt"), "00000.00");
         hmi.setStringToNextion(String() + "t_mu" + (i + 1) + ".txt", getStringUnit(data.getMeasurementUnit()));
     }
     //initialize the signal level base on the last signal value
@@ -638,6 +640,6 @@ void StateMachine::updateSelectedUnitToNextion(uint8_t unit)
 {
     for (uint8_t i = 0; i < 10; i++)
     {
-        hmi.setIntegerToNextion(String() + "b" + i + ".picc", unit == i ? 39 : 37);
+        hmi.setIntegerToNextion(String() + "b" + i + ".picc", unit == i ? Measurement_List_Select : Measurement_List_Bkg);
     }
 }
