@@ -47,17 +47,6 @@ F 3 "https://www.onsemi.com/pub/Collateral/SI4542DY-D.PDF" H 1795 6290 50  0001 
 	-1   0    0    -1  
 $EndComp
 $Comp
-L Transistor_FET:AO3401A Q3
-U 1 1 606F53CC
-P 3800 6700
-F 0 "Q3" H 4005 6746 50  0000 L CNN
-F 1 "AO3401A" H 4005 6655 50  0000 L CNN
-F 2 "Package_TO_SOT_SMD:SOT-23" H 4000 6625 50  0001 L CIN
-F 3 "http://www.aosmd.com/pdfs/datasheet/AO3401A.pdf" H 3800 6700 50  0001 L CNN
-	1    3800 6700
-	1    0    0    -1  
-$EndComp
-$Comp
 L Device:Battery_Cell BT1
 U 1 1 60706077
 P 1815 1340
@@ -1107,4 +1096,15 @@ Wire Wire Line
 Wire Wire Line
 	2540 1650 2750 1650
 Connection ~ 2540 2030
+$Comp
+L Transistor_FET:BSS138 Q3
+U 1 1 60917343
+P 3800 6700
+F 0 "Q3" H 4004 6746 50  0000 L CNN
+F 1 "BSS138" H 4004 6655 50  0000 L CNN
+F 2 "Package_TO_SOT_SMD:SOT-23" H 4000 6625 50  0001 L CIN
+F 3 "https://www.onsemi.com/pub/Collateral/BSS138-D.PDF" H 3800 6700 50  0001 L CNN
+	1    3800 6700
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC

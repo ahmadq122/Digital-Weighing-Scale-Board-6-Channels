@@ -5,6 +5,7 @@
 #include "Time/MyTime.h"
 #include "RTOS/RTOS.h"
 #include "ADC/ADS1232.h"
+#include "PictureListID.h"
 
 void Settings::mainMenu(void)
 {
@@ -68,24 +69,24 @@ void Settings::updateSelectedTimezoneToNextion(void)
     switch (data.getTimezone())
     {
     case 0:
-        hmi.setIntegerToNextion("b0.picc", 29);
-        hmi.setIntegerToNextion("b1.picc", 27);
-        hmi.setIntegerToNextion("b2.picc", 27);
+        hmi.setIntegerToNextion("b0.picc", Timezone_Menu_Selected_Bkg);
+        hmi.setIntegerToNextion("b1.picc", Timezone_Menu_Normal_Btn);
+        hmi.setIntegerToNextion("b2.picc", Timezone_Menu_Normal_Btn);
         break;
     case 1:
-        hmi.setIntegerToNextion("b1.picc", 29);
-        hmi.setIntegerToNextion("b0.picc", 27);
-        hmi.setIntegerToNextion("b2.picc", 27);
+        hmi.setIntegerToNextion("b1.picc", Timezone_Menu_Selected_Bkg);
+        hmi.setIntegerToNextion("b0.picc", Timezone_Menu_Normal_Btn);
+        hmi.setIntegerToNextion("b2.picc", Timezone_Menu_Normal_Btn);
         break;
     case 2:
-        hmi.setIntegerToNextion("b2.picc", 29);
-        hmi.setIntegerToNextion("b0.picc", 27);
-        hmi.setIntegerToNextion("b1.picc", 27);
+        hmi.setIntegerToNextion("b2.picc", Timezone_Menu_Selected_Bkg);
+        hmi.setIntegerToNextion("b0.picc", Timezone_Menu_Normal_Btn);
+        hmi.setIntegerToNextion("b1.picc", Timezone_Menu_Normal_Btn);
         break;
     default:
-        hmi.setIntegerToNextion("b0.picc", 27);
-        hmi.setIntegerToNextion("b1.picc", 27);
-        hmi.setIntegerToNextion("b2.picc", 27);
+        hmi.setIntegerToNextion("b0.picc", Timezone_Menu_Normal_Btn);
+        hmi.setIntegerToNextion("b1.picc", Timezone_Menu_Normal_Btn);
+        hmi.setIntegerToNextion("b2.picc", Timezone_Menu_Normal_Btn);
         break;
     }
     mtime.initOffset(data.getTimezone());
