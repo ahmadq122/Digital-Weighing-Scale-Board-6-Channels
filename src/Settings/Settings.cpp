@@ -44,8 +44,8 @@ start:
                     maximumWeight();
                     break;
                 case 3:
-                    printDebugln("Set battery capacity");
-                    batteryCapacity();
+                    printDebugln("Set time and date");
+                    timeAndDate();
                     break;
                 case 4:
                     printDebugln("Debug page opened");
@@ -209,14 +209,11 @@ void Settings::updateMaximumValueToNextion(void)
 void Settings::maximumWeight(void)
 {
     bool button[6];
-    bool button1[2];
+    bool button1[2] = {false};
     String newValueStr;
     float newValue = 0;
 
 start:
-    button1[0] = false;
-    button1[1] = false;
-
     hmi.showPage("maximum");
     hmi.waitForPageRespon();
 
@@ -257,6 +254,37 @@ start:
         }
     }
 }
+void Settings::timeAndDate(void)
+{
+    bool button[12];
+
+    hmi.showPage("timedate");
+    hmi.waitForPageRespon();
+
+    while (true)
+    {
+        if (hmi.getExitPageFlag())
+        {
+            printDebugln("Exit Time and Date page");
+            return;
+        }
+        for (byte i = 0; i < 12; i++)
+        {
+            button[i] = hmi.getDataButton(i);
+            if (button[i])
+            {
+                switch (i)
+                {
+                case 0:
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+    }
+}
+
 void Settings::batteryCapacity(void)
 {
     bool button[2] = {false,
@@ -293,9 +321,9 @@ void Settings::updateSelectedBaudrateToNextion(bool type, uint8_t selected)
     for (uint8_t i = 0; i < 10; i++)
     {
         if (i == selected)
-            hmi.setIntegerToNextion(String() + "b" + i + ".picc", 59);
+            hmi.setIntegerToNextion(String() + "b" + i + ".picc", Debug_Baud_Select);
         else
-            hmi.setIntegerToNextion(String() + "b" + i + ".picc", 57);
+            hmi.setIntegerToNextion(String() + "b" + i + ".picc", Debug_Normal_Btn);
     }
 }
 void Settings::debugMenu(void)
@@ -514,9 +542,9 @@ void Settings::zeroCalibration(void)
                 setState = 3;
             if (setState == 1)
             {
-                hmi.setIntegerToNextion("b1.picc", 44);
-                hmi.setIntegerToNextion("b1.picc2", 45);
-                hmi.setIntegerToNextion("q1.picc", 44);
+                hmi.setIntegerToNextion("b1.picc", Zero_Normal_Btn_2);
+                hmi.setIntegerToNextion("b1.picc2", Zero_Prs_Btn_2);
+                hmi.setIntegerToNextion("q1.picc", Zero_Normal_Btn_2);
                 updateAllAdcValue();
             }
             else if (setState == 2)

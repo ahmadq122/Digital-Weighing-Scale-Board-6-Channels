@@ -12,6 +12,7 @@ private:
     void timeZone(void);
     void brightness(void);
     void maximumWeight(void);
+    void timeAndDate(void);
     void batteryCapacity(void);
     void debugMenu(void);
     void calibrationSensor(void);
