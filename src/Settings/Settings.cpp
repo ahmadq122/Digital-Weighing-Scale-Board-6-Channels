@@ -6,6 +6,7 @@
 #include "RTOS/RTOS.h"
 #include "ADC/ADS1232.h"
 #include "PictureListID.h"
+#include "Utility/Utility.h"
 
 void Settings::mainMenu(void)
 {
@@ -257,9 +258,19 @@ start:
 void Settings::timeAndDate(void)
 {
     bool button[12];
+    int8_t data[6]; //hour,minute,second,date,month,year
+    mtime.getRtcTime(&data[0], &data[1], &data[2]);
+    mtime.getRtcDate(&data[3], &data[4], &data[5]);
 
     hmi.showPage("timedate");
     hmi.waitForPageRespon();
+
+    for (uint8_t i = 0; i < 6; i++)
+    {
+        if (i == 2)
+            continue;
+        hmi.setStringToNextion(String() + "t" + i + ".txt", utils.integerToString(data[i], 2));
+    }
 
     while (true)
     {
@@ -276,6 +287,54 @@ void Settings::timeAndDate(void)
                 switch (i)
                 {
                 case 0:
+                    if (++data[0] > 23)
+                        data[0] = 0;
+                    hmi.setStringToNextion("t0.txt", utils.integerToString(data[0], 2));
+                    break;
+                case 1:
+                    if (--data[0] < 0)
+                        data[0] = 23;
+                    hmi.setStringToNextion("t0.txt", utils.integerToString(data[0], 2));
+                    break;
+                case 2:
+                    if (++data[1] > 59)
+                        data[1] = 0;
+                    hmi.setStringToNextion("t1.txt", utils.integerToString(data[1], 2));
+                    break;
+                case 3:
+                    if (--data[1] < 0)
+                        data[1] = 59;
+                    hmi.setStringToNextion("t1.txt", utils.integerToString(data[1], 2));
+                    break;
+                case 4:
+                    if (++data[3] > 31)
+                        data[3] = 1;
+                    hmi.setStringToNextion("t3.txt", utils.integerToString(data[3], 2));
+                    break;
+                case 5:
+                    if (--data[3] < 1)
+                        data[3] = 31;
+                    hmi.setStringToNextion("t3.txt", utils.integerToString(data[3], 2));
+                    break;
+                case 6:
+                    if (++data[4] > 12)
+                        data[4] = 1;
+                    hmi.setStringToNextion("t4.txt", utils.integerToString(data[4], 2));
+                    break;
+                case 7:
+                    if (--data[4] < 1)
+                        data[4] = 12;
+                    hmi.setStringToNextion("t4.txt", utils.integerToString(data[4], 2));
+                    break;
+                case 8:
+                    if (++data[5] > 99)
+                        data[5] = 0;
+                    hmi.setStringToNextion("t5.txt", utils.integerToString(data[5], 2));
+                    break;
+                case 9:
+                    if (--data[5] < 0)
+                        data[5] = 99;
+                    hmi.setStringToNextion("t5.txt", utils.integerToString(data[5], 2));
                     break;
                 default:
                     break;

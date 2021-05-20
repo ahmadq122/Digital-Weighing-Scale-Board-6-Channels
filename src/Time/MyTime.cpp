@@ -135,4 +135,20 @@ void MyTime::getActualTimeInMinute(uint16_t *timeMinute)
     }
 }
 
+void MyTime::getRtcTime(int8_t *hour, int8_t *min, int8_t *sec)
+{
+    readTime();
+    *hour = static_cast<int8_t>(rtc.hour);
+    *min = static_cast<int8_t>(rtc.minute);
+    *sec = static_cast<int8_t>(rtc.second);
+}
+
+void MyTime::getRtcDate(int8_t *date, int8_t *month, int8_t *year)
+{
+    readDate();
+    *date = static_cast<int8_t>(rtc.date);
+    *month = static_cast<int8_t>(rtc.month);
+    *year = static_cast<int8_t>(rtc.year);
+}
+
 MyTime mtime;

@@ -39,4 +39,31 @@ void Utility::integerToString(uint32_t number, char *buffer, uint8_t len)
     strcpy(buffer, numbStr.c_str());
 }
 
+String Utility::integerToString(uint32_t number, uint8_t len)
+{
+    String tempStr = String() + number;
+    String numbStr;
+    char charFirstZero[10];
+    uint8_t a = 0, b = 0;
+
+    if (tempStr.length() < len)
+    {
+        a = len - tempStr.length();
+        while (a)
+        {
+            charFirstZero[b] = '0';
+            a--;
+            b++;
+        }
+        charFirstZero[b] = '\0';
+        numbStr = String() + charFirstZero;
+        numbStr += tempStr;
+    }
+    else
+    {
+        numbStr = tempStr;
+    }
+    return numbStr;
+}
+
 Utility utils;

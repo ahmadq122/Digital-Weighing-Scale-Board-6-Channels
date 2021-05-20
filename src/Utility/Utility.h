@@ -7,6 +7,7 @@ class Utility
 public:
     uint8_t charArraySize(const char *charArray);
     void integerToString(uint32_t number, char *buffer, uint8_t len);
+    String integerToString(uint32_t number, uint8_t len);
 };
 
 extern Utility utils;
