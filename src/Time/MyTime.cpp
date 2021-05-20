@@ -151,4 +151,13 @@ void MyTime::getRtcDate(int8_t *date, int8_t *month, int8_t *year)
     *year = static_cast<int8_t>(rtc.year);
 }
 
+void MyTime::setRtcTime(uint8_t hour, uint8_t minute, uint8_t second)
+{
+    setTime(hour, minute, second);
+}
+void MyTime::setRtcDate(uint8_t date, uint8_t month, uint8_t year)
+{
+    setDate(date, month, year);
+}
+
 MyTime mtime;

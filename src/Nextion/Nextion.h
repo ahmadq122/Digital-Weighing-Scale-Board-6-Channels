@@ -58,6 +58,7 @@ public:
     uint16_t getText(const char *variableName, char *buffer, uint32_t len);
     void flushAvailableButton(void);
     void waitForPageRespon(void);
+    void showSavingBarAnimation(uint16_t msDuration);
 
 private:
     void sendCommandToNextion(const char *cmd);

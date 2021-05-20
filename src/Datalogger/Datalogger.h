@@ -13,6 +13,8 @@ public:
 
 private:
     void scheduler(uint8_t loggerType);
+    void timeScheduler(uint8_t loggerType);
+    void dateScheduler(uint8_t loggerType);
     void showBaudrateOption(bool type, bool show);
     void updateSelectedBaudrateToNextion(bool type, uint8_t selected);
     void showObjDatalogPage(uint8_t loggerType, bool show);

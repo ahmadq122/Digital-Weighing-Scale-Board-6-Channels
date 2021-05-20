@@ -457,4 +457,19 @@ void Nextion::presetScreenBrightness(void)
   }
 }
 
+void Nextion::showSavingBarAnimation(uint16_t msDuration)
+{
+  uint8_t progress = 0;
+
+  setVisObjectNextion("saving", true);
+  while (progress <= 100)
+  {
+    hmi.setIntegerToNextion("saving.val", progress);
+    progress += 10;
+    delay(msDuration / 10);
+  }
+  delay((msDuration > 500) ? 500 : msDuration);
+  hmi.setVisObjectNextion("saving", false);
+}
+
 Nextion hmi;

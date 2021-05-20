@@ -336,6 +336,14 @@ void Settings::timeAndDate(void)
                         data[5] = 99;
                     hmi.setStringToNextion("t5.txt", utils.integerToString(data[5], 2));
                     break;
+                case 10:
+                    mtime.setRtcTime(data[0], data[1], 0);
+                    hmi.showSavingBarAnimation(500);
+                    break;
+                case 11:
+                    mtime.setRtcDate(data[3], data[4], data[5]);
+                    hmi.showSavingBarAnimation(500);
+                    break;
                 default:
                     break;
                 }
@@ -588,7 +596,7 @@ void updateAllAdcValue(void)
 void Settings::zeroCalibration(void)
 {
     uint8_t setState = 0;
-    uint8_t progress = 0;
+
     hmi.showPage("zero");
     hmi.waitForPageRespon();
 
@@ -608,24 +616,14 @@ void Settings::zeroCalibration(void)
             }
             else if (setState == 2)
             {
-                hmi.setVisObjectNextion("saving", true);
-                while (progress <= 100)
-                {
-                    if (progress < 10)
-                    {
-                        data.setAdcCalibrationPoint(0, 0, ads.adcRead[0][0]);
-                        data.setAdcCalibrationPoint(1, 0, ads.adcRead[0][1]);
-                        data.setAdcCalibrationPoint(2, 0, ads.adcRead[1][0]);
-                        data.setAdcCalibrationPoint(3, 0, ads.adcRead[1][1]);
-                        data.setAdcCalibrationPoint(4, 0, ads.adcRead[2][0]);
-                        data.setAdcCalibrationPoint(5, 0, ads.adcRead[2][1]);
-                    }
-                    hmi.setIntegerToNextion("saving.val", progress);
-                    progress += 10;
-                    delay(50);
-                }
-                delay(500);
-                hmi.setVisObjectNextion("saving", false);
+                data.setAdcCalibrationPoint(0, 0, ads.adcRead[0][0]);
+                data.setAdcCalibrationPoint(1, 0, ads.adcRead[0][1]);
+                data.setAdcCalibrationPoint(2, 0, ads.adcRead[1][0]);
+                data.setAdcCalibrationPoint(3, 0, ads.adcRead[1][1]);
+                data.setAdcCalibrationPoint(4, 0, ads.adcRead[2][0]);
+                data.setAdcCalibrationPoint(5, 0, ads.adcRead[2][1]);
+
+                hmi.showSavingBarAnimation(500);
             }
         }
         if (hmi.getExitPageFlag())
@@ -648,13 +646,13 @@ void updatePointCalibParameter(uint8_t channel, uint8_t point)
     }
     if (data.getPointCalibrationStatus(channel, point))
     {
-        hmi.setIntegerToNextion("t2.picc", 49);
-        hmi.setIntegerToNextion("t2.picc2", 51);
+        hmi.setIntegerToNextion("t2.picc", Pointcal_Set_Bkg);
+        hmi.setIntegerToNextion("t2.picc2", Pointcal_Set_Prs_Bkg);
     }
     else
     {
-        hmi.setIntegerToNextion("t2.picc", 48);
-        hmi.setIntegerToNextion("t2.picc2", 50);
+        hmi.setIntegerToNextion("t2.picc", Pointcal_Normal_Bkg);
+        hmi.setIntegerToNextion("t2.picc2", Pointcal_Prs_Bkg);
     }
 }
 
@@ -740,9 +738,9 @@ void Settings::pointCalibration(void)
                     if (settingState == 0)
                     {
                         settingState = 1;
-                        hmi.setIntegerToNextion("b4.picc", 49);
-                        hmi.setIntegerToNextion("b4.picc2", 51);
-                        hmi.setIntegerToNextion("q0.picc", 49);
+                        hmi.setIntegerToNextion("b4.picc", Pointcal_Set_Bkg);
+                        hmi.setIntegerToNextion("b4.picc2", Pointcal_Set_Prs_Bkg);
+                        hmi.setIntegerToNextion("q0.picc", Pointcal_Set_Bkg);
                     }
                     else if (settingState == 1)
                     {
@@ -756,10 +754,12 @@ void Settings::pointCalibration(void)
                             data.setPointCalibrationStatus(channelState, pointState, true);
                         else
                             data.setPointCalibrationStatus(channelState, pointState, false);
+                        
+                        hmi.showSavingBarAnimation(150);
 
-                        hmi.setIntegerToNextion("b4.picc", 48);
-                        hmi.setIntegerToNextion("b4.picc2", 50);
-                        hmi.setIntegerToNextion("q0.picc", 48);
+                        hmi.setIntegerToNextion("b4.picc", Pointcal_Normal_Bkg);
+                        hmi.setIntegerToNextion("b4.picc2", Pointcal_Prs_Bkg);
+                        hmi.setIntegerToNextion("q0.picc", Pointcal_Normal_Bkg);
                     }
                     break;
                 case 5:
@@ -773,9 +773,9 @@ void Settings::pointCalibration(void)
                 {
                     if (settingState == 0)
                     {
-                        hmi.setIntegerToNextion("b4.picc", 48);
-                        hmi.setIntegerToNextion("b4.picc2", 50);
-                        hmi.setIntegerToNextion("q0.picc", 48);
+                        hmi.setIntegerToNextion("b4.picc", Pointcal_Normal_Bkg);
+                        hmi.setIntegerToNextion("b4.picc2", Pointcal_Prs_Bkg);
+                        hmi.setIntegerToNextion("q0.picc", Pointcal_Normal_Bkg);
                     }
                 }
             }
