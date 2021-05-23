@@ -1,6 +1,6 @@
 #include "StateMachine/StateMachine.h"
 // #include "Nextion/Nextion.h"
-// #include "FlashMemory/FlashMemory.h"
+#include "FlashMemory/FlashMemory.h"
 
 StateMachine state;
 
@@ -16,7 +16,7 @@ void loop()
 
   uint8_t nextState = HOME;
 
-  // MemoryFlash data;
+  // MemoryFlash d;
   
   // Serial.println(String() + "uint8_t:" + sizeof(uint8_t));
   // Serial.println(String() + "uint16_t:" + sizeof(uint16_t));
@@ -30,8 +30,10 @@ void loop()
   // Serial.end();
   // Serial.begin(115200);
   // delay(1000);
-  // Serial.println(sizeof(data.flash));
-  // Serial.println(String()+ "Free memory: "+(MEMORY_SIZE-sizeof(data.flash))+" bytes");
+  // uint8_t sizeLeft = MEMORY_SIZE - sizeof(d.flash);
+  // uint16_t size = sizeof(d.flash);
+  // Serial.println(size);
+  // Serial.println(String() + "Free memory: " + sizeLeft + " bytes");
 
   while (true)
   {

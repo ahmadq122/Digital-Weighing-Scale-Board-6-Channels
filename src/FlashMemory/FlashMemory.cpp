@@ -438,15 +438,42 @@ bool MemoryFlash::setGramMaximum(uint8_t channel, float newValue)
     }
     return false;
 }
-bool MemoryFlash::setScheduleDatalog(bool scheduleType, uint8_t loggerType, uint8_t index, uint16_t newValue)
+bool MemoryFlash::setTimeSchedulerDatalog(bool scheduleType, uint8_t loggerType, uint8_t index, uint16_t newValue)
 {
-    uint16_t enable = 0x1000 & flash.scheduleDatalog[scheduleType][loggerType][index];
-    uint16_t oldValue = 0x0FFF & flash.scheduleDatalog[scheduleType][loggerType][index];
+    uint16_t enable = 0x1000 & flash.timeSchedulerDataLog[scheduleType][loggerType][index];
+    uint16_t oldValue = 0x0FFF & flash.timeSchedulerDataLog[scheduleType][loggerType][index];
     newValue = newValue & 0x0FFF;
 
     if (newValue != oldValue)
     {
-        flash.scheduleDatalog[scheduleType][loggerType][index] = newValue | enable;
+        flash.timeSchedulerDataLog[scheduleType][loggerType][index] = newValue | enable;
+
+        storeDataToFlash();
+        printDebugln(String() + (newValue / 60) + ":" + (newValue % 60) + " (HH:MM) new data set!");
+        return true;
+    }
+    else
+    {
+        printDebugln(String() + "New data already in flash!");
+    }
+    return false;
+}
+
+bool MemoryFlash::setEnableTimeScheduler(bool scheduleType, uint8_t loggerType, uint8_t index, bool newValue)
+{
+    uint16_t schedule = 0x0FFF & flash.timeSchedulerDataLog[scheduleType][loggerType][index];
+    bool oldValue = ((0x1000 & flash.timeSchedulerDataLog[scheduleType][loggerType][index]) > 0) ? true : false;
+
+    if (newValue != oldValue)
+    {
+        if (newValue)
+        {
+            flash.timeSchedulerDataLog[scheduleType][loggerType][index] = schedule | 0x1000;
+        }
+        else
+        {
+            flash.timeSchedulerDataLog[scheduleType][loggerType][index] = schedule & 0xEFFF;
+        }
 
         storeDataToFlash();
         printDebugln(String() + newValue + ": new data set!");
@@ -459,24 +486,65 @@ bool MemoryFlash::setScheduleDatalog(bool scheduleType, uint8_t loggerType, uint
     return false;
 }
 
-bool MemoryFlash::setEnableSchedule(bool scheduleType, uint8_t loggerType, uint8_t index, bool newValue)
+/*
+* Date  : 01 - 31, maximum takes 5 bits //0xF800
+* Month : 01 - 12, maximum takes 4 bits //0x0780
+* Year  : 00 - 99, maximum takes 7 bits //0x007F
+* total bit : 16 bits 
+*/
+bool MemoryFlash::setDateSchedulerDatalog(bool scheduleType, uint8_t loggerType, uint8_t newDate, uint8_t newMonth, uint8_t newYear)
 {
-    uint16_t schedule = 0x0FFF & flash.scheduleDatalog[scheduleType][loggerType][index];
-    bool oldValue = ((0x1000 & flash.scheduleDatalog[scheduleType][loggerType][index]) > 0) ? true : false;
+    uint16_t oldValue = flash.dateSchedulerDataLog[scheduleType][loggerType];
+    uint16_t newValue = ((static_cast<uint16_t>(newDate) << 11) & 0xF800) | ((static_cast<uint16_t>(newMonth) << 7) & 0x0780);
+    newValue |= (static_cast<uint16_t>(newYear) & 0x007F);
+
+    if (newValue != oldValue)
+    {
+        flash.dateSchedulerDataLog[scheduleType][loggerType] = newValue;
+
+        storeDataToFlash();
+        printDebugln(String() + newDate + "/" + newMonth + "/" + newYear + " new data set!");
+        return true;
+    }
+    else
+    {
+        printDebugln(String() + "New data already in flash!");
+    }
+    return false;
+}
+
+bool MemoryFlash::setEnableDateScheduler(bool scheduleType, uint8_t loggerType, bool newValue)
+{
+    uint8_t index = 0;
+    bool oldValue = false;
+    if (loggerType == serial)
+    {
+        index = (scheduleType == _off_) ? 0 : 1;
+    }
+    else if (loggerType == local)
+    {
+        index = (scheduleType == _off_) ? 2 : 3;
+    }
+    else if (loggerType == remote)
+    {
+        index = (scheduleType == _off_) ? 4 : 5;
+    }
+
+    oldValue = bitRead(flash.enableDateScheduler, index);
 
     if (newValue != oldValue)
     {
         if (newValue)
         {
-            flash.scheduleDatalog[scheduleType][loggerType][index] = schedule | 0x1000;
+            bitSet(flash.enableDateScheduler, index);
         }
         else
         {
-            flash.scheduleDatalog[scheduleType][loggerType][index] = schedule & 0xEFFF;
+            bitClear(flash.enableDateScheduler, index);
         }
 
         storeDataToFlash();
-        printDebugln(String() + newValue + ": new data set!");
+        printDebugln(String() + newValue + ": new data set at index " + index);
         return true;
     }
     else
@@ -560,10 +628,10 @@ bool MemoryFlash::getDatalogStatus(uint8_t loggerType)
     if (loggerType > remote)
         return false;
 
-    if (loggerType == serial)
-        type = SERIAL_LOG_ENABLE;
-    else if (loggerType == local)
+    if (loggerType == local)
         type = LOCAL_LOG_ENABLE;
+    else if (loggerType == serial)
+        type = SERIAL_LOG_ENABLE;
     else if (loggerType == remote)
         type = WEB_LOG_ENABLE;
 
@@ -613,13 +681,44 @@ float MemoryFlash::getGramMaximum(uint8_t channel)
     return flash.gramMaximum[channel];
 }
 
-uint16_t MemoryFlash::getScheduleDatalog(bool scheduleType, uint8_t loggerType, uint8_t index)
+void MemoryFlash::getTimeSchedulerDatalog(bool scheduleType, uint8_t loggerType, uint8_t index, uint8_t *hour, uint8_t *minute)
 {
-    return (flash.scheduleDatalog[scheduleType][loggerType][index] & 0x0FFF);
+    uint16_t value = flash.timeSchedulerDataLog[scheduleType][loggerType][index] & 0x0FFF;
+    *hour = static_cast<uint8_t>(value / 60);
+    *minute = static_cast<uint8_t>(value % 60);
 }
-bool MemoryFlash::getEnableSchedule(bool scheduleType, uint8_t loggerType, uint8_t index)
+
+bool MemoryFlash::getEnableTimeScheduler(bool scheduleType, uint8_t loggerType, uint8_t index)
 {
-    return (((flash.scheduleDatalog[scheduleType][loggerType][index] & 0x1000) > 0) ? true : false);
+    return ((0x1000 & flash.timeSchedulerDataLog[scheduleType][loggerType][index]) > 0) ? true : false;
+}
+
+void MemoryFlash::getDateSchedulerDatalog(bool scheduleType, uint8_t loggerType, uint8_t *date, uint8_t *month, uint8_t *year)
+{
+    uint16_t value = flash.dateSchedulerDataLog[scheduleType][loggerType];
+    *date = static_cast<uint8_t>((value & 0xF800) >> 11);
+    *month = static_cast<uint8_t>((value & 0x0780) >> 7);
+    *year = static_cast<uint8_t>(value & 0x007F);
+}
+
+bool MemoryFlash::getEnableDateScheduler(bool scheduleType, uint8_t loggerType)
+{
+    uint8_t index = 0;
+
+    if (loggerType == serial)
+    {
+        index = (scheduleType == _off_) ? 0 : 1;
+    }
+    else if (loggerType == local)
+    {
+        index = (scheduleType == _off_) ? 2 : 3;
+    }
+    else if (loggerType == remote)
+    {
+        index = (scheduleType == _off_) ? 4 : 5;
+    }
+
+    return (bitRead(flash.enableDateScheduler, index));
 }
 
 uint16_t MemoryFlash::getDimScreenTimer(void)

@@ -2,6 +2,12 @@
 
 #include "Arduino.h"
 
+#define color_white 65535
+#define color_cyan  2047
+#define color_grey  46518
+#define color_black 0
+#define color_red   63488
+
 class Utility
 {
 public:

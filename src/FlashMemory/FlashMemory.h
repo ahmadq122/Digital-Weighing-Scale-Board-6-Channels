@@ -66,8 +66,10 @@ public:
     bool setAdcCalibrationPoint(uint8_t channel, uint8_t point, uint32_t newValue);
     bool setGramCalibrationPoint(uint8_t channel, uint8_t point, float newValue);
     bool setGramMaximum(uint8_t channel, float newValue);
-    bool setScheduleDatalog(bool scheduleType, uint8_t loggerType, uint8_t index, uint16_t newValue);
-    bool setEnableSchedule(bool scheduleType, uint8_t loggerType, uint8_t index, bool newValue);
+    bool setTimeSchedulerDatalog(bool scheduleType, uint8_t loggerType, uint8_t index, uint16_t newValue);
+    bool setDateSchedulerDatalog(bool scheduleType, uint8_t loggerType, uint8_t newDate, uint8_t newMonth, uint8_t newYear);
+    bool setEnableTimeScheduler(bool scheduleType, uint8_t loggerType, uint8_t index, bool newValue);
+    bool setEnableDateScheduler(bool scheduleType, uint8_t loggerType, bool newValue);
     bool setDimScreenTimer(uint8_t newValue);
     bool setScreenBrightness(uint8_t newValue);
 
@@ -92,12 +94,13 @@ public:
     uint32_t getAdcCalibrationPoint(uint8_t channel, uint8_t point);
     float getGramCalibrationPoint(uint8_t channel, uint8_t point);
     float getGramMaximum(uint8_t channel);
-    uint16_t getScheduleDatalog(bool scheduleType, uint8_t loggerType, uint8_t index);
-    bool getEnableSchedule(bool scheduleType, uint8_t loggerType, uint8_t index);
+    void getTimeSchedulerDatalog(bool scheduleType, uint8_t loggerType, uint8_t index, uint8_t *hour, uint8_t *minute);
+    void getDateSchedulerDatalog(bool scheduleType, uint8_t loggerType, uint8_t *date, uint8_t *month, uint8_t *year);
+    bool getEnableTimeScheduler(bool scheduleType, uint8_t loggerType, uint8_t index);
+    bool getEnableDateScheduler(bool scheduleType, uint8_t loggerType);
     uint16_t getDimScreenTimer(void);
     uint8_t getScreenBrightness(void);
 
-private:
     struct dataFlash
     {
         char ssid[MAX_SSID_CHAR];
@@ -107,7 +110,7 @@ private:
         uint8_t timeZone = 0;
         uint8_t measurementUnit = 0;
         uint8_t channelEnDisStatus = B00111111;
-        uint8_t generalStatus = B00000001; //debugMode + networkEnable (card, serial and web log)
+        uint8_t generalStatus = B00000001; //na, na, na, enable web log, enable serial log, enable card log, networkEnable, debugMode
         uint8_t fieldChannel[MAX_CHANNEL];
         uint8_t pointCalibrationStatus[MAX_CHANNEL];
         uint16_t batteryCapacity = 1000;
@@ -116,10 +119,38 @@ private:
         uint32_t adcCalibrationPoint[MAX_CHANNEL][MAX_POINT_CAL];
         float gramCalibrationPoint[MAX_CHANNEL][MAX_POINT_CAL - 1];
         float gramMaximum[MAX_CHANNEL];
-        uint16_t scheduleDatalog[2][3][3]; //[scheduleType][loggerType][index]
+        uint16_t timeSchedulerDataLog[2][3][2];
+        uint16_t dateSchedulerDataLog[2][3];
+        uint8_t enableDateScheduler = 0;
         uint8_t dimScreenTimer = 0;
         uint8_t screenBrightness = 100;
     } flash;
+
+private:
+    // struct dataFlash
+    // {
+    //     char ssid[MAX_SSID_CHAR];
+    //     char password[MAX_PASSWORD_CHAR];
+    //     char keyAPI[MAX_APIKEY_CHAR];
+    //     uint8_t encryptType;
+    //     uint8_t timeZone = 0;
+    //     uint8_t measurementUnit = 0;
+    //     uint8_t channelEnDisStatus = B00111111;
+    //     uint8_t generalStatus = B00000001; //na, na, na, enable web log, enable serial log, enable card log, networkEnable, debugMode
+    //     uint8_t fieldChannel[MAX_CHANNEL];
+    //     uint8_t pointCalibrationStatus[MAX_CHANNEL];
+    //     uint16_t batteryCapacity = 1000;
+    //     uint32_t periodDataLog[3];
+    //     uint8_t baudrateSerial[2];
+    //     uint32_t adcCalibrationPoint[MAX_CHANNEL][MAX_POINT_CAL];
+    //     float gramCalibrationPoint[MAX_CHANNEL][MAX_POINT_CAL - 1];
+    //     float gramMaximum[MAX_CHANNEL];
+    //     uint16_t timeSchedulerDataLog[2][3][2];
+    //     uint16_t dateSchedulerDataLog[2][3];
+    //     uint8_t enableDateScheduler = 0;
+    //     uint8_t dimScreenTimer = 0;
+    //     uint8_t screenBrightness = 100;
+    // } flash;
 
     uint32_t baudrate[10] = {
         4800,

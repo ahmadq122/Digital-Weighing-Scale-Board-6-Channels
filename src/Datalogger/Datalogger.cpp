@@ -212,7 +212,7 @@ __start:
     }
 }
 
-void updateSchedulerSettingState(uint8_t settingState)
+void Datalogger::updateSchedulerSettingState(uint8_t settingState)
 {
     for (uint8_t j = 0; j < 6; j++)
     {
@@ -223,42 +223,7 @@ void updateSchedulerSettingState(uint8_t settingState)
     }
 }
 
-void updateStrOfAllSchedule(uint8_t loggerType)
-{
-    uint8_t hourSchedule = 0;
-    uint8_t minuteSchedule = 0;
-    char strHour[3];
-    char strMinute[3];
-
-    for (uint8_t i = 0; i < 6; i++)
-    {
-        if (i < 3)
-        {
-            hourSchedule = data.getScheduleDatalog(_on_, loggerType, i) / 60;
-            minuteSchedule = data.getScheduleDatalog(_on_, loggerType, i) % 60;
-        }
-        else
-        {
-            hourSchedule = data.getScheduleDatalog(_off_, loggerType, i - 3) / 60;
-            minuteSchedule = data.getScheduleDatalog(_off_, loggerType, i - 3) % 60;
-        }
-        utils.integerToString(hourSchedule, strHour, 2);
-        utils.integerToString(minuteSchedule, strMinute, 2);
-        hmi.setStringToNextion(String() + "b" + i + ".txt", String() + strHour + ":" + strMinute);
-    }
-}
-void updateStatusOfAllSchedule(uint8_t loggerType)
-{
-    for (uint8_t i = 6; i < 12; i++)
-    {
-        if (i < 9)
-            hmi.setIntegerToNextion(String() + "b" + i + ".val", data.getEnableSchedule(_on_, loggerType, i - 6));
-        else
-            hmi.setIntegerToNextion(String() + "b" + i + ".val", data.getEnableSchedule(_off_, loggerType, i - 9));
-    }
-}
-
-void updateStrOfSetSchedule(uint8_t hourSchedule, uint8_t minuteSchedule)
+void Datalogger::updateStrOfSetSchedule(uint8_t hourSchedule, uint8_t minuteSchedule)
 {
     char strHour[3];
     char strMinute[3];
@@ -339,247 +304,329 @@ void Datalogger::scheduler(uint8_t loggerType)
     }
 }
 
+void Datalogger::updateTimeScheduler(uint8_t loggerType)
+{
+    uint8_t hour[4];
+    uint8_t minute[4];
+    bool enable[4];
+
+    data.getTimeSchedulerDatalog(_on_, loggerType, 0, &hour[0], &minute[0]);
+    data.getTimeSchedulerDatalog(_on_, loggerType, 1, &hour[1], &minute[1]);
+    data.getTimeSchedulerDatalog(_off_, loggerType, 0, &hour[2], &minute[2]);
+    data.getTimeSchedulerDatalog(_off_, loggerType, 1, &hour[3], &minute[3]);
+
+    enable[0] = data.getEnableTimeScheduler(_on_, loggerType, 0);
+    enable[1] = data.getEnableTimeScheduler(_on_, loggerType, 1);
+    enable[2] = data.getEnableTimeScheduler(_off_, loggerType, 0);
+    enable[3] = data.getEnableTimeScheduler(_off_, loggerType, 1);
+
+    hmi.setStringToNextion("t0.txt", (String() + utils.integerToString(hour[0], 2) + ":" + utils.integerToString(minute[0], 2)));
+    hmi.setStringToNextion("t1.txt", (String() + utils.integerToString(hour[1], 2) + ":" + utils.integerToString(minute[1], 2)));
+    hmi.setStringToNextion("t2.txt", (String() + utils.integerToString(hour[2], 2) + ":" + utils.integerToString(minute[2], 2)));
+    hmi.setStringToNextion("t3.txt", (String() + utils.integerToString(hour[3], 2) + ":" + utils.integerToString(minute[3], 2)));
+    hmi.setStringToNextion("t4.txt", utils.integerToString(hour[0], 2));
+    hmi.setStringToNextion("t5.txt", utils.integerToString(minute[0], 2));
+    hmi.setIntegerToNextion("bt0.val", enable[0]);
+    hmi.setIntegerToNextion("bt1.val", enable[1]);
+    hmi.setIntegerToNextion("bt2.val", enable[2]);
+    hmi.setIntegerToNextion("bt3.val", enable[3]);
+}
+
+void Datalogger::updateSelectedTimeScheduler(uint8_t loggerType, uint8_t optSelected)
+{
+    char hourSelectedStr[3];
+    char minuteSelectedStr[3];
+    char str[6];
+    uint8_t hour[4];
+    uint8_t minute[4];
+
+    switch (optSelected)
+    {
+    case 0:
+        data.getTimeSchedulerDatalog(_on_, loggerType, 0, &hour[0], &minute[0]);
+        utils.integerToString(hour[0], hourSelectedStr, 2);
+        utils.integerToString(minute[0], minuteSelectedStr, 2);
+        break;
+    case 1:
+        data.getTimeSchedulerDatalog(_on_, loggerType, 1, &hour[1], &minute[1]);
+        break;
+    case 2:
+        data.getTimeSchedulerDatalog(_off_, loggerType, 0, &hour[2], &minute[2]);
+        break;
+    case 3:
+        data.getTimeSchedulerDatalog(_off_, loggerType, 1, &hour[3], &minute[3]);
+        break;
+    default:
+        strcpy(hourSelectedStr, "00");
+        strcpy(minuteSelectedStr, "00");
+        break;
+    }
+    strcpy(str, hourSelectedStr);
+    strcat(str, ":");
+    strcat(str, minuteSelectedStr);
+
+    hmi.setStringToNextion(String() + "t" + optSelected + ".txt", str);
+    hmi.setStringToNextion("t4.txt", hourSelectedStr);
+    hmi.setStringToNextion("t5.txt", minuteSelectedStr);
+    for (uint8_t i = 0; i < 4; i++)
+        hmi.setIntegerToNextion(String() + "t" + optSelected + ".txt", (i == optSelected) ? color_cyan : color_white);
+}
+
 void Datalogger::timeScheduler(uint8_t loggerType)
 {
-    bool button[17];
-    bool enDis[6] = {false};
-    int8_t hourSchedule;
-    int8_t minuteSchedule;
-    uint8_t savingProgress = 0;
-    uint8_t settingState = 0;
-    bool set = false;
+    bool button[13];
+    uint8_t minute = 0;
+    uint8_t hour = 0;
+    uint8_t optSelected = 0;
+    bool enable[4];
 
     hmi.showPage("tsched");
     hmi.waitForPageRespon();
 
-    for (uint8_t i = 0; i < 6; i++)
-    {
-        if (i < 3)
-            enDis[i] = data.getEnableSchedule(_off_, loggerType, i);
-        else
-            enDis[i] = data.getEnableSchedule(_on_, loggerType, (i - 3));
-    }
-
-    updateStrOfAllSchedule(loggerType);
-    updateStatusOfAllSchedule(loggerType);
-    updateSchedulerSettingState(settingState);
-
-    hourSchedule = data.getScheduleDatalog(_on_, loggerType, 0) / 60;
-    minuteSchedule = data.getScheduleDatalog(_on_, loggerType, 0) % 60;
-    updateStrOfSetSchedule(hourSchedule, minuteSchedule);
+    updateTimeScheduler(loggerType);
+    data.getTimeSchedulerDatalog(_on_, loggerType, 0, &hour, &minute);
+    enable[0] = data.getEnableTimeScheduler(_on_, loggerType, 0);
+    enable[1] = data.getEnableTimeScheduler(_on_, loggerType, 1);
+    enable[2] = data.getEnableTimeScheduler(_off_, loggerType, 0);
+    enable[3] = data.getEnableTimeScheduler(_off_, loggerType, 1);
 
     while (true)
     {
-        for (uint8_t i = 0; i < 17; i++)
+        if (hmi.getExitPageFlag())
+        {
+            printDebugln("Exit Time Scheduler page");
+            break;
+        }
+        for (uint8_t i = 0; i < 13; i++)
         {
             button[i] = hmi.getDataButton(i);
             if (button[i])
             {
                 switch (i)
                 {
-                case 12:
-                    if (++hourSchedule > 23)
-                        hourSchedule = 0;
+                case 0:
+                    if (++hour > 23)
+                        hour = 0;
                     break;
-                case 13:
-                    if (--hourSchedule < 0)
-                        hourSchedule = 23;
-                    break;
-                case 14:
-                    if (++minuteSchedule > 59)
-                        minuteSchedule = 0;
-                    break;
-                case 15:
-                    if (--minuteSchedule < 0)
-                        minuteSchedule = 59;
-                    break;
-                case 16:
-                    if (settingState < 3)
-                        set = data.setScheduleDatalog(_on_, loggerType, settingState, ((hourSchedule * 60) + (minuteSchedule)));
+                case 1:
+                    if (hour > 0)
+                        hour--;
                     else
-                        set = data.setScheduleDatalog(_off_, loggerType, settingState - 3, ((hourSchedule * 60) + (minuteSchedule)));
-                    if (set)
-                    {
-                        hmi.setVisObjectNextion("saving", true);
-                        savingProgress = 0;
-                        while (savingProgress <= 100)
-                        {
-                            hmi.setIntegerToNextion("saving.val", savingProgress);
-                            savingProgress += 10;
-                            delay(100);
-                        }
-                        delay(100);
-                        hmi.setVisObjectNextion("saving", false);
-                        updateStrOfAllSchedule(loggerType);
-                    }
-                    hmi.flushAvailableButton();
+                        hour = 23;
+                    break;
+                case 2:
+                    if (++minute > 59)
+                        minute = 0;
+                    break;
+                case 3:
+                    if (minute > 0)
+                        minute--;
+                    else
+                        minute = 59;
+                    break;
+                case 4:
+                    if (optSelected == 0)
+                        data.setTimeSchedulerDatalog(loggerType, 0, ((hour * 60) + minute));
+                    else if (optSelected == 1)
+                        data.setTimeSchedulerDatalog(loggerType, 1, ((hour * 60) + minute));
+                    else if (optSelected == 2)
+                        data.setTimeSchedulerDatalog(loggerType, 0, ((hour * 60) + minute));
+                    else if (optSelected == 3)
+                        data.setTimeSchedulerDatalog(loggerType, 1, ((hour * 60) + minute));
+                    hmi.showSavingBarAnimation(500);
+                    break;
+                case 5:
+                    optSelected = 0;
+                    break;
+                case 6:
+                    optSelected = 1;
+                    break;
+                case 7:
+                    optSelected = 2;
+                    break;
+                case 8:
+                    optSelected = 3;
+                    break;
+                case 9:
+                    enable[0] = !enable[0];
+                    if (data.setEnableTimeScheduler(loggerType, 0, enable[0]))
+                        hmi.setIntegerToNextion("bt0.val", enable[0]);
+                    break;
+                case 10:
+                    enable[1] = !enable[1];
+                    if (data.setEnableTimeScheduler(loggerType, 1, enable[1]))
+                        hmi.setIntegerToNextion("bt1.val", enable[1]);
+                    break;
+                case 11:
+                    enable[2] = !enable[2];
+                    if (data.setEnableTimeScheduler(loggerType, 0, enable[2]))
+                        hmi.setIntegerToNextion("bt2.val", enable[2]);
+                    break;
+                case 12:
+                    enable[3] = !enable[3];
+                    if (data.setEnableTimeScheduler(loggerType, 1, enable[3]))
+                        hmi.setIntegerToNextion("bt3.val", enable[3]);
                     break;
                 default:
                     break;
                 }
-                if (i >= 0 && i <= 5)
+                if ((i >= 0 && i <= 3) || (i >= 5 && i <= 8))
                 {
-                    settingState = i;
-                    updateSchedulerSettingState(settingState);
-                    if (settingState < 3)
-                    {
-                        hourSchedule = (data.getScheduleDatalog(_on_, loggerType, settingState) / 60);
-                        minuteSchedule = (data.getScheduleDatalog(_on_, loggerType, settingState) % 60);
-                    }
-                    else
-                    {
-                        hourSchedule = (data.getScheduleDatalog(_off_, loggerType, settingState - 3) / 60);
-                        minuteSchedule = (data.getScheduleDatalog(_off_, loggerType, settingState - 3) % 60);
-                    }
-                    updateStrOfSetSchedule(hourSchedule, minuteSchedule);
-                }
-                else if (i >= 6 && i <= 11)
-                {
-                    if (i < 9)
-                    {
-                        enDis[i - 3] = !enDis[i - 3];
-                        data.setEnableSchedule(_on_, loggerType, (i - 6), enDis[i - 3]);
-                    }
-                    else
-                    {
-                        enDis[i - 9] = !enDis[i - 9];
-                        data.setEnableSchedule(_off_, loggerType, (i - 9), enDis[i - 9]);
-                    }
-                    updateStatusOfAllSchedule(loggerType);
-                }
-                else if (i >= 12 && i <= 15)
-                {
-                    updateStrOfSetSchedule(hourSchedule, minuteSchedule);
+                    updateSelectedTimeScheduler(loggerType, optSelected);
                 }
             }
-        }
-
-        if (hmi.getExitPageFlag())
-        {
-            printDebugln("Exit Scheduler page");
-            break;
         }
     }
 }
+
+void Datalogger::updateDateScheduler(uint8_t loggerType)
+{
+    uint8_t date[2];
+    uint8_t month[2];
+    uint8_t year[2];
+    bool enable[2];
+
+    data.getDateSchedulerDatalog(_on_, loggerType, &date[0], &month[0], &year[0]);
+    data.getDateSchedulerDatalog(_off_, loggerType, &date[1], &month[1], &year[1]);
+
+    enable[0] = data.getEnableDateScheduler(_on_, loggerType);
+    enable[1] = data.getEnableDateScheduler(_off_, loggerType);
+
+    hmi.setStringToNextion("t0.txt", (String() + utils.integerToString(date[0], 2) + "/" + utils.integerToString(month[0], 2) + "/" + utils.integerToString(year[0], 2)));
+    hmi.setStringToNextion("t1.txt", (String() + utils.integerToString(date[1], 2) + "/" + utils.integerToString(month[0], 2) + "/" + utils.integerToString(year[1], 2)));
+    hmi.setStringToNextion("t2.txt", utils.integerToString(date[0], 2));
+    hmi.setStringToNextion("t3.txt", utils.integerToString(month[0], 2));
+    hmi.setStringToNextion("t4.txt", utils.integerToString(year[0], 2));
+    hmi.setIntegerToNextion("bt0.val", enable[0]);
+    hmi.setIntegerToNextion("bt1.val", enable[1]);
+}
+
+void Datalogger::updateSelectedDateScheduler(uint8_t loggerType, uint8_t optSelected)
+{
+    char dateSelectedStr[3];
+    char monthSelectedStr[3];
+    char yearSelectedStr[3];
+    char str[9];
+    uint8_t date[2];
+    uint8_t month[2];
+    uint8_t year[2];
+
+    switch (optSelected)
+    {
+    case 0:
+        data.getDateSchedulerDatalog(_on_, loggerType, &date[0], &month[0], &year[0]);
+        utils.integerToString(date[0], dateSelectedStr, 2);
+        utils.integerToString(month[0], monthSelectedStr, 2);
+        utils.integerToString(year[0], yearSelectedStr, 2);
+        break;
+    case 1:
+        data.getDateSchedulerDatalog(_off_, loggerType, &date[1], &month[1], &year[1]);
+        utils.integerToString(date[1], dateSelectedStr, 2);
+        utils.integerToString(month[1], monthSelectedStr, 2);
+        utils.integerToString(year[1], yearSelectedStr, 2);
+        break;
+    default:
+        strcpy(dateSelectedStr, "01");
+        strcpy(monthSelectedStr, "01");
+        strcpy(yearSelectedStr, "21");
+        break;
+    }
+    strcpy(str, dateSelectedStr);
+    strcat(str, "/");
+    strcat(str, monthSelectedStr);
+    strcat(str, "/");
+    strcat(str, yearSelectedStr);
+
+    hmi.setStringToNextion(String() + "t" + optSelected + ".txt", str);
+    hmi.setStringToNextion("t2.txt", dateSelectedStr);
+    hmi.setStringToNextion("t3.txt", monthSelectedStr);
+    hmi.setStringToNextion("t4.txt", yearSelectedStr);
+    for (uint8_t i = 0; i < 2; i++)
+        hmi.setIntegerToNextion(String() + "t" + optSelected + ".txt", (i == optSelected) ? color_cyan : color_white);
+}
+
 void Datalogger::dateScheduler(uint8_t loggerType)
 {
-    bool button[17];
-    bool enDis[6] = {false};
-    int8_t hourSchedule;
-    int8_t minuteSchedule;
-    uint8_t savingProgress = 0;
-    uint8_t settingState = 0;
-    bool set = false;
+    bool button[11];
+    char dateSelectedStr[2];
+    char monthSelectedStr[2];
+    char yearSelectedStr[2];
+    uint8_t date;
+    uint8_t month;
+    uint8_t year;
+    bool enable[2];
+    bool optSelected = false;
 
-    hmi.showPage("dsched");
+    hmi.showPage("tsched");
     hmi.waitForPageRespon();
 
-    for (uint8_t i = 0; i < 6; i++)
-    {
-        if (i < 3)
-            enDis[i] = data.getEnableSchedule(_off_, loggerType, i);
-        else
-            enDis[i] = data.getEnableSchedule(_on_, loggerType, (i - 3));
-    }
-
-    updateStrOfAllSchedule(loggerType);
-    updateStatusOfAllSchedule(loggerType);
-    updateSchedulerSettingState(settingState);
-
-    hourSchedule = data.getScheduleDatalog(_on_, loggerType, 0) / 60;
-    minuteSchedule = data.getScheduleDatalog(_on_, loggerType, 0) % 60;
-    updateStrOfSetSchedule(hourSchedule, minuteSchedule);
+    updateDateScheduler(loggerType);
+    data.getDateSchedulerDatalog(_on_, loggerType, &date, &month, &year);
+    enable[0] = data.getEnableDateScheduler(_on_, loggerType);
+    enable[1] = data.getEnableDateScheduler(_off_, loggerType);
 
     while (true)
     {
-        for (uint8_t i = 0; i < 17; i++)
+        if (hmi.getExitPageFlag())
+        {
+            printDebugln("Exit Date Scheduler page");
+            break;
+        }
+        for (uint8_t i = 0; i < 11; i++)
         {
             button[i] = hmi.getDataButton(i);
             if (button[i])
             {
                 switch (i)
                 {
-                case 12:
-                    if (++hourSchedule > 23)
-                        hourSchedule = 0;
+                case 0:
+                    if (++date > 31)
+                        date = 0;
                     break;
-                case 13:
-                    if (--hourSchedule < 0)
-                        hourSchedule = 23;
-                    break;
-                case 14:
-                    if (++minuteSchedule > 59)
-                        minuteSchedule = 0;
-                    break;
-                case 15:
-                    if (--minuteSchedule < 0)
-                        minuteSchedule = 59;
-                    break;
-                case 16:
-                    if (settingState < 3)
-                        set = data.setScheduleDatalog(_on_, loggerType, settingState, ((hourSchedule * 60) + (minuteSchedule)));
+                case 1:
+                    if (date > 0)
+                        date--;
                     else
-                        set = data.setScheduleDatalog(_off_, loggerType, settingState - 3, ((hourSchedule * 60) + (minuteSchedule)));
-                    if (set)
-                    {
-                        hmi.setVisObjectNextion("saving", true);
-                        savingProgress = 0;
-                        while (savingProgress <= 100)
-                        {
-                            hmi.setIntegerToNextion("saving.val", savingProgress);
-                            savingProgress += 10;
-                            delay(100);
-                        }
-                        delay(100);
-                        hmi.setVisObjectNextion("saving", false);
-                        updateStrOfAllSchedule(loggerType);
-                    }
-                    hmi.flushAvailableButton();
+                        date = 31;
+                    break;
+                case 2:
+                    if (++month > 12)
+                        month = 0;
+                    break;
+                case 3:
+                    if (month > 0)
+                        month--;
+                    else
+                        month = 12;
+                    break;
+                case 4:
+                    if (++year > 99)
+                        year = 0;
+                    break;
+                case 5:
+                    if (year > 0)
+                        year--;
+                    else
+                        year = 99;
+                    break;
+                case 6:
+                    if (!optSelected)
+                        data.setDateSchedulerDatalog(_on_, loggerType, date, month, year));
+                    else
+                        data.setDateSchedulerDatalog(_off_, loggerType, date, month, year);
+                    break;
+                case 7:
+                    break;
+                case 8:
+                    break;
+                case 9:
+                    break;
+                case 10:
                     break;
                 default:
                     break;
                 }
-                if (i >= 0 && i <= 5)
-                {
-                    settingState = i;
-                    updateSchedulerSettingState(settingState);
-                    if (settingState < 3)
-                    {
-                        hourSchedule = (data.getScheduleDatalog(_on_, loggerType, settingState) / 60);
-                        minuteSchedule = (data.getScheduleDatalog(_on_, loggerType, settingState) % 60);
-                    }
-                    else
-                    {
-                        hourSchedule = (data.getScheduleDatalog(_off_, loggerType, settingState - 3) / 60);
-                        minuteSchedule = (data.getScheduleDatalog(_off_, loggerType, settingState - 3) % 60);
-                    }
-                    updateStrOfSetSchedule(hourSchedule, minuteSchedule);
-                }
-                else if (i >= 6 && i <= 11)
-                {
-                    if (i < 9)
-                    {
-                        enDis[i - 3] = !enDis[i - 3];
-                        data.setEnableSchedule(_on_, loggerType, (i - 6), enDis[i - 3]);
-                    }
-                    else
-                    {
-                        enDis[i - 9] = !enDis[i - 9];
-                        data.setEnableSchedule(_off_, loggerType, (i - 9), enDis[i - 9]);
-                    }
-                    updateStatusOfAllSchedule(loggerType);
-                }
-                else if (i >= 12 && i <= 15)
-                {
-                    updateStrOfSetSchedule(hourSchedule, minuteSchedule);
-                }
             }
-        }
-
-        if (hmi.getExitPageFlag())
-        {
-            printDebugln("Exit Scheduler page");
-            break;
         }
     }
 }
@@ -612,25 +659,24 @@ void Datalogger::updateSelectedBaudrateToNextion(bool type, uint8_t selected)
 
 bool Datalogger::checkSchedule(bool scheduleType, uint8_t loggerType)
 {
-    uint16_t timeMinute = 0;
+    // uint16_t timeMinute = 0;
+    // mtime.getActualTimeInMinute(&timeMinute);
 
-    mtime.getActualTimeInMinute(&timeMinute);
+    // printDebug(String() + (timeMinute / 60) + ":" + (timeMinute % 60) + " && " + (data.getScheduleDatalog(scheduleType, loggerType, 0) / 60) + ":" + (data.getScheduleDatalog(scheduleType, loggerType, 0) % 60) + " || ");
+    // printDebug(String() + (timeMinute / 60) + ":" + (timeMinute % 60) + " && " + (data.getScheduleDatalog(scheduleType, loggerType, 1) / 60) + ":" + (data.getScheduleDatalog(scheduleType, loggerType, 1) % 60) + " || ");
+    // printDebug(String() + (timeMinute / 60) + ":" + (timeMinute % 60) + " && " + (data.getScheduleDatalog(scheduleType, loggerType, 2) / 60) + ":" + (data.getScheduleDatalog(scheduleType, loggerType, 2) % 60) + " -> ");
+    // printDebug(loggerType == 0 ? "Serial " : loggerType == 1 ? "Local "
+    //                                                          : "Remote ");
+    // printDebug(scheduleType ? "On " : "Off ");
 
-    printDebug(String() + (timeMinute / 60) + ":" + (timeMinute % 60) + " && " + (data.getScheduleDatalog(scheduleType, loggerType, 0) / 60) + ":" + (data.getScheduleDatalog(scheduleType, loggerType, 0) % 60) + " || ");
-    printDebug(String() + (timeMinute / 60) + ":" + (timeMinute % 60) + " && " + (data.getScheduleDatalog(scheduleType, loggerType, 1) / 60) + ":" + (data.getScheduleDatalog(scheduleType, loggerType, 1) % 60) + " || ");
-    printDebug(String() + (timeMinute / 60) + ":" + (timeMinute % 60) + " && " + (data.getScheduleDatalog(scheduleType, loggerType, 2) / 60) + ":" + (data.getScheduleDatalog(scheduleType, loggerType, 2) % 60) + " -> ");
-    printDebug(loggerType == 0 ? "Serial " : loggerType == 1 ? "Local "
-                                                             : "Remote ");
-    printDebug(scheduleType ? "On " : "Off ");
-
-    if ((timeMinute == data.getScheduleDatalog(scheduleType, loggerType, 0) && data.getEnableSchedule(scheduleType, loggerType, 0)) ||
-        (timeMinute == data.getScheduleDatalog(scheduleType, loggerType, 1) && data.getEnableSchedule(scheduleType, loggerType, 1)) ||
-        (timeMinute == data.getScheduleDatalog(scheduleType, loggerType, 2) && data.getEnableSchedule(scheduleType, loggerType, 2)))
-    {
-        printDebugln("true");
-        return true;
-    }
-    printDebugln("false");
+    // if ((timeMinute == data.getScheduleDatalog(scheduleType, loggerType, 0) && data.getEnableSchedule(scheduleType, loggerType, 0)) ||
+    //     (timeMinute == data.getScheduleDatalog(scheduleType, loggerType, 1) && data.getEnableSchedule(scheduleType, loggerType, 1)) ||
+    //     (timeMinute == data.getScheduleDatalog(scheduleType, loggerType, 2) && data.getEnableSchedule(scheduleType, loggerType, 2)))
+    // {
+    //     printDebugln("true");
+    //     return true;
+    // }
+    // printDebugln("false");
     return false;
 }
 

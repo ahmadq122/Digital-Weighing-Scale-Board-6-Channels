@@ -490,7 +490,7 @@ start:
     }
 }
 
-void updateSetpointToNextion(uint8_t channel)
+void Settings::updateSetpointToNextion(uint8_t channel)
 {
     bool valid[7];
     uint8_t i = 0;
@@ -583,7 +583,7 @@ start:
     }
 }
 
-void updateAllAdcValue(void)
+void Settings::updateAllAdcValue(void)
 {
     hmi.setStringToNextion("t0.txt", ads.adcReadString[ads1][0]);
     hmi.setStringToNextion("t1.txt", ads.adcReadString[ads1][1]);
@@ -634,7 +634,7 @@ void Settings::zeroCalibration(void)
     }
 }
 
-void updatePointCalibParameter(uint8_t channel, uint8_t point)
+void Settings::updatePointCalibParameter(uint8_t channel, uint8_t point)
 {
     if (point > 0)
     {
