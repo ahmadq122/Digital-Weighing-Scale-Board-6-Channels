@@ -3,6 +3,7 @@
 #include "RTOS/RTOS.h"
 #include "PinMap.h"
 #include "Utility/Utility.h"
+#include "FlashMemory/FlashMemory.h"
 
 void ADS1232::begin(void)
 {
@@ -31,6 +32,10 @@ void ADS1232::begin(void)
         pinMode(DOUT[i], INPUT);
         pinMode(A0[i], OUTPUT);
     }
+    if (!data.getSpeedRate())
+        digitalWrite(speed, LOW);
+    else
+        digitalWrite(speed, HIGH);
     delay(10);
     powerUp();
     printDebugln("Init Pin done!");
@@ -77,7 +82,7 @@ bool ADS1232::init(uint8_t board)
     {
         if (!dataRead(board, 0, 1))
             timeOutCounter++;
-        if (timeOutCounter > 3)
+        if (timeOutCounter > 5)
         {
             printDebugln(String() + "Init ADS board " + (board + 1) + " Failed!");
             return false;
@@ -91,7 +96,7 @@ bool ADS1232::init(uint8_t board)
     {
         if (!dataRead(board, 1, 1))
             timeOutCounter++;
-        if (timeOutCounter > 3)
+        if (timeOutCounter > 5)
         {
             printDebugln(String() + "Init ADS board " + (board + 1) + " Failed!");
             return false;
@@ -110,16 +115,18 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
     unsigned int waitingTime;
     unsigned int SettlingTimeAfterChangeChannel = 0;
     char tempStr[15];
-    uint8_t data[3] = {0, 0, 0};
+    uint8_t dat[3] = {0, 0, 0};
 
     if (channel != prevChannel[board])
     {
         setChannel(board, channel);
 
         ////if setting speedrate used 80SPS
-        // SettlingTimeAfterChangeChannel = 55;
+        if (data.getSpeedRate())
+            SettlingTimeAfterChangeChannel = 55;
         //// if setting speedrate use 10SPS
-        SettlingTimeAfterChangeChannel = 405;
+        else
+            SettlingTimeAfterChangeChannel = 405;
         prevChannel[board] = channel;
     }
 
@@ -133,16 +140,20 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
     if (calibrating)
     {
         ////if setting speedrate used 80SPS
-        // waitingTime = 150;
+        if (data.getSpeedRate())
+            waitingTime = 150;
         ////if setting speedrate use 10SPS
-        waitingTime = 850;
+        else
+            waitingTime = 850;
     }
     else
     {
         ////if setting speedrate used 80SPS
-        // waitingTime = 20;
+        if (data.getSpeedRate())
+            waitingTime = 20;
         ////if setting speedrate use 10SPS
-        waitingTime = 150;
+        else
+            waitingTime = 150;
     }
 
     waitingTime += SettlingTimeAfterChangeChannel;
@@ -151,10 +162,10 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
 
     while (dataReady(board))
     {
-        if (rtos.milliSeconds - start > waitingTime)
+        if ((rtos.milliSeconds - start) > waitingTime)
         {
             if (rtos.startProgressBar < 100)
-                rtos.updateStartProgressBar(10);
+                rtos.updateStartProgressBar(2);
             return false; // Timeout waiting for HIGH}
         }
     }
@@ -162,10 +173,10 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
     start = rtos.milliSeconds;
     while (!dataReady(board))
     {
-        if (rtos.milliSeconds - start > waitingTime)
+        if ((rtos.milliSeconds - start) > waitingTime)
         {
             if (rtos.startProgressBar < 100)
-                rtos.updateStartProgressBar(10);
+                rtos.updateStartProgressBar(2);
             return false; // Timeout waiting for LOW
         }
     }
@@ -179,9 +190,9 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
     {
         digitalWrite(SCLK[board], 0);
         //pulse the clock pin 24 times to read the data
-        data[2] = shiftIn(DOUT[board], SCLK[board], MSBFIRST);
-        data[1] = shiftIn(DOUT[board], SCLK[board], MSBFIRST);
-        data[0] = shiftIn(DOUT[board], SCLK[board], MSBFIRST);
+        dat[2] = shiftIn(DOUT[board], SCLK[board], MSBFIRST);
+        dat[1] = shiftIn(DOUT[board], SCLK[board], MSBFIRST);
+        dat[0] = shiftIn(DOUT[board], SCLK[board], MSBFIRST);
 
         /* giving two additional clock cycle to put the DOUT pin to high after shifting the data and
                  * get offset calibration to avoid the inhereted offset error, this method can be used also
@@ -208,9 +219,9 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
         // The positive full-scale input produces an output code of 7FFFFFh
         // and the negative full-scale input produces an output code of 800000h
         // If we have a negative number, this will be translated between 0 -> 0x7FFFFF
-        if (data[2] & B1000000)
+        if (dat[2] & B1000000)
         {
-            data[2] &= B01111111;
+            dat[2] &= B01111111;
             to_add = 0x0UL;
         }
         // If we have a positive number, this will be translated between 0x800000 -> 0x1000000
@@ -218,7 +229,7 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
         {
             to_add = 0x7FFFFFUL; // 2^23
         }
-        ADC_value_read = (static_cast<long>(data[2]) << 16 | static_cast<long>(data[1]) << 8 | static_cast<long>(data[0]));
+        ADC_value_read = (static_cast<long>(dat[2]) << 16 | static_cast<long>(dat[1]) << 8 | static_cast<long>(dat[0]));
         ADC_value_read += to_add;
         //////data reading is stored in array to be filtered by moving average filter
         if (++index[board][channel] < SAMPLE_MOV_AVERAGE)
@@ -244,17 +255,132 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
         utils.integerToString(adcRead[board][channel], tempStr, 10);
         adcReadString[board][channel] = tempStr;
         if (rtos.startProgressBar < 100)
-            rtos.updateStartProgressBar(10);
+            rtos.updateStartProgressBar(2);
         return true;
     }
     if (rtos.startProgressBar < 100)
-        rtos.updateStartProgressBar(10);
+        rtos.updateStartProgressBar(2);
     return false;
 }
 
-float ADS1232::getWeightInUnit(float gram, uint8_t unit)
+float ADS1232::getWeightInUnit(byte channel)
 {
-    return gram / dividerUnits[unit];
+    uint32_t adcValue = 0;
+    uint8_t adcState = 0;
+    float weight = 0;
+
+    if (channel == Channel1)
+        adcValue = adcRead[ads1][0];
+    else if (channel == Channel2)
+        adcValue = adcRead[ads1][1];
+    else if (channel == Channel3)
+        adcValue = adcRead[ads2][0];
+    else if (channel == Channel4)
+        adcValue = adcRead[ads2][1];
+    else if (channel == Channel5)
+        adcValue = adcRead[ads3][0];
+    else if (channel == Channel6)
+        adcValue = adcRead[ads3][1];
+
+    int pointCalibrationStatus = getPointDoneCalibrated(data.getPointCalibrationStatus(channel));
+    //  Serial.print(ch ? "CHANNEL2:" : "CHANNEL1:");
+    // pointCalibrationStatus = constrain(pointCalibrationStatus - 1, 0, MAX_POINT_CAL);
+    adcState = constrain(weightADCstate(adcValue, channel), 0, pointCalibrationStatus);
+    // adcState = weightADCstate(adcValue, channel);
+    switch (adcState)
+    {
+    case 0:
+        weight = 0;
+        break;
+
+    default:
+        weight = (weightCalculationInGram((data.getAdcCalibrationPoint(channel, (adcState - 1)) + adcTare[channel]), data.getGramCalibrationPoint(channel, (adcState - 1)),
+                                          (data.getAdcCalibrationPoint(channel, adcState) + adcTare[channel]), data.getGramCalibrationPoint(channel, adcState), adcValue));
+        break;
+    }
+    //  Serial.println(String() + "adcState:" + adcState);
+    return weight / dividerUnits[data.getMeasurementUnit()];
+}
+
+String ADS1232::getStringWeightInUnit(uint8_t channel)
+{
+    uint8_t unit = data.getMeasurementUnit();
+    float weight = getWeightInUnit(channel);
+
+    switch (unit)
+    {
+    case gram:
+        return utils.floatToString(weight, 5, 2);
+        // break;
+    case milligram:
+        return utils.floatToString(weight, 7, 0);
+        // break;
+    case pound:
+        return utils.floatToString(weight, 3, 4);
+        // break;
+    case ounce:
+        return utils.floatToString(weight, 4, 3);
+        // break;
+    case troy_ounce:
+        return utils.floatToString(weight, 4, 3);
+        // break;
+    case carat:
+        return utils.floatToString(weight, 6, 1);
+        // break;
+    case kilogram:
+        return utils.floatToString(weight, 3, 4);
+        // break;
+    case newton:
+        return utils.floatToString(weight, 7, 0);
+        // break;
+    case dram:
+        return utils.floatToString(weight, 6, 1);
+        // break;
+    case grain:
+        return utils.floatToString(weight, 4, 3);
+        // break;
+    default:
+        return utils.floatToString(weight, 5, 2);
+        // break;
+    }
+}
+
+uint8_t ADS1232::getPointDoneCalibrated(uint8_t pointCalibrationStatus)
+{
+    for (uint8_t i = 0; i < MAX_POINT_CAL; i++)
+    {
+        if (!bitRead(pointCalibrationStatus, i))
+            return i;
+    }
+    return MAX_POINT_CAL;
+}
+
+unsigned char ADS1232::weightADCstate(unsigned long adcValue, uint8_t channel)
+{
+    for (byte i = 0; i < MAX_POINT_CAL; i++)
+    {
+        if (adcValue < data.getAdcCalibrationPoint(channel, i) + ADC_OFFSET)
+            return i;
+    }
+    return 0xFF;
+}
+
+float ADS1232::weightCalculationInGram(unsigned long x1, float y1, unsigned long x2, float y2, unsigned long adcValue)
+{
+    float m, b, gram;
+
+    m = ((float)x1 - (float)x2) / (y1 - y2);
+    b = (float)x1 - (m * y1);
+    gram = ((double)adcValue - b) / m;
+
+    if (gram <= 0)
+        gram = 0;
+    if (x1 >= x2 || y1 >= y2)
+    {
+        //    Serial.println(String() + "X1:" + x1 + " X2:" + x2 + " Y1:" + y1 + " Y2:" + y2);
+        return 999.00;
+    }
+    return gram;
 }
 
 ADS1232 ads;

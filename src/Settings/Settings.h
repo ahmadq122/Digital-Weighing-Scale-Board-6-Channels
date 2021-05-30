@@ -13,11 +13,11 @@ private:
     void brightness(void);
     void maximumWeight(void);
     void timeAndDate(void);
-    void batteryCapacity(void);
+    // void batteryCapacity(void);
     void debugMenu(void);
     void calibrationSensor(void);
     void setPoint(void);
-    void zeroCalibration(void);
+    void resetCalibration(void);
     void pointCalibration(void);
 
     void updateSelectedTimezoneToNextion(void);
@@ -25,7 +25,7 @@ private:
     void showBaudrateOption(bool type, bool show);
     void updateSelectedBaudrateToNextion(bool type, uint8_t selected);
     void updateSetpointToNextion(uint8_t channel);
-    void updateAllAdcValue(void);
+    void updateAdcValueString(uint8_t channel, uint32_t *oldValue);
     void updatePointCalibParameter(uint8_t channel, uint8_t point);
 };
 

@@ -10,11 +10,32 @@
 
 void Settings::mainMenu(void)
 {
-    bool button[7];
+    bool button[8];
+    bool adcRateValue = data.getSpeedRate();
+    uint8_t menuPage = 0;
 
 start:
-    hmi.showPage("settings");
-    hmi.waitForPageRespon();
+
+    if (menuPage == 0)
+    {
+        hmi.showPage("settings");
+        hmi.waitForPageRespon();
+    }
+    else
+    {
+        hmi.showPage("settings1");
+        hmi.waitForPageRespon();
+        if (adcRateValue)
+        {
+            hmi.setIntegerToNextion("b0.picc", Settings11_Menu_Normal_Btn);
+            hmi.setIntegerToNextion("b0.picc2", Settings11_Menu_Prs_Btn);
+        }
+        else
+        {
+            hmi.setIntegerToNextion("b0.picc", Settings1_Menu_Normal_Btn);
+            hmi.setIntegerToNextion("b0.picc2", Settings1_Menu_Prs_Btn);
+        }
+    }
     printDebugln("Settings page opened");
 
     while (true)
@@ -25,7 +46,7 @@ start:
             printDebugln("Exit Settings page");
             return;
         }
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < 8; i++)
         {
             button[i] = hmi.getDataButton(i);
             if (button[i])
@@ -33,28 +54,61 @@ start:
                 switch (i)
                 {
                 case 0:
-                    printDebugln("Timezone page opened");
-                    timeZone();
+                    if (menuPage == 0)
+                    {
+                        printDebugln("Timezone page opened");
+                        timeZone();
+                    }
+                    else if (menuPage == 1)
+                    {
+                        printDebugln("ADC Rate value changed");
+                        adcRateValue = !adcRateValue;
+                        data.setSpeedRate(adcRateValue);
+                        hmi.showSavingBarAnimation(1000);
+                    }
                     break;
                 case 1:
                     printDebugln("Brightness page opened");
-                    brightness();
+                    if (menuPage == 0)
+                        brightness();
                     break;
                 case 2:
                     printDebugln("Maximum page opened");
-                    maximumWeight();
+                    if (menuPage == 0)
+                        maximumWeight();
                     break;
                 case 3:
                     printDebugln("Set time and date");
-                    timeAndDate();
+                    if (menuPage == 0)
+                        timeAndDate();
                     break;
                 case 4:
                     printDebugln("Debug page opened");
-                    debugMenu();
+                    if (menuPage == 0)
+                        debugMenu();
                     break;
                 case 5:
                     printDebugln("Calibration page opened");
-                    calibrationSensor();
+                    if (menuPage == 0)
+                        calibrationSensor();
+                    break;
+                case 6:
+                    printDebugln("Left menu page");
+                    if (menuPage == 1)
+                    {
+                        // hmi.showPage("settings");
+                        // hmi.waitForPageRespon();
+                        menuPage = 0;
+                    }
+                    break;
+                case 7:
+                    printDebugln("Right menu page");
+                    if (menuPage == 0)
+                    {
+                        // hmi.showPage("settings1");
+                        // hmi.waitForPageRespon();
+                        menuPage = 1;
+                    }
                     break;
                 default:
                     break;
@@ -170,15 +224,16 @@ void Settings::brightness(void)
                 case 0:
                     popup = !popup;
                     hmi.setVisObjectNextion("q2", popup);
-                    for (uint8_t i = 1; i <= 6; i++)
+                    for (uint8_t a = 1; a <= 6; a++)
                     {
-                        hmi.setVisObjectNextion(String() + "b" + i, popup);
+                        hmi.setVisObjectNextion(String() + "b" + a, popup);
                     }
                     break;
                 default:
                     data.setDimScreenTimer(i - 1);
+                    rtos.dimmCounterDownSecond = data.getDimScreenTimer();
                     hmi.setVisObjectNextion("q2", false);
-                    for (uint8_t i = 1; i <= 6; i++)
+                    for (uint8_t a = 1; a <= 6; a++)
                     {
                         hmi.setVisObjectNextion(String() + "b" + i, false);
                     }
@@ -352,25 +407,25 @@ void Settings::timeAndDate(void)
     }
 }
 
-void Settings::batteryCapacity(void)
-{
-    bool button[2] = {false,
-                      false};
-    hmi.showPage("numpad");
-    hmi.waitForPageRespon();
-    hmi.setStringToNextion("num_string.txt", String() + data.getBatteryCapacity());
-    while (!button[0] && !button[1])
-    {
-        // hmi.serialEvent_2();
-        for (uint8_t i = 0; i < 2; i++)
-            button[i] = hmi.getDataButton(i);
-    }
-    if (button[1])
-    {
-        data.setBatteryCapacity(static_cast<uint16_t>(atoi(hmi.getDataString(0))));
-        printDebugln(String() + "Battery capacity set: " + data.getBatteryCapacity() + " mAh");
-    }
-}
+// void Settings::batteryCapacity(void)
+// {
+//     bool button[2] = {false,
+//                       false};
+//     hmi.showPage("numpad");
+//     hmi.waitForPageRespon();
+//     hmi.setStringToNextion("num_string.txt", String() + data.getBatteryCapacity());
+//     while (!button[0] && !button[1])
+//     {
+//         // hmi.serialEvent_2();
+//         for (uint8_t i = 0; i < 2; i++)
+//             button[i] = hmi.getDataButton(i);
+//     }
+//     if (button[1])
+//     {
+//         data.setBatteryCapacity(static_cast<uint16_t>(atoi(hmi.getDataString(0))));
+//         printDebugln(String() + "Battery capacity set: " + data.getBatteryCapacity() + " mAh");
+//     }
+// }
 
 void Settings::showBaudrateOption(bool type, bool show)
 {
@@ -476,10 +531,10 @@ start:
                     setPoint();
                     break;
                 case 1:
-                    zeroCalibration();
+                    pointCalibration();
                     break;
                 case 2:
-                    pointCalibration();
+                    resetCalibration();
                     break;
                 default:
                     break;
@@ -583,55 +638,61 @@ start:
     }
 }
 
-void Settings::updateAllAdcValue(void)
+void Settings::updateAdcValueString(uint8_t channel, uint32_t *oldValue)
 {
-    hmi.setStringToNextion("t0.txt", ads.adcReadString[ads1][0]);
-    hmi.setStringToNextion("t1.txt", ads.adcReadString[ads1][1]);
-    hmi.setStringToNextion("t2.txt", ads.adcReadString[ads2][0]);
-    hmi.setStringToNextion("t3.txt", ads.adcReadString[ads2][1]);
-    hmi.setStringToNextion("t4.txt", ads.adcReadString[ads3][0]);
-    hmi.setStringToNextion("t5.txt", ads.adcReadString[ads3][1]);
-}
-
-void Settings::zeroCalibration(void)
-{
-    uint8_t setState = 0;
-
-    hmi.showPage("zero");
-    hmi.waitForPageRespon();
-
-    while (true)
+    if (channel == Channel1)
     {
-        // hmi.serialEvent_2();
-        if (hmi.getDataButton(0))
+        if (*oldValue != ads.adcRead[ads1][0])
         {
-            if (++setState >= 3)
-                setState = 3;
-            if (setState == 1)
-            {
-                hmi.setIntegerToNextion("b1.picc", Zero_Normal_Btn_2);
-                hmi.setIntegerToNextion("b1.picc2", Zero_Prs_Btn_2);
-                hmi.setIntegerToNextion("q1.picc", Zero_Normal_Btn_2);
-                updateAllAdcValue();
-            }
-            else if (setState == 2)
-            {
-                data.setAdcCalibrationPoint(0, 0, ads.adcRead[0][0]);
-                data.setAdcCalibrationPoint(1, 0, ads.adcRead[0][1]);
-                data.setAdcCalibrationPoint(2, 0, ads.adcRead[1][0]);
-                data.setAdcCalibrationPoint(3, 0, ads.adcRead[1][1]);
-                data.setAdcCalibrationPoint(4, 0, ads.adcRead[2][0]);
-                data.setAdcCalibrationPoint(5, 0, ads.adcRead[2][1]);
-
-                hmi.showSavingBarAnimation(500);
-            }
-        }
-        if (hmi.getExitPageFlag())
-        {
-            printDebugln("Exit Zero Calibration page");
-            break;
+            *oldValue = ads.adcRead[ads1][0];
+            hmi.setStringToNextion("t0.txt", ads.adcReadString[ads1][0]);
         }
     }
+    else if (channel == Channel2)
+    {
+        if (*oldValue != ads.adcRead[ads1][1])
+        {
+            *oldValue = ads.adcRead[ads1][1];
+            hmi.setStringToNextion("t1.txt", ads.adcReadString[ads1][1]);
+        }
+    }
+    else if (channel == Channel3)
+    {
+        if (*oldValue != ads.adcRead[ads2][0])
+        {
+            *oldValue = ads.adcRead[ads2][0];
+            hmi.setStringToNextion("t2.txt", ads.adcReadString[ads2][0]);
+        }
+    }
+    else if (channel == Channel4)
+    {
+        if (*oldValue != ads.adcRead[ads2][1])
+        {
+            *oldValue = ads.adcRead[ads2][1];
+            hmi.setStringToNextion("t3.txt", ads.adcReadString[ads2][1]);
+        }
+    }
+    else if (channel == Channel5)
+    {
+        if (*oldValue != ads.adcRead[ads3][0])
+        {
+            *oldValue = ads.adcRead[ads3][0];
+            hmi.setStringToNextion("t4.txt", ads.adcReadString[ads3][0]);
+        }
+    }
+    else if (channel == Channel6)
+    {
+        if (*oldValue != ads.adcRead[ads3][1])
+        {
+            *oldValue = ads.adcRead[ads3][1];
+            hmi.setStringToNextion("t5.txt", ads.adcReadString[ads3][1]);
+        }
+    }
+}
+
+void Settings::resetCalibration(void)
+{
+
 }
 
 void Settings::updatePointCalibParameter(uint8_t channel, uint8_t point)
@@ -754,8 +815,8 @@ void Settings::pointCalibration(void)
                             data.setPointCalibrationStatus(channelState, pointState, true);
                         else
                             data.setPointCalibrationStatus(channelState, pointState, false);
-                        
-                        hmi.showSavingBarAnimation(150);
+
+                        hmi.showSavingBarAnimation(100);
 
                         hmi.setIntegerToNextion("b4.picc", Pointcal_Normal_Bkg);
                         hmi.setIntegerToNextion("b4.picc2", Pointcal_Prs_Bkg);
@@ -763,12 +824,18 @@ void Settings::pointCalibration(void)
                     }
                     break;
                 case 5:
-                    data.setPointCalibrationStatus(channelState, pointState, false);
+                    if (data.getPointCalibrationStatus(channelState, pointState))
+                    {
+                        data.setPointCalibrationStatus(channelState, pointState, false);
+                        hmi.showSavingBarAnimation(100);
+                    }
                     break;
                 default:
                     break;
                 }
+
                 updatePointCalibParameter(channelState, pointState);
+
                 if (i != 4)
                 {
                     if (settingState == 0)

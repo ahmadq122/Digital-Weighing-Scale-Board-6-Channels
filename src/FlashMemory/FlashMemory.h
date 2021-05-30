@@ -18,7 +18,8 @@ enum GeneralStatus
     NETWORK_ENABLE,
     LOCAL_LOG_ENABLE,
     SERIAL_LOG_ENABLE,
-    WEB_LOG_ENABLE
+    WEB_LOG_ENABLE,
+    SPEED_RATE
 };
 enum BaudrateSerial
 {
@@ -35,6 +36,12 @@ enum Schedule
 {
     _off_,
     _on_
+};
+
+enum SpeedRate
+{
+    SPS_10,
+    SPS_80
 };
 
 #define DATA_V_BEEN_WRITTEN_FLAG 0xAA
@@ -58,8 +65,8 @@ public:
     bool setDebugMode(bool newValue);
     bool setNetworkEnable(bool newValue);
     bool setDatalogStatus(uint8_t loggerType, bool newValue);
-    bool setBatteryCapacity(uint16_t newValue);
-    bool setFieldChannel(uint8_t channel, uint8_t newValue);
+    // bool setBatteryCapacity(uint16_t newValue);
+    // bool setFieldChannel(uint8_t channel, uint8_t newValue);
     bool setPointCalibrationStatus(uint8_t channel, uint8_t point, bool newValue);
     bool setPeriodDatalog(uint8_t loggerType, uint32_t newValue);
     bool setBaudrateSerial(bool type, uint8_t newValue);
@@ -72,6 +79,7 @@ public:
     bool setEnableDateScheduler(bool scheduleType, uint8_t loggerType, bool newValue);
     bool setDimScreenTimer(uint8_t newValue);
     bool setScreenBrightness(uint8_t newValue);
+    bool setSpeedRate(bool newValue);
 
     //reading data flash
     const char *getSSID(void);
@@ -84,10 +92,10 @@ public:
     bool getDebugMode(void);
     bool getNetworkEnable(void);
     bool getDatalogStatus(uint8_t loggerType);
-    uint8_t getFieldChannel(uint8_t channel);
+    // uint8_t getFieldChannel(uint8_t channel);
     bool getPointCalibrationStatus(uint8_t channel, uint8_t point);
     uint8_t getPointCalibrationStatus(uint8_t channel);
-    uint16_t getBatteryCapacity(void);
+    // uint16_t getBatteryCapacity(void);
     uint32_t getPeriodDatalog(uint8_t loggerType);
     uint32_t getBaudrateSerial(bool type);
     uint8_t getBaudrateSerialIndex(bool type);
@@ -100,33 +108,9 @@ public:
     bool getEnableDateScheduler(bool scheduleType, uint8_t loggerType);
     uint16_t getDimScreenTimer(void);
     uint8_t getScreenBrightness(void);
-
-    struct dataFlash
-    {
-        char ssid[MAX_SSID_CHAR];
-        char password[MAX_PASSWORD_CHAR];
-        char keyAPI[MAX_APIKEY_CHAR];
-        uint8_t encryptType;
-        uint8_t timeZone = 0;
-        uint8_t measurementUnit = 0;
-        uint8_t channelEnDisStatus = B00111111;
-        uint8_t generalStatus = B00000001; //na, na, na, enable web log, enable serial log, enable card log, networkEnable, debugMode
-        uint8_t fieldChannel[MAX_CHANNEL];
-        uint8_t pointCalibrationStatus[MAX_CHANNEL];
-        uint16_t batteryCapacity = 1000;
-        uint32_t periodDataLog[3];
-        uint8_t baudrateSerial[2];
-        uint32_t adcCalibrationPoint[MAX_CHANNEL][MAX_POINT_CAL];
-        float gramCalibrationPoint[MAX_CHANNEL][MAX_POINT_CAL - 1];
-        float gramMaximum[MAX_CHANNEL];
-        uint16_t timeSchedulerDataLog[2][3][2];
-        uint16_t dateSchedulerDataLog[2][3];
-        uint8_t enableDateScheduler = 0;
-        uint8_t dimScreenTimer = 0;
-        uint8_t screenBrightness = 100;
-    } flash;
-
-private:
+    bool getSpeedRate(void);
+    bool resetDefault(void);
+    bool resetCalibrationData(uint8_t channel);
     // struct dataFlash
     // {
     //     char ssid[MAX_SSID_CHAR];
@@ -139,7 +123,7 @@ private:
     //     uint8_t generalStatus = B00000001; //na, na, na, enable web log, enable serial log, enable card log, networkEnable, debugMode
     //     uint8_t fieldChannel[MAX_CHANNEL];
     //     uint8_t pointCalibrationStatus[MAX_CHANNEL];
-    //     uint16_t batteryCapacity = 1000;
+    //    // uint16_t batteryCapacity = 1000;
     //     uint32_t periodDataLog[3];
     //     uint8_t baudrateSerial[2];
     //     uint32_t adcCalibrationPoint[MAX_CHANNEL][MAX_POINT_CAL];
@@ -151,6 +135,32 @@ private:
     //     uint8_t dimScreenTimer = 0;
     //     uint8_t screenBrightness = 100;
     // } flash;
+
+private:
+    struct dataFlash
+    {
+        char ssid[MAX_SSID_CHAR];
+        char password[MAX_PASSWORD_CHAR];
+        char keyAPI[MAX_APIKEY_CHAR];
+        uint8_t encryptType;
+        uint8_t timeZone = 0;
+        uint8_t measurementUnit = 0;
+        uint8_t channelEnDisStatus = B00111111;
+        uint8_t generalStatus = B00000001; //na, na, spped rate, enable web log, enable serial log, enable card log, networkEnable, debugMode
+        // uint8_t fieldChannel[MAX_CHANNEL];
+        uint8_t pointCalibrationStatus[MAX_CHANNEL];
+        // uint16_t batteryCapacity = 1000;
+        uint32_t periodDataLog[3];
+        uint8_t baudrateSerial[2];
+        uint32_t adcCalibrationPoint[MAX_CHANNEL][MAX_POINT_CAL];
+        float gramCalibrationPoint[MAX_CHANNEL][MAX_POINT_CAL - 1];
+        float gramMaximum[MAX_CHANNEL];
+        uint16_t timeSchedulerDataLog[2][3][2];
+        uint16_t dateSchedulerDataLog[2][3];
+        uint8_t enableDateScheduler = 0;
+        uint8_t dimScreenTimer = 0;
+        uint8_t screenBrightness = 100;
+    } flash;
 
     uint32_t baudrate[10] = {
         4800,
@@ -164,9 +174,9 @@ private:
         250000,
         500000};
     uint16_t dim[6] = {0, 30, 60, 120, 180, 300};
-    bool resetDefault();
+
     bool flushFlash();
-    void storeDataToFlash(void);
+    bool storeDataToFlash(void);
 };
 
 extern MemoryFlash data;

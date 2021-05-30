@@ -121,15 +121,15 @@ void Task_01(void *pvParameters) // This is a task.
             rtos.secondTriggered[i] = 1;
         }
 
-        if (data.getDimScreenTimer() != 0)
+        if (data.getDimScreenTimer() > 0)
         {
             if (rtos.dimmCounterDownSecond)
                 rtos.dimmCounterDownSecond--;
             else
             {
-                if (rtos.currentBrightness != 10)
+                if (rtos.currentBrightness > 10)
                 {
-                    rtos.currentBrightness = 0;
+                    rtos.currentBrightness = 10;
                     hmi.setIntegerToNextion("dim", rtos.currentBrightness);
                 }
             }
@@ -178,15 +178,22 @@ void Task_04(void *pvParameters) // This is a task.
         ads.isAvailable[board] = true;
         for (;;) // A Task shall never return or exit.
         {
-            if (ads.dataRead(board, channel, 1))
+            if (data.getChannelEnDisStatus(channel))
             {
-                if (++counter > SAMPLE_MOV_AVERAGE / 5)
+                if (ads.dataRead(board, channel, 1))
                 {
-                    counter = 0;
-                    channel = !channel;
+                    if (++counter > 1)
+                    {
+                        counter = 0;
+                        channel = !channel;
+                    }
                 }
+                vTaskDelay(20);
             }
-            vTaskDelay(10);
+            else
+            {
+                vTaskDelay(1000);
+            }
         }
     }
     else
@@ -213,15 +220,22 @@ void Task_05(void *pvParameters) // This is a task.
         ads.isAvailable[board] = true;
         for (;;) // A Task shall never return or exit.
         {
-            if (ads.dataRead(board, channel, 1))
+            if (data.getChannelEnDisStatus(2 + channel))
             {
-                if (++counter > SAMPLE_MOV_AVERAGE / 5)
+                if (ads.dataRead(board, channel, 1))
                 {
-                    counter = 0;
-                    channel = !channel;
+                    if (++counter > 1)
+                    {
+                        counter = 0;
+                        channel = !channel;
+                    }
                 }
+                vTaskDelay(20);
             }
-            vTaskDelay(10);
+            else
+            {
+                vTaskDelay(1000);
+            }
         }
     }
     else
@@ -247,15 +261,22 @@ void Task_06(void *pvParameters) // This is a task.
         ads.isAvailable[board] = true;
         for (;;) // A Task shall never return or exit.
         {
-            if (ads.dataRead(board, channel, 1))
+            if (data.getChannelEnDisStatus(4 + channel))
             {
-                if (++counter > SAMPLE_MOV_AVERAGE / 5)
+                if (ads.dataRead(board, channel, 1))
                 {
-                    counter = 0;
-                    channel = !channel;
+                    if (++counter > 1)
+                    {
+                        counter = 0;
+                        channel = !channel;
+                    }
                 }
+                vTaskDelay(20);
             }
-            vTaskDelay(10);
+            else
+            {
+                vTaskDelay(1000);
+            }
         }
     }
     else

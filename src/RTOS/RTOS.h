@@ -12,7 +12,7 @@ public:
     uint32_t counterDownSecondsLog[3] = {0};
     uint32_t interruptSeconds = 0;
     uint16_t dimmCounterDownSecond = 30;
-    uint8_t currentBrightness = 0;
+    uint8_t currentBrightness = 100;
     bool remoteLogTriggered[6] = {false};
     bool secondBlink = false;
     bool secondTriggered[10] = {false};

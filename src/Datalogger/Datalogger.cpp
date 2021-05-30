@@ -332,7 +332,7 @@ void Datalogger::updateTimeScheduler(uint8_t loggerType)
     hmi.setIntegerToNextion("bt3.val", enable[3]);
 }
 
-void Datalogger::updateSelectedTimeScheduler(uint8_t loggerType, uint8_t optSelected)
+void Datalogger::updateSelectedTimeScheduler(uint8_t loggerType, uint8_t optSelected, uint8_t *dataHour, uint8_t *dataMinute)
 {
     char hourSelectedStr[3];
     char minuteSelectedStr[3];
@@ -349,18 +349,26 @@ void Datalogger::updateSelectedTimeScheduler(uint8_t loggerType, uint8_t optSele
         break;
     case 1:
         data.getTimeSchedulerDatalog(_on_, loggerType, 1, &hour[1], &minute[1]);
+        utils.integerToString(hour[1], hourSelectedStr, 2);
+        utils.integerToString(minute[1], minuteSelectedStr, 2);
         break;
     case 2:
         data.getTimeSchedulerDatalog(_off_, loggerType, 0, &hour[2], &minute[2]);
+        utils.integerToString(hour[2], hourSelectedStr, 2);
+        utils.integerToString(minute[2], minuteSelectedStr, 2);
         break;
     case 3:
         data.getTimeSchedulerDatalog(_off_, loggerType, 1, &hour[3], &minute[3]);
+        utils.integerToString(hour[3], hourSelectedStr, 2);
+        utils.integerToString(minute[3], minuteSelectedStr, 2);
         break;
     default:
         strcpy(hourSelectedStr, "00");
         strcpy(minuteSelectedStr, "00");
         break;
     }
+    *dataHour = hour[optSelected];
+    *dataMinute = minute[optSelected];
     strcpy(str, hourSelectedStr);
     strcat(str, ":");
     strcat(str, minuteSelectedStr);
@@ -369,7 +377,7 @@ void Datalogger::updateSelectedTimeScheduler(uint8_t loggerType, uint8_t optSele
     hmi.setStringToNextion("t4.txt", hourSelectedStr);
     hmi.setStringToNextion("t5.txt", minuteSelectedStr);
     for (uint8_t i = 0; i < 4; i++)
-        hmi.setIntegerToNextion(String() + "t" + optSelected + ".txt", (i == optSelected) ? color_cyan : color_white);
+        hmi.setIntegerToNextion(String() + "t" + i + ".pco", (i == optSelected) ? color_cyan : color_white);
 }
 
 void Datalogger::timeScheduler(uint8_t loggerType)
@@ -384,7 +392,8 @@ void Datalogger::timeScheduler(uint8_t loggerType)
     hmi.waitForPageRespon();
 
     updateTimeScheduler(loggerType);
-    data.getTimeSchedulerDatalog(_on_, loggerType, 0, &hour, &minute);
+    updateSelectedTimeScheduler(loggerType, optSelected, &hour, &minute);
+    // data.getTimeSchedulerDatalog(_on_, loggerType, 0, &hour, &minute);
     enable[0] = data.getEnableTimeScheduler(_on_, loggerType, 0);
     enable[1] = data.getEnableTimeScheduler(_on_, loggerType, 1);
     enable[2] = data.getEnableTimeScheduler(_off_, loggerType, 0);
@@ -407,33 +416,38 @@ void Datalogger::timeScheduler(uint8_t loggerType)
                 case 0:
                     if (++hour > 23)
                         hour = 0;
+                    hmi.setStringToNextion("t4.txt", utils.integerToString(hour, 2));
+
                     break;
                 case 1:
                     if (hour > 0)
                         hour--;
                     else
                         hour = 23;
+                    hmi.setStringToNextion("t4.txt", utils.integerToString(hour, 2));
                     break;
                 case 2:
                     if (++minute > 59)
                         minute = 0;
+                    hmi.setStringToNextion("t5.txt", utils.integerToString(minute, 2));
                     break;
                 case 3:
                     if (minute > 0)
                         minute--;
                     else
                         minute = 59;
+                    hmi.setStringToNextion("t5.txt", utils.integerToString(minute, 2));
                     break;
                 case 4:
                     if (optSelected == 0)
-                        data.setTimeSchedulerDatalog(loggerType, 0, ((hour * 60) + minute));
+                        data.setTimeSchedulerDatalog(_on_, loggerType, 0, ((hour * 60) + minute));
                     else if (optSelected == 1)
-                        data.setTimeSchedulerDatalog(loggerType, 1, ((hour * 60) + minute));
+                        data.setTimeSchedulerDatalog(_on_, loggerType, 1, ((hour * 60) + minute));
                     else if (optSelected == 2)
-                        data.setTimeSchedulerDatalog(loggerType, 0, ((hour * 60) + minute));
+                        data.setTimeSchedulerDatalog(_off_, loggerType, 0, ((hour * 60) + minute));
                     else if (optSelected == 3)
-                        data.setTimeSchedulerDatalog(loggerType, 1, ((hour * 60) + minute));
-                    hmi.showSavingBarAnimation(500);
+                        data.setTimeSchedulerDatalog(_off_, loggerType, 1, ((hour * 60) + minute));
+                    hmi.showSavingBarAnimation(200);
                     break;
                 case 5:
                     optSelected = 0;
@@ -449,30 +463,44 @@ void Datalogger::timeScheduler(uint8_t loggerType)
                     break;
                 case 9:
                     enable[0] = !enable[0];
-                    if (data.setEnableTimeScheduler(loggerType, 0, enable[0]))
+                    if (data.setEnableTimeScheduler(_on_, loggerType, 0, enable[0]))
+                    {
+                        hmi.showSavingBarAnimation(100);
                         hmi.setIntegerToNextion("bt0.val", enable[0]);
+                    }
                     break;
                 case 10:
                     enable[1] = !enable[1];
-                    if (data.setEnableTimeScheduler(loggerType, 1, enable[1]))
+                    if (data.setEnableTimeScheduler(_on_, loggerType, 1, enable[1]))
+                    {
+                        hmi.showSavingBarAnimation(100);
                         hmi.setIntegerToNextion("bt1.val", enable[1]);
+                    }
                     break;
                 case 11:
                     enable[2] = !enable[2];
-                    if (data.setEnableTimeScheduler(loggerType, 0, enable[2]))
+                    if (data.setEnableTimeScheduler(_off_, loggerType, 0, enable[2]))
+                    {
+                        hmi.showSavingBarAnimation(100);
                         hmi.setIntegerToNextion("bt2.val", enable[2]);
+                    }
                     break;
                 case 12:
                     enable[3] = !enable[3];
-                    if (data.setEnableTimeScheduler(loggerType, 1, enable[3]))
+                    if (data.setEnableTimeScheduler(_off_, loggerType, 1, enable[3]))
+                    {
+                        hmi.showSavingBarAnimation(100);
                         hmi.setIntegerToNextion("bt3.val", enable[3]);
+                    }
                     break;
                 default:
                     break;
                 }
-                if ((i >= 0 && i <= 3) || (i >= 5 && i <= 8))
+                if (i >= 4 && i <= 8)
                 {
-                    updateSelectedTimeScheduler(loggerType, optSelected);
+                    updateSelectedTimeScheduler(loggerType, optSelected, &hour, &minute);
+                    // hmi.setStringToNextion("t4.txt", utils.integerToString(hour, 2));
+                    // hmi.setStringToNextion("t5.txt", utils.integerToString(minute, 2));
                 }
             }
         }
@@ -501,7 +529,7 @@ void Datalogger::updateDateScheduler(uint8_t loggerType)
     hmi.setIntegerToNextion("bt1.val", enable[1]);
 }
 
-void Datalogger::updateSelectedDateScheduler(uint8_t loggerType, uint8_t optSelected)
+void Datalogger::updateSelectedDateScheduler(uint8_t loggerType, uint8_t optSelected, uint8_t *dataDate, uint8_t *dataMonth, uint8_t *dataYear)
 {
     char dateSelectedStr[3];
     char monthSelectedStr[3];
@@ -531,6 +559,9 @@ void Datalogger::updateSelectedDateScheduler(uint8_t loggerType, uint8_t optSele
         strcpy(yearSelectedStr, "21");
         break;
     }
+    *dataDate = date[optSelected];
+    *dataMonth = month[optSelected];
+    *dataYear = year[optSelected];
     strcpy(str, dateSelectedStr);
     strcat(str, "/");
     strcat(str, monthSelectedStr);
@@ -542,26 +573,24 @@ void Datalogger::updateSelectedDateScheduler(uint8_t loggerType, uint8_t optSele
     hmi.setStringToNextion("t3.txt", monthSelectedStr);
     hmi.setStringToNextion("t4.txt", yearSelectedStr);
     for (uint8_t i = 0; i < 2; i++)
-        hmi.setIntegerToNextion(String() + "t" + optSelected + ".txt", (i == optSelected) ? color_cyan : color_white);
+        hmi.setIntegerToNextion(String() + "t" + i + ".pco", (i == optSelected) ? color_cyan : color_white);
 }
 
 void Datalogger::dateScheduler(uint8_t loggerType)
 {
     bool button[11];
-    char dateSelectedStr[2];
-    char monthSelectedStr[2];
-    char yearSelectedStr[2];
     uint8_t date;
     uint8_t month;
     uint8_t year;
     bool enable[2];
     bool optSelected = false;
 
-    hmi.showPage("tsched");
+    hmi.showPage("dsched");
     hmi.waitForPageRespon();
 
     updateDateScheduler(loggerType);
-    data.getDateSchedulerDatalog(_on_, loggerType, &date, &month, &year);
+    updateSelectedDateScheduler(loggerType, optSelected, &date, &month, &year);
+    //data.getDateSchedulerDatalog(_on_, loggerType, &date, &month, &year);
     enable[0] = data.getEnableDateScheduler(_on_, loggerType);
     enable[1] = data.getEnableDateScheduler(_off_, loggerType);
 
@@ -582,49 +611,74 @@ void Datalogger::dateScheduler(uint8_t loggerType)
                 case 0:
                     if (++date > 31)
                         date = 0;
+                    hmi.setStringToNextion("t2.txt", utils.integerToString(date, 2));
                     break;
                 case 1:
                     if (date > 0)
                         date--;
                     else
                         date = 31;
+                    hmi.setStringToNextion("t2.txt", utils.integerToString(date, 2));
                     break;
                 case 2:
                     if (++month > 12)
                         month = 0;
+                    hmi.setStringToNextion("t3.txt", utils.integerToString(month, 2));
                     break;
                 case 3:
                     if (month > 0)
                         month--;
                     else
                         month = 12;
+                    hmi.setStringToNextion("t3.txt", utils.integerToString(month, 2));
                     break;
                 case 4:
                     if (++year > 99)
                         year = 0;
+                    hmi.setStringToNextion("t4.txt", utils.integerToString(year, 2));
                     break;
                 case 5:
                     if (year > 0)
                         year--;
                     else
                         year = 99;
+                    hmi.setStringToNextion("t4.txt", utils.integerToString(year, 2));
                     break;
                 case 6:
                     if (!optSelected)
-                        data.setDateSchedulerDatalog(_on_, loggerType, date, month, year));
+                        data.setDateSchedulerDatalog(_on_, loggerType, date, month, year);
                     else
                         data.setDateSchedulerDatalog(_off_, loggerType, date, month, year);
+                    hmi.showSavingBarAnimation(200);
                     break;
                 case 7:
+                    optSelected = 0;
                     break;
                 case 8:
+                    optSelected = 1;
                     break;
                 case 9:
+                    enable[0] = !enable[0];
+                    if (data.setEnableDateScheduler(_on_, loggerType, enable[0]))
+                    {
+                        hmi.showSavingBarAnimation(100);
+                        hmi.setIntegerToNextion("bt0.val", enable[0]);
+                    }
                     break;
                 case 10:
+                    enable[1] = !enable[1];
+                    if (data.setEnableDateScheduler(_off_, loggerType, enable[1]))
+                    {
+                        hmi.showSavingBarAnimation(100);
+                        hmi.setIntegerToNextion("bt1.val", enable[1]);
+                    }
                     break;
                 default:
                     break;
+                }
+                if (i >= 6 && i <= 8)
+                {
+                    updateSelectedDateScheduler(loggerType, optSelected, &date, &month, &year);
                 }
             }
         }

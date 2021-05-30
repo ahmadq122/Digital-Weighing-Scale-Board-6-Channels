@@ -5,6 +5,10 @@
         "*.tcc": "cpp",
         "cmath": "cpp",
         "array": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "fstream": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp",
+        "sstream": "cpp"
     }
 }

@@ -3,7 +3,12 @@
 
 #include "Arduino.h"
 
-#define SAMPLE_MOV_AVERAGE 10
+#define SAMPLE_MOV_AVERAGE 40
+#define ADC_OFFSET 100
+
+#ifndef MAX_CHANNEL
+#define MAX_CHANNEL 6
+#endif
 
 enum Channel
 {
@@ -40,13 +45,13 @@ class ADS1232
 public:
     uint32_t adcRead[3][2];     //ADC value after filtered
     String adcReadString[3][2]; ////ADC value convert to 10 characters of String
-
     void begin(void);
     bool init(uint8_t board);
-    float getWeightInUnit(float gram, uint8_t unit);
     bool dataRead(uint8_t board, bool channel, bool calibrating);
+    String getStringWeightInUnit(uint8_t channel);
     uint8_t PDWN;
     bool isAvailable[3];
+    uint32_t adcTare[MAX_CHANNEL];
 
 private:
     // uint8_t PDWN[3];
@@ -70,9 +75,14 @@ private:
     bool prevChannel[3];
 
     bool dataReady(uint8_t board);
+    unsigned char weightADCstate(unsigned long AdcValue, uint8_t channel);
     void setChannel(uint8_t board, uint8_t channel);
     void powerUp(void);
     void powerDown(void);
+    uint8_t getPointDoneCalibrated(uint8_t pointCalibrationStatus);
+    
+    float weightCalculationInGram(unsigned long x1, float y1, unsigned long x2, float y2, unsigned long adcValue);
+    float getWeightInUnit(byte channel);
 };
 
 extern ADS1232 ads;

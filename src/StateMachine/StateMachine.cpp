@@ -476,14 +476,16 @@ void StateMachine::updateWeightStringToNextion(void)
 
     for (uint8_t i = 0; i < MAX_CHANNEL; i++)
     {
-        newWeightString[i] = String() + rtos.counterUpSeconds;
-
-        if (data.getChannelEnDisStatus(i) && prevWeightString[i] != newWeightString[i])
+        if (data.getChannelEnDisStatus(i))
         {
-            hmi.setStringToNextion((String() + "t_ch" + (i + 1) + ".txt"), newWeightString[i]);
-            printDebugln(String() + "Updated: " + " Channel " + (i + 1) + " weight");
+            newWeightString[i] = ads.getStringWeightInUnit(i);
+            if (prevWeightString[i] != newWeightString[i])
+            {
+                hmi.setStringToNextion((String() + "t_ch" + (i + 1) + ".txt"), newWeightString[i]);
+                printDebugln(String() + "Updated: " + " Channel " + (i + 1) + " weight");
+            }
+            prevWeightString[i] = newWeightString[i];
         }
-        prevWeightString[i] = newWeightString[i];
     }
 }
 

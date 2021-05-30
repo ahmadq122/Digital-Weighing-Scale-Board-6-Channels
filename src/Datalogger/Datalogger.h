@@ -23,8 +23,8 @@ private:
     void updateStrOfSetSchedule(uint8_t hourSchedule, uint8_t minuteSchedule);
     void updateTimeScheduler(uint8_t loggerType);
     void updateDateScheduler(uint8_t loggerType);
-    void updateSelectedTimeScheduler(uint8_t loggerType, uint8_t select);
-    void updateSelectedDateScheduler(uint8_t loggerType, uint8_t select);
+    void updateSelectedTimeScheduler(uint8_t loggerType, uint8_t select, uint8_t *dataHour, uint8_t *dataMinute);
+    void updateSelectedDateScheduler(uint8_t loggerType, uint8_t select, uint8_t *dataDate, uint8_t *dataMonth, uint8_t *dataYear);
 
     String thingSpeakServer = "https://api.thingspeak.com/update?api_key=";
     uint8_t remoteUpdateForChannel = 0;
