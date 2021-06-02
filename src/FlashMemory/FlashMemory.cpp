@@ -4,6 +4,7 @@
 #include "RTOS/RTOS.h"
 #include "Utility/Utility.h"
 #include "PinMap.h"
+#include "ADC/ADS1232.h"
 
 bool MemoryFlash::begin(uint16_t sizeOfMemory)
 {
@@ -376,6 +377,29 @@ bool MemoryFlash::setSpeedRate(bool newValue)
     return false;
 }
 
+bool MemoryFlash::setBuzzerMute(bool newValue)
+{
+    if (newValue != bitRead(flash.generalStatus, BUZZER_MUTE))
+    {
+        if (newValue)
+        {
+            bitSet(flash.generalStatus, BUZZER_MUTE);
+        }
+        else
+        {
+            bitClear(flash.generalStatus, BUZZER_MUTE);
+        }
+        storeDataToFlash();
+        printDebugln(String() + "New data set : " + newValue);
+        return true;
+    }
+    else
+    {
+        printDebugln(String() + "New data already in flash!");
+    }
+    return false;
+}
+
 // bool MemoryFlash::setBatteryCapacity(uint16_t newValue)
 // {
 //     if (newValue != flash.batteryCapacity)
@@ -707,6 +731,10 @@ bool MemoryFlash::getSpeedRate(void)
 {
     return bitRead(flash.generalStatus, SPEED_RATE);
 }
+bool MemoryFlash::getBuzzerMute(void)
+{
+    return bitRead(flash.generalStatus, BUZZER_MUTE);
+}
 // uint8_t MemoryFlash::getFieldChannel(uint8_t channel)
 // {
 //     return flash.fieldChannel[channel];
@@ -748,7 +776,7 @@ float MemoryFlash::getGramCalibrationPoint(uint8_t channel, uint8_t point)
 }
 float MemoryFlash::getGramMaximum(uint8_t channel)
 {
-    return flash.gramMaximum[channel];
+    return (flash.gramMaximum[channel]);
 }
 
 void MemoryFlash::getTimeSchedulerDatalog(bool scheduleType, uint8_t loggerType, uint8_t index, uint8_t *hour, uint8_t *minute)

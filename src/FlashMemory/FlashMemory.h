@@ -19,7 +19,8 @@ enum GeneralStatus
     LOCAL_LOG_ENABLE,
     SERIAL_LOG_ENABLE,
     WEB_LOG_ENABLE,
-    SPEED_RATE
+    SPEED_RATE,
+    BUZZER_MUTE
 };
 enum BaudrateSerial
 {
@@ -80,6 +81,7 @@ public:
     bool setDimScreenTimer(uint8_t newValue);
     bool setScreenBrightness(uint8_t newValue);
     bool setSpeedRate(bool newValue);
+    bool setBuzzerMute(bool newValue);
 
     //reading data flash
     const char *getSSID(void);
@@ -109,32 +111,10 @@ public:
     uint16_t getDimScreenTimer(void);
     uint8_t getScreenBrightness(void);
     bool getSpeedRate(void);
+    bool getBuzzerMute(void);
     bool resetDefault(void);
     bool resetCalibrationData(uint8_t channel);
-    // struct dataFlash
-    // {
-    //     char ssid[MAX_SSID_CHAR];
-    //     char password[MAX_PASSWORD_CHAR];
-    //     char keyAPI[MAX_APIKEY_CHAR];
-    //     uint8_t encryptType;
-    //     uint8_t timeZone = 0;
-    //     uint8_t measurementUnit = 0;
-    //     uint8_t channelEnDisStatus = B00111111;
-    //     uint8_t generalStatus = B00000001; //na, na, na, enable web log, enable serial log, enable card log, networkEnable, debugMode
-    //     uint8_t fieldChannel[MAX_CHANNEL];
-    //     uint8_t pointCalibrationStatus[MAX_CHANNEL];
-    //    // uint16_t batteryCapacity = 1000;
-    //     uint32_t periodDataLog[3];
-    //     uint8_t baudrateSerial[2];
-    //     uint32_t adcCalibrationPoint[MAX_CHANNEL][MAX_POINT_CAL];
-    //     float gramCalibrationPoint[MAX_CHANNEL][MAX_POINT_CAL - 1];
-    //     float gramMaximum[MAX_CHANNEL];
-    //     uint16_t timeSchedulerDataLog[2][3][2];
-    //     uint16_t dateSchedulerDataLog[2][3];
-    //     uint8_t enableDateScheduler = 0;
-    //     uint8_t dimScreenTimer = 0;
-    //     uint8_t screenBrightness = 100;
-    // } flash;
+
 
 private:
     struct dataFlash
@@ -146,7 +126,7 @@ private:
         uint8_t timeZone = 0;
         uint8_t measurementUnit = 0;
         uint8_t channelEnDisStatus = B00111111;
-        uint8_t generalStatus = B00000001; //na, na, spped rate, enable web log, enable serial log, enable card log, networkEnable, debugMode
+        uint8_t generalStatus = B00000001; //na, buzzer, spped rate, enable web log, enable serial log, enable card log, networkEnable, debugMode
         // uint8_t fieldChannel[MAX_CHANNEL];
         uint8_t pointCalibrationStatus[MAX_CHANNEL];
         // uint16_t batteryCapacity = 1000;

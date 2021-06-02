@@ -185,13 +185,16 @@ void Task_04(void *pvParameters) // This is a task.
                     if (++counter > 1)
                     {
                         counter = 0;
-                        channel = !channel;
+                        if (data.getChannelEnDisStatus(!channel))
+                            channel = !channel;
                     }
                 }
                 vTaskDelay(20);
             }
             else
             {
+                if (data.getChannelEnDisStatus(!channel))
+                    channel = !channel;
                 vTaskDelay(1000);
             }
         }
@@ -227,13 +230,16 @@ void Task_05(void *pvParameters) // This is a task.
                     if (++counter > 1)
                     {
                         counter = 0;
-                        channel = !channel;
+                        if (data.getChannelEnDisStatus(!channel))
+                            channel = !channel;
                     }
                 }
                 vTaskDelay(20);
             }
             else
             {
+                if (data.getChannelEnDisStatus(!channel))
+                    channel = !channel;
                 vTaskDelay(1000);
             }
         }
@@ -268,13 +274,16 @@ void Task_06(void *pvParameters) // This is a task.
                     if (++counter > 1)
                     {
                         counter = 0;
-                        channel = !channel;
+                        if (data.getChannelEnDisStatus(!channel))
+                            channel = !channel;
                     }
                 }
                 vTaskDelay(20);
             }
             else
             {
+                if (data.getChannelEnDisStatus(!channel))
+                    channel = !channel;
                 vTaskDelay(1000);
             }
         }

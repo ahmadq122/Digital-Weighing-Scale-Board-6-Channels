@@ -293,12 +293,17 @@ float ADS1232::getWeightInUnit(byte channel)
         weight = 0;
         break;
 
+    case 1:
+        weight = (weightCalculationInGram((data.getAdcCalibrationPoint(channel, (adcState - 1)) + adcTare[channel]), 0.00,
+                                          (data.getAdcCalibrationPoint(channel, adcState) + adcTare[channel]), data.getGramCalibrationPoint(channel, (adcState - 1)), adcValue));
+        break;
+
     default:
-        weight = (weightCalculationInGram((data.getAdcCalibrationPoint(channel, (adcState - 1)) + adcTare[channel]), data.getGramCalibrationPoint(channel, (adcState - 1)),
-                                          (data.getAdcCalibrationPoint(channel, adcState) + adcTare[channel]), data.getGramCalibrationPoint(channel, adcState), adcValue));
+        weight = (weightCalculationInGram((data.getAdcCalibrationPoint(channel, (adcState - 1)) + adcTare[channel]), data.getGramCalibrationPoint(channel, (adcState - 2)),
+                                          (data.getAdcCalibrationPoint(channel, adcState) + adcTare[channel]), data.getGramCalibrationPoint(channel, (adcState - 1)), adcValue));
         break;
     }
-    //  Serial.println(String() + "adcState:" + adcState);
+
     return weight / dividerUnits[data.getMeasurementUnit()];
 }
 
@@ -378,7 +383,7 @@ float ADS1232::weightCalculationInGram(unsigned long x1, float y1, unsigned long
     if (x1 >= x2 || y1 >= y2)
     {
         //    Serial.println(String() + "X1:" + x1 + " X2:" + x2 + " Y1:" + y1 + " Y2:" + y2);
-        return 999.00;
+        return ERROR_WEIGHT;
     }
     return gram;
 }

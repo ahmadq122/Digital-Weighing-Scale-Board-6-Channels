@@ -460,7 +460,8 @@ void Nextion::presetScreenBrightness(void)
 void Nextion::showSavingBarAnimation(uint16_t msDuration)
 {
   uint8_t progress = 0;
-  const uint16_t dlay = msDuration / 10;
+  bool speedRate = data.getSpeedRate();
+  const uint16_t dlay = (speedRate ? msDuration : (msDuration / 2)) / 10;
 
   setVisObjectNextion("saving", true);
   while (progress <= 100)

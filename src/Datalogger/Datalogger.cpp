@@ -58,7 +58,6 @@ void Datalogger::setting(uint8_t loggerType)
     int8_t hourPeriod = 0;
     int8_t minutePeriod = 0;
     int8_t secondPeriod = 0;
-    uint8_t savingProgress = 0;
 
     enDis = data.getDatalogStatus(loggerType);
     period = data.getPeriodDatalog(loggerType);
@@ -78,7 +77,7 @@ __start:
     if (loggerType == serial)
         hmi.setStringToNextion("b1.txt", String() + data.getBaudrateSerial(logging));
     hmi.setIntegerToNextion("b0.val", enDis);
-    hmi.setIntegerToNextion("q2.picc", enDis ? 67 : 66);
+    hmi.setIntegerToNextion("q2.picc", enDis ? Datalog_Serial_Prs_Bkg : Datalog_Serial_Normal_Bkg);
     showObjDatalogPage(loggerType, enDis);
     updateStrPeriod(hourPeriod, minutePeriod, secondPeriod);
 
@@ -103,9 +102,9 @@ __start:
                     data.setDatalogStatus(loggerType, enDis);
                     hmi.setIntegerToNextion("b0.val", enDis);
                     if (enDis)
-                        hmi.setIntegerToNextion("q2.picc", 67);
+                        hmi.setIntegerToNextion("q2.picc", Datalog_Serial_Prs_Bkg);
                     else
-                        hmi.setIntegerToNextion("q2.picc", 66);
+                        hmi.setIntegerToNextion("q2.picc", Datalog_Serial_Normal_Bkg);
                     showObjDatalogPage(loggerType, enDis);
                     break;
                 case 1:
@@ -130,7 +129,8 @@ __start:
                         }
                         hmi.setStringToNextion("b1.txt", String() + data.getBaudrateSerial(logging));
                         updateSelectedBaudrateToNextion(logging, data.getBaudrateSerialIndex(logging));
-                        delay(2000);
+                        delay(1500);
+                        hmi.showSavingBarAnimation(200);
                         showBaudrateOption(logging, false);
                         hmi.flushAvailableButton();
                     }
@@ -182,16 +182,7 @@ __start:
                 case 9:
                     if (data.setPeriodDatalog(loggerType, ((hourPeriod * 3600) + (minutePeriod * 60) + secondPeriod)))
                     {
-                        hmi.setVisObjectNextion("saving", true);
-                        savingProgress = 0;
-                        while (savingProgress <= 100)
-                        {
-                            hmi.setIntegerToNextion("saving.val", savingProgress);
-                            savingProgress += 10;
-                            delay(100);
-                        }
-                        delay(100);
-                        hmi.setVisObjectNextion("saving", false);
+                        hmi.showSavingBarAnimation(200);
                     }
                     hmi.flushAvailableButton();
                     break;
@@ -217,9 +208,9 @@ void Datalogger::updateSchedulerSettingState(uint8_t settingState)
     for (uint8_t j = 0; j < 6; j++)
     {
         if (j == settingState)
-            hmi.setIntegerToNextion(String() + "b" + j + ".pco", 2047);
+            hmi.setIntegerToNextion(String() + "b" + j + ".pco", color_cyan);
         else
-            hmi.setIntegerToNextion(String() + "b" + j + ".pco", 65535);
+            hmi.setIntegerToNextion(String() + "b" + j + ".pco", color_white);
     }
 }
 
@@ -690,13 +681,30 @@ void Datalogger::showBaudrateOption(bool type, bool show)
     hmi.setVisObjectNextion("b0", !show);
     hmi.setVisObjectNextion("q2", !show);
     hmi.setVisObjectNextion("b2", !show);
-
-    hmi.setVisObjectNextion("q5", show);
+    if (show)
+    {
+        hmi.setVisObjectNextion("q5", show);
+    }
+    else
+    {
+        hmi.setVisObjectNextion("q7", !show);
+    }
+    // delay(100);
     if (type == logging)
         hmi.setVisObjectNextion("q6", show);
+    // delay(100);
     for (uint i = 10; i <= 19; i++)
+    {
         hmi.setVisObjectNextion(String() + "b" + i, show);
+        // delay(100);
+    }
+    if (!show)
+    {
+        hmi.setVisObjectNextion("q7", show);
+        hmi.setVisObjectNextion("q5", show);
+    }
 }
+
 void Datalogger::updateSelectedBaudrateToNextion(bool type, uint8_t selected)
 {
     data.setBaudrateSerial(type, selected);
@@ -705,9 +713,9 @@ void Datalogger::updateSelectedBaudrateToNextion(bool type, uint8_t selected)
     for (uint8_t i = 10; i <= 19; i++)
     {
         if ((i - 10) == selected)
-            hmi.setIntegerToNextion(String() + "b" + i + ".picc", 59);
+            hmi.setIntegerToNextion(String() + "b" + i + ".picc", Debug_Baud_Select);
         else
-            hmi.setIntegerToNextion(String() + "b" + i + ".picc", 57);
+            hmi.setIntegerToNextion(String() + "b" + i + ".picc", Debug_Normal_Btn);
     }
 }
 

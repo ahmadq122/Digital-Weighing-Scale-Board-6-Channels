@@ -10,6 +10,8 @@
 #define MAX_CHANNEL 6
 #endif
 
+#define ERROR_WEIGHT 9999.999
+
 enum Channel
 {
     Channel1,
@@ -52,15 +54,7 @@ public:
     uint8_t PDWN;
     bool isAvailable[3];
     uint32_t adcTare[MAX_CHANNEL];
-
-private:
-    // uint8_t PDWN[3];
-    uint8_t SCLK[3];
-    uint8_t DOUT[3];
-    uint8_t A0[3];
-    uint32_t adcBuffer[3][2][SAMPLE_MOV_AVERAGE];
-    uint8_t index[3][2];
-    uint8_t speed;
+    float getWeightInUnit(byte channel);
     float dividerUnits[11] = {
         1,
         0.001,
@@ -72,6 +66,16 @@ private:
         0.009807,
         0.564383,
         15.43236};
+
+private:
+    // uint8_t PDWN[3];
+    uint8_t SCLK[3];
+    uint8_t DOUT[3];
+    uint8_t A0[3];
+    uint32_t adcBuffer[3][2][SAMPLE_MOV_AVERAGE];
+    uint8_t index[3][2];
+    uint8_t speed;
+
     bool prevChannel[3];
 
     bool dataReady(uint8_t board);
@@ -80,9 +84,8 @@ private:
     void powerUp(void);
     void powerDown(void);
     uint8_t getPointDoneCalibrated(uint8_t pointCalibrationStatus);
-    
+
     float weightCalculationInGram(unsigned long x1, float y1, unsigned long x2, float y2, unsigned long adcValue);
-    float getWeightInUnit(byte channel);
 };
 
 extern ADS1232 ads;

@@ -65,6 +65,9 @@ void StateMachine::setup(void)
 {
     bool flashBegin = false;
     uint8_t counter = 0;
+    pinMode(Pin_Buzzer, OUTPUT);
+    digitalWrite(Pin_Buzzer, 0);
+
     delay(100);
 
     Serial.begin(115200);
@@ -101,7 +104,7 @@ void StateMachine::setup(void)
     Serial1.begin(115200);
     while (!Serial1)
         ;
-    pinMode(Pin_Buzzer, OUTPUT);
+    
     rtos.updateStartProgressBar(10);
     ads.begin();
     rtos.setup();
@@ -117,6 +120,9 @@ void StateMachine::setup(void)
         rtos.updateStartProgressBar(10);
         delay(100);
     }
+    digitalWrite(Pin_Buzzer, 1);
+    delay(100);
+    digitalWrite(Pin_Buzzer, 0);
 }
 
 bool StateMachine::initTime(void)
@@ -491,26 +497,31 @@ void StateMachine::updateWeightStringToNextion(void)
 
 void StateMachine::evenBuzzer(void)
 {
-    if (hmi.getDataBuzzer() == 2)
+    if (!data.getBuzzerMute())
     {
-        if (!buzzerState)
+        if (hmi.getDataBuzzer() == 2)
         {
-            buzzerState = true;
-            digitalWrite(Pin_Buzzer, 1);
+            if (!buzzerState)
+            {
+                buzzerState = true;
+                digitalWrite(Pin_Buzzer, 1);
+            }
         }
-    }
-    else if (hmi.getDataBuzzer() == 1)
-    {
-        if (buzzerState)
+        else if (hmi.getDataBuzzer() == 1)
         {
-            buzzerState = false;
+            if (buzzerState)
+            {
+                buzzerState = false;
+                digitalWrite(Pin_Buzzer, 0);
+            }
+        }
+        else
+        {
             digitalWrite(Pin_Buzzer, 0);
         }
     }
     else
-    {
         digitalWrite(Pin_Buzzer, 0);
-    }
 }
 
 void StateMachine::updateSignalIndicatorToNextion(uint8_t newValue)
@@ -595,26 +606,27 @@ bool StateMachine::isWeightExceedMaximumValue(uint8_t channel, float actualWeigh
     { //check if float is nan value
         return false;
     }
-    return (actualWeight > data.getGramMaximum(channel));
+    return ((actualWeight > (data.getGramMaximum(channel) / ads.dividerUnits[data.getMeasurementUnit()])) && (actualWeight != ERROR_WEIGHT));
 }
 
 void StateMachine::updateExceedMaximumFlagToNextion(void)
 {
-    float actual[MAX_CHANNEL] = {
-        0,
-        501,
-        0,
-        0,
-        2001,
-        0};
+    // float actual[MAX_CHANNEL];
     uint32_t temp;
+
+    // for (uint8_t i = 0; i < MAX_CHANNEL; i++)
+    // {
+    //     if (data.getChannelEnDisStatus(i))
+    //         actual[i] = ads.getWeightInUnit(i);
+    // }
+
     if (rtos.secondTriggered[2])
     {
         for (uint8_t i = 0; i < MAX_CHANNEL; i++)
         {
             if (data.getChannelEnDisStatus(i))
             {
-                if (isWeightExceedMaximumValue(i, actual[i]))
+                if (isWeightExceedMaximumValue(i, ads.getWeightInUnit(i)))
                 {
                     hmi.setIntegerToNextion((String() + "max" + (i + 1) + ".val"), 1);
                     maxState[i] = true;

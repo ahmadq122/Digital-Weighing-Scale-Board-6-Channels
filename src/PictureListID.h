@@ -39,6 +39,8 @@ enum ListID
     Settings1_Menu_Prs_Btn,
     Settings11_Menu_Normal_Btn,
     Settings11_Menu_Prs_Btn,
+    Settings1_Menu_Popup,
+    Settings1_Menu_Popup_Prs,
     Timezone_Menu_Normal_Btn,
     Timezone_Menu_Prs_Btn,
     Timezone_Menu_Selected_Bkg,
