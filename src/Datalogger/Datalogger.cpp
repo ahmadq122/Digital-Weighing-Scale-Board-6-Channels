@@ -721,6 +721,24 @@ void Datalogger::updateSelectedBaudrateToNextion(bool type, uint8_t selected)
 
 bool Datalogger::checkSchedule(bool scheduleType, uint8_t loggerType)
 {
+    uint8_t dateSet;
+    uint8_t monthSet;
+    uint8_t yearSet;
+
+    data.getDateSchedulerDatalog(scheduleType, loggerType, &dateSet, &monthSet, &yearSet);
+    if (data.getEnableDateScheduler(scheduleType, loggerType))
+    {
+        if ((data.getEnableTimeScheduler(scheduleType, loggerType, 0)) || (data.getEnableTimeScheduler(scheduleType, loggerType, 1)))
+        {
+        }
+    }
+    else
+    {
+        if ((data.getEnableTimeScheduler(scheduleType, loggerType, 0)) || (data.getEnableTimeScheduler(scheduleType, loggerType, 1)))
+        {
+        }
+    }
+
     // uint16_t timeMinute = 0;
     // mtime.getActualTimeInMinute(&timeMinute);
 
