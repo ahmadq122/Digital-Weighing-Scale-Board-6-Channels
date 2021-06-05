@@ -115,7 +115,13 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
     unsigned int waitingTime;
     unsigned int SettlingTimeAfterChangeChannel = 0;
     char tempStr[15];
+
     uint8_t dat[3] = {0, 0, 0};
+
+    if (rtos.startProgressBar < 100)
+    {
+        rtos.updateStartProgressBar(1);
+    }
 
     if (channel != prevChannel[board])
     {
@@ -164,8 +170,7 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
     {
         if ((rtos.milliSeconds - start) > waitingTime)
         {
-            if (rtos.startProgressBar < 100)
-                rtos.updateStartProgressBar(2);
+
             return false; // Timeout waiting for HIGH}
         }
     }
@@ -175,9 +180,7 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
     {
         if ((rtos.milliSeconds - start) > waitingTime)
         {
-            if (rtos.startProgressBar < 100)
-                rtos.updateStartProgressBar(2);
-            return false; // Timeout waiting for LOW
+                       return false; // Timeout waiting for LOW
         }
     }
 
@@ -254,12 +257,8 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
         }
         utils.integerToString(adcRead[board][channel], tempStr, 10);
         adcReadString[board][channel] = tempStr;
-        if (rtos.startProgressBar < 100)
-            rtos.updateStartProgressBar(2);
         return true;
     }
-    if (rtos.startProgressBar < 100)
-        rtos.updateStartProgressBar(2);
     return false;
 }
 

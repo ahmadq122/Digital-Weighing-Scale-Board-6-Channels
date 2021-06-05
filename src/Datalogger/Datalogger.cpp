@@ -724,39 +724,74 @@ bool Datalogger::checkSchedule(bool scheduleType, uint8_t loggerType)
     uint8_t dateSet;
     uint8_t monthSet;
     uint8_t yearSet;
+    uint8_t hourSet[2];
+    uint8_t minuteSet[2];
+    uint16_t timeMinute = 0;
+    uint16_t timeMinuteSet[2] = {0, 0};
+    uint8_t date = 0;
+    uint8_t month = 0;
+    uint8_t year = 0;
+    bool timeSchedEn[2];
 
+    mtime.getActualTimeInMinute(&timeMinute);
+    mtime.getActualDate(&date, &month, &year);
     data.getDateSchedulerDatalog(scheduleType, loggerType, &dateSet, &monthSet, &yearSet);
+    data.getTimeSchedulerDatalog(scheduleType, loggerType, 0, &hourSet[0], &minuteSet[0]);
+    data.getTimeSchedulerDatalog(scheduleType, loggerType, 1, &hourSet[1], &minuteSet[1]);
+    timeMinuteSet[0] = (hourSet[0] * 60) + minuteSet[0];
+    timeMinuteSet[1] = (hourSet[1] * 60) + minuteSet[1];
+
+    timeSchedEn[0] = data.getEnableTimeScheduler(scheduleType, loggerType, 0);
+    timeSchedEn[1] = data.getEnableTimeScheduler(scheduleType, loggerType, 1);
+
+    printDebugln(String() + utils.integerToString(date, 2) + "/" + utils.integerToString(month, 2) + "/" + utils.integerToString(year, 2) + " -> " + utils.integerToString(dateSet, 2) + "/" + utils.integerToString(monthSet, 2) + "/" + utils.integerToString(yearSet, 2));
+    printDebug(String() + utils.integerToString((timeMinute / 60), 2) + ":" + utils.integerToString((timeMinute % 60), 2) + " -> " + utils.integerToString(hourSet[0], 2) + ":" + utils.integerToString(minuteSet[0], 2) + " || ");
+    printDebugln(String() + utils.integerToString((timeMinute / 60), 2) + ":" + utils.integerToString((timeMinute % 60), 2) + " -> " + utils.integerToString(hourSet[1], 2) + ":" + utils.integerToString(minuteSet[1], 2));
+    printDebug(loggerType == 0 ? "Serial log " : loggerType == 1 ? "Local log "
+                                                                 : "Remote log ");
+    printDebug(scheduleType == _on_ ? "On" : "Off");
+
     if (data.getEnableDateScheduler(scheduleType, loggerType))
     {
-        if ((data.getEnableTimeScheduler(scheduleType, loggerType, 0)) || (data.getEnableTimeScheduler(scheduleType, loggerType, 1)))
+        if (date == dateSet && month == monthSet && year == yearSet)
         {
+            if (timeSchedEn[0] || timeSchedEn[1])
+            {
+                if ((timeMinute == timeMinuteSet[0] && timeSchedEn[0]) || (timeMinute == timeMinuteSet[1] && timeSchedEn[1]))
+                {
+                    printDebugln(" (Date&Time True)");
+                    return true;
+                }
+            }
+            else
+            {
+                printDebugln(" (Date True)");
+                return true;
+            }
         }
+        // else
+        // {
+        //     return false;
+        // }
     }
     else
     {
-        if ((data.getEnableTimeScheduler(scheduleType, loggerType, 0)) || (data.getEnableTimeScheduler(scheduleType, loggerType, 1)))
+        if (timeSchedEn[0] || timeSchedEn[1])
         {
+            if ((timeMinute == timeMinuteSet[0] && timeSchedEn[0]) || (timeMinute == timeMinuteSet[1] && timeSchedEn[1]))
+            {
+                printDebugln(" (Time True)");
+                return true;
+            }
+            // else
+            //     return false;
         }
+        // else
+        // {
+        //     return false;
+        // }
     }
-
-    // uint16_t timeMinute = 0;
-    // mtime.getActualTimeInMinute(&timeMinute);
-
-    // printDebug(String() + (timeMinute / 60) + ":" + (timeMinute % 60) + " && " + (data.getScheduleDatalog(scheduleType, loggerType, 0) / 60) + ":" + (data.getScheduleDatalog(scheduleType, loggerType, 0) % 60) + " || ");
-    // printDebug(String() + (timeMinute / 60) + ":" + (timeMinute % 60) + " && " + (data.getScheduleDatalog(scheduleType, loggerType, 1) / 60) + ":" + (data.getScheduleDatalog(scheduleType, loggerType, 1) % 60) + " || ");
-    // printDebug(String() + (timeMinute / 60) + ":" + (timeMinute % 60) + " && " + (data.getScheduleDatalog(scheduleType, loggerType, 2) / 60) + ":" + (data.getScheduleDatalog(scheduleType, loggerType, 2) % 60) + " -> ");
-    // printDebug(loggerType == 0 ? "Serial " : loggerType == 1 ? "Local "
-    //                                                          : "Remote ");
-    // printDebug(scheduleType ? "On " : "Off ");
-
-    // if ((timeMinute == data.getScheduleDatalog(scheduleType, loggerType, 0) && data.getEnableSchedule(scheduleType, loggerType, 0)) ||
-    //     (timeMinute == data.getScheduleDatalog(scheduleType, loggerType, 1) && data.getEnableSchedule(scheduleType, loggerType, 1)) ||
-    //     (timeMinute == data.getScheduleDatalog(scheduleType, loggerType, 2) && data.getEnableSchedule(scheduleType, loggerType, 2)))
-    // {
-    //     printDebugln("true");
-    //     return true;
-    // }
-    // printDebugln("false");
+    printDebugln(" (False)");
     return false;
 }
 

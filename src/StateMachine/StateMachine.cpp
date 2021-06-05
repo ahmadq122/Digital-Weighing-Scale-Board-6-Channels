@@ -94,7 +94,6 @@ void StateMachine::setup(void)
         delay(200);
     }
     delay(10);
-    rtos.updateStartProgressBar(10);
     if (data.getDebugMode())
     {
         Serial.begin(data.getBaudrateSerial(debugging));
@@ -104,25 +103,25 @@ void StateMachine::setup(void)
     Serial1.begin(115200);
     while (!Serial1)
         ;
-    
-    rtos.updateStartProgressBar(10);
+
     ads.begin();
     rtos.setup();
     net.setup();
     initTime();
-    rtos.updateStartProgressBar(10);
     initSDCard();
-    rtos.updateStartProgressBar(10);
+    rtos.updateStartProgressBar(5);
     hmi.init();
-    while (rtos.startProgressBar < 100)
-    {
-        printDebugln(String() + "Progress: " + rtos.startProgressBar + " %");
-        rtos.updateStartProgressBar(10);
-        delay(100);
-    }
+
     digitalWrite(Pin_Buzzer, 1);
     delay(100);
     digitalWrite(Pin_Buzzer, 0);
+
+    while (rtos.startProgressBar < 100)
+    {
+        printDebugln(String() + "Progress: " + rtos.startProgressBar + " %");
+        rtos.updateStartProgressBar(5);
+        delay(50);
+    }
 }
 
 bool StateMachine::initTime(void)

@@ -21,6 +21,7 @@ public:
     void getDateStr(char *buffer);
     void getTimeAndDateStr(char *buffer);
     void getActualTimeInMinute(uint16_t *timeMinute);
+    void getActualDate(uint8_t *date, uint8_t *month, uint8_t *year);
     void getRtcTime(int8_t *hour, int8_t *minute, int8_t *second);
     void getRtcDate(int8_t *date, int8_t *month, int8_t *year);
     void setRtcTime(uint8_t hour, uint8_t minute, uint8_t second);

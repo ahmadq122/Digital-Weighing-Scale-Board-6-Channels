@@ -135,6 +135,22 @@ void MyTime::getActualTimeInMinute(uint16_t *timeMinute)
     }
 }
 
+void MyTime::getActualDate(uint8_t *date, uint8_t *month, uint8_t *year)
+{
+    if (ntpEnabled)
+    {
+        *date = ntp.date;
+        *month = ntp.month;
+        *year = ntp.year;
+    }
+    else
+    {
+        *date = rtc.date;
+        *month = rtc.month;
+        *year = rtc.year;
+    }
+}
+
 void MyTime::getRtcTime(int8_t *hour, int8_t *min, int8_t *sec)
 {
     readTime();
