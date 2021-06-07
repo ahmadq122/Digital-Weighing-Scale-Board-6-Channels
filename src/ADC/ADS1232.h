@@ -53,7 +53,8 @@ public:
     String getStringWeightInUnit(uint8_t channel);
     uint8_t PDWN;
     bool isAvailable[3];
-    uint32_t adcTare[MAX_CHANNEL];
+    float tare[MAX_CHANNEL] = {0};
+    bool enableTare[MAX_CHANNEL] = {false};
     float getWeightInUnit(byte channel);
     float dividerUnits[11] = {
         1,

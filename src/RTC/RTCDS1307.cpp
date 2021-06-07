@@ -280,7 +280,7 @@ bool RTCDS1307::setDate(uint8_t date, uint8_t month, unsigned int year)
     uint8_t temp_year = 0;
     uint8_t years = 0;
 
-    year = constrain(year, 2015, 2099);
+    year = constrain(year, 2021, 2099);
     month = constrain(month, 1, 12);
     if (month == 2)
     {

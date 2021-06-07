@@ -4,6 +4,7 @@
 #include "PinMap.h"
 #include "Utility/Utility.h"
 #include "FlashMemory/FlashMemory.h"
+#include "DebugSerial/DebugSerial.h"
 
 void ADS1232::begin(void)
 {
@@ -75,6 +76,11 @@ bool ADS1232::init(uint8_t board)
 {
     uint8_t timeOutCounter = 0;
 
+    if (rtos.startProgressBar < 100)
+    {
+        rtos.updateStartProgressBar(10);
+    }
+
     printDebugln(String() + "Init ADS board " + (board + 1) + " Channel " + 0);
     index[board][0] = 0;
     adcRead[board][0] = 0;
@@ -117,11 +123,6 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
     char tempStr[15];
 
     uint8_t dat[3] = {0, 0, 0};
-
-    if (rtos.startProgressBar < 100)
-    {
-        rtos.updateStartProgressBar(1);
-    }
 
     if (channel != prevChannel[board])
     {
@@ -180,7 +181,7 @@ bool ADS1232::dataRead(uint8_t board, bool channel, bool calibrating)
     {
         if ((rtos.milliSeconds - start) > waitingTime)
         {
-                       return false; // Timeout waiting for LOW
+            return false; // Timeout waiting for LOW
         }
     }
 
@@ -281,11 +282,9 @@ float ADS1232::getWeightInUnit(byte channel)
     else if (channel == Channel6)
         adcValue = adcRead[ads3][1];
 
-    int pointCalibrationStatus = getPointDoneCalibrated(data.getPointCalibrationStatus(channel));
-    //  Serial.print(ch ? "CHANNEL2:" : "CHANNEL1:");
-    // pointCalibrationStatus = constrain(pointCalibrationStatus - 1, 0, MAX_POINT_CAL);
-    adcState = constrain(weightADCstate(adcValue, channel), 0, pointCalibrationStatus);
-    // adcState = weightADCstate(adcValue, channel);
+    adcState = weightADCstate(adcValue, channel);
+    // printDebugln(String() + "State Point Channel " + channel + ": " + adcState);
+
     switch (adcState)
     {
     case 0:
@@ -293,17 +292,29 @@ float ADS1232::getWeightInUnit(byte channel)
         break;
 
     case 1:
-        weight = (weightCalculationInGram((data.getAdcCalibrationPoint(channel, (adcState - 1)) + adcTare[channel]), 0.00,
-                                          (data.getAdcCalibrationPoint(channel, adcState) + adcTare[channel]), data.getGramCalibrationPoint(channel, (adcState - 1)), adcValue));
+        weight = (weightCalculationInGram((data.getAdcCalibrationPoint(channel, (adcState - 1))), 0.00,
+                                          (data.getAdcCalibrationPoint(channel, adcState)), data.getGramCalibrationPoint(channel, (adcState - 1)), adcValue));
         break;
 
     default:
-        weight = (weightCalculationInGram((data.getAdcCalibrationPoint(channel, (adcState - 1)) + adcTare[channel]), data.getGramCalibrationPoint(channel, (adcState - 2)),
-                                          (data.getAdcCalibrationPoint(channel, adcState) + adcTare[channel]), data.getGramCalibrationPoint(channel, (adcState - 1)), adcValue));
+        weight = (weightCalculationInGram((data.getAdcCalibrationPoint(channel, (adcState - 1))), data.getGramCalibrationPoint(channel, (adcState - 2)),
+                                          (data.getAdcCalibrationPoint(channel, adcState)), data.getGramCalibrationPoint(channel, (adcState - 1)), adcValue));
         break;
     }
+    if (enableTare[channel])
+    {
+        tare[channel] = weight;
+        enableTare[channel] = false;
+    }
+    if (weight != ERROR_WEIGHT)
+        weight = weight - tare[channel];
+    else
+        return weight;
 
-    return weight / dividerUnits[data.getMeasurementUnit()];
+    if (weight < 0)
+        weight = 0;
+
+    return (weight / dividerUnits[data.getMeasurementUnit()]);
 }
 
 String ADS1232::getStringWeightInUnit(uint8_t channel)
@@ -361,12 +372,16 @@ uint8_t ADS1232::getPointDoneCalibrated(uint8_t pointCalibrationStatus)
 
 unsigned char ADS1232::weightADCstate(unsigned long adcValue, uint8_t channel)
 {
-    for (byte i = 0; i < MAX_POINT_CAL; i++)
+    int pointCalibrationStatus = getPointDoneCalibrated(data.getPointCalibrationStatus(channel));
+    pointCalibrationStatus = constrain(pointCalibrationStatus - 1, 0, MAX_POINT_CAL);
+    // printDebugln(String() + "Max Point Calib Channel " + channel + ": " + pointCalibrationStatus + " points");
+
+    for (byte i = 0; i < pointCalibrationStatus; i++)
     {
         if (adcValue < data.getAdcCalibrationPoint(channel, i) + ADC_OFFSET)
             return i;
     }
-    return 0xFF;
+    return pointCalibrationStatus;
 }
 
 float ADS1232::weightCalculationInGram(unsigned long x1, float y1, unsigned long x2, float y2, unsigned long adcValue)

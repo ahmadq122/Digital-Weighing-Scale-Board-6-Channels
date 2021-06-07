@@ -88,12 +88,15 @@ void StateMachine::setup(void)
     }
     Serial.end();
 
+    rtos.updateStartProgressBar(10);
     while (flashBegin == false)
     {
         flashBegin = initFlash(MEMORY_SIZE);
         delay(200);
     }
     delay(10);
+
+    rtos.updateStartProgressBar(10);
     if (data.getDebugMode())
     {
         Serial.begin(data.getBaudrateSerial(debugging));
@@ -104,17 +107,14 @@ void StateMachine::setup(void)
     while (!Serial1)
         ;
 
+    rtos.updateStartProgressBar(10);
     ads.begin();
     rtos.setup();
     net.setup();
     initTime();
     initSDCard();
-    rtos.updateStartProgressBar(5);
+    rtos.updateStartProgressBar(10);
     hmi.init();
-
-    digitalWrite(Pin_Buzzer, 1);
-    delay(100);
-    digitalWrite(Pin_Buzzer, 0);
 
     while (rtos.startProgressBar < 100)
     {
@@ -122,6 +122,9 @@ void StateMachine::setup(void)
         rtos.updateStartProgressBar(5);
         delay(50);
     }
+    digitalWrite(Pin_Buzzer, 1);
+    delay(100);
+    digitalWrite(Pin_Buzzer, 0);
 }
 
 bool StateMachine::initTime(void)
@@ -314,33 +317,51 @@ uint8_t StateMachine::homeScreen(void)
                 }
                 else if (button[10])
                 {
-                    tare[Channel1] = currentWeight[Channel1];
-                    printDebugln("Channel 1 Tare");
+                    ads.enableTare[Channel1] = true;
+                    printDebugln("Channel 1 Tare >>>>>>>>>>>>>>>>>>>");
+                    // while (ads.enableTare[Channel1])
+                    //     ;
+                    hmi.showSavingBarAnimation(100);
                 }
                 else if (button[11])
                 {
-                    tare[Channel2] = currentWeight[Channel2];
-                    printDebugln("Channel 2 Tare");
+                    ads.enableTare[Channel2] = true;
+                    printDebugln("Channel 2 Tare >>>>>>>>>>>>>>>>>>>");
+                    // while (ads.enableTare[Channel2])
+                    //     ;
+                    hmi.showSavingBarAnimation(100);
                 }
                 else if (button[12])
                 {
-                    tare[Channel3] = currentWeight[Channel3];
-                    printDebugln("Channel 3 Tare");
+                    ads.enableTare[Channel3] = true;
+                    printDebugln("Channel 3 Tare >>>>>>>>>>>>>>>>>>>");
+                    // while (ads.enableTare[Channel3])
+                    //     ;
+                    hmi.showSavingBarAnimation(100);
                 }
                 else if (button[13])
                 {
-                    tare[Channel4] = currentWeight[Channel4];
-                    printDebugln("Channel 4 Tare");
+                    ads.enableTare[Channel4] = true;
+                    printDebugln("Channel 4 Tare >>>>>>>>>>>>>>>>>>>");
+                    // while (ads.enableTare[Channel4])
+                    //     ;
+                    hmi.showSavingBarAnimation(100);
                 }
                 else if (button[14])
                 {
-                    tare[Channel5] = currentWeight[Channel5];
-                    printDebugln("Channel 5 Tare");
+                    ads.enableTare[Channel5] = true;
+                    printDebugln("Channel 5 Tare >>>>>>>>>>>>>>>>>>>");
+                    // while (ads.enableTare[Channel5])
+                    //     ;
+                    hmi.showSavingBarAnimation(100);
                 }
                 else if (button[15])
                 {
-                    tare[Channel6] = currentWeight[Channel6];
-                    printDebugln("Channel 6 Tare");
+                    ads.enableTare[Channel6] = true;
+                    printDebugln("Channel 6 Tare >>>>>>>>>>>>>>>>>>>");
+                    // while (ads.enableTare[Channel6])
+                    //     ;
+                    hmi.showSavingBarAnimation(100);
                 }
             }
         }

@@ -24,10 +24,8 @@ public:
     uint8_t settings(void);
     uint8_t measurementUnits(void);
     uint8_t datalogSettings(void);
-    float tare[6] = {0};
 
 private:
-    float currentWeight[6];
     bool initFlash(uint16_t memory);
     bool initTime(void);
     void setupPinIO(void);

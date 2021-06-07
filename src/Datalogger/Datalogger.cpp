@@ -683,25 +683,35 @@ void Datalogger::showBaudrateOption(bool type, bool show)
     hmi.setVisObjectNextion("b2", !show);
     if (show)
     {
+        for (uint8_t i = 3; i <= 9; i++)
+        {
+            hmi.setVisObjectNextion(String() + "b" + i, !show);
+            if (i < 6)
+                hmi.setVisObjectNextion(String() + "t" + (i - 3), !show);
+            if (i < 5)
+                hmi.setVisObjectNextion(String() + "q" + (i - 3), !show);
+        }
         hmi.setVisObjectNextion("q5", show);
     }
-    else
-    {
-        hmi.setVisObjectNextion("q7", !show);
-    }
-    // delay(100);
+
     if (type == logging)
         hmi.setVisObjectNextion("q6", show);
-    // delay(100);
+
     for (uint i = 10; i <= 19; i++)
     {
         hmi.setVisObjectNextion(String() + "b" + i, show);
-        // delay(100);
     }
     if (!show)
     {
-        hmi.setVisObjectNextion("q7", show);
         hmi.setVisObjectNextion("q5", show);
+        for (uint8_t i = 3; i <= 9; i++)
+        {
+            hmi.setVisObjectNextion(String() + "b" + i, !show);
+            if (i < 6)
+                hmi.setVisObjectNextion(String() + "t" + (i - 3), !show);
+            if (i < 5)
+                hmi.setVisObjectNextion(String() + "q" + (i - 3), !show);
+        }
     }
 }
 
@@ -732,6 +742,7 @@ bool Datalogger::checkSchedule(bool scheduleType, uint8_t loggerType)
     uint8_t month = 0;
     uint8_t year = 0;
     bool timeSchedEn[2];
+    bool dateSchedEn;
 
     mtime.getActualTimeInMinute(&timeMinute);
     mtime.getActualDate(&date, &month, &year);
@@ -741,17 +752,22 @@ bool Datalogger::checkSchedule(bool scheduleType, uint8_t loggerType)
     timeMinuteSet[0] = (hourSet[0] * 60) + minuteSet[0];
     timeMinuteSet[1] = (hourSet[1] * 60) + minuteSet[1];
 
+    dateSchedEn = data.getEnableDateScheduler(scheduleType, loggerType);
     timeSchedEn[0] = data.getEnableTimeScheduler(scheduleType, loggerType, 0);
     timeSchedEn[1] = data.getEnableTimeScheduler(scheduleType, loggerType, 1);
 
-    printDebugln(String() + utils.integerToString(date, 2) + "/" + utils.integerToString(month, 2) + "/" + utils.integerToString(year, 2) + " -> " + utils.integerToString(dateSet, 2) + "/" + utils.integerToString(monthSet, 2) + "/" + utils.integerToString(yearSet, 2));
-    printDebug(String() + utils.integerToString((timeMinute / 60), 2) + ":" + utils.integerToString((timeMinute % 60), 2) + " -> " + utils.integerToString(hourSet[0], 2) + ":" + utils.integerToString(minuteSet[0], 2) + " || ");
-    printDebugln(String() + utils.integerToString((timeMinute / 60), 2) + ":" + utils.integerToString((timeMinute % 60), 2) + " -> " + utils.integerToString(hourSet[1], 2) + ":" + utils.integerToString(minuteSet[1], 2));
+    if (dateSchedEn)
+        printDebugln(String() + utils.integerToString(date, 2) + "/" + utils.integerToString(month, 2) + "/" + utils.integerToString(year, 2) + " -> " + utils.integerToString(dateSet, 2) + "/" + utils.integerToString(monthSet, 2) + "/" + utils.integerToString(yearSet, 2));
+    if (timeSchedEn[0] || timeSchedEn[1])
+    {
+        printDebug(String() + utils.integerToString((timeMinute / 60), 2) + ":" + utils.integerToString((timeMinute % 60), 2) + " -> " + utils.integerToString(hourSet[0], 2) + ":" + utils.integerToString(minuteSet[0], 2) + " || ");
+        printDebugln(String() + utils.integerToString((timeMinute / 60), 2) + ":" + utils.integerToString((timeMinute % 60), 2) + " -> " + utils.integerToString(hourSet[1], 2) + ":" + utils.integerToString(minuteSet[1], 2));
+    }
     printDebug(loggerType == 0 ? "Serial log " : loggerType == 1 ? "Local log "
                                                                  : "Remote log ");
     printDebug(scheduleType == _on_ ? "On" : "Off");
 
-    if (data.getEnableDateScheduler(scheduleType, loggerType))
+    if (dateSchedEn)
     {
         if (date == dateSet && month == monthSet && year == yearSet)
         {
@@ -759,20 +775,16 @@ bool Datalogger::checkSchedule(bool scheduleType, uint8_t loggerType)
             {
                 if ((timeMinute == timeMinuteSet[0] && timeSchedEn[0]) || (timeMinute == timeMinuteSet[1] && timeSchedEn[1]))
                 {
-                    printDebugln(" (Date&Time True)");
+                    printDebugln(" (Date&Time True) _________________________");
                     return true;
                 }
             }
             else
             {
-                printDebugln(" (Date True)");
+                printDebugln(" (Date True) _________________________");
                 return true;
             }
         }
-        // else
-        // {
-        //     return false;
-        // }
     }
     else
     {
@@ -780,17 +792,20 @@ bool Datalogger::checkSchedule(bool scheduleType, uint8_t loggerType)
         {
             if ((timeMinute == timeMinuteSet[0] && timeSchedEn[0]) || (timeMinute == timeMinuteSet[1] && timeSchedEn[1]))
             {
-                printDebugln(" (Time True)");
+                printDebugln(" (Time True) _________________________");
                 return true;
             }
-            // else
-            //     return false;
         }
-        // else
-        // {
-        //     return false;
-        // }
+        else
+        {
+            if (!dateSchedEn && !timeSchedEn[0] && !timeSchedEn[1] && data.getDatalogStatus(loggerType))
+            {
+                printDebugln(" (True) _________________________");
+                return true;
+            }
+        }
     }
+
     printDebugln(" (False)");
     return false;
 }

@@ -35,7 +35,7 @@ void RealTimeOS::setup(void)
     xTaskCreatePinnedToCore(
         Task_02,
         "Task_02",
-        1024, // Stack size
+        1024 * 2, // Stack size
         NULL,
         configMAX_PRIORITIES - 2, // Priority
         NULL,
@@ -53,7 +53,7 @@ void RealTimeOS::setup(void)
     xTaskCreatePinnedToCore(
         Task_04,
         "Task_04",
-        1024 * 4, // Stack size
+        1024 * 5, // Stack size
         NULL,
         configMAX_PRIORITIES - 4, // Priority
         NULL,
@@ -62,7 +62,7 @@ void RealTimeOS::setup(void)
     xTaskCreatePinnedToCore(
         Task_05,
         "Task_05",
-        1024 * 4, // Stack size
+        1024 * 5, // Stack size
         NULL,
         configMAX_PRIORITIES - 5, // Priority
         NULL,
@@ -71,7 +71,7 @@ void RealTimeOS::setup(void)
     xTaskCreatePinnedToCore(
         Task_06,
         "Task_06",
-        1024 * 4, // Stack size
+        1024 * 5, // Stack size
         NULL,
         configMAX_PRIORITIES - 6, // Priority
         NULL,
@@ -227,10 +227,10 @@ void Task_05(void *pvParameters) // This is a task.
             {
                 if (ads.dataRead(board, channel, 1))
                 {
-                    if (++counter > 1)
+                    if (++counter > 2)
                     {
                         counter = 0;
-                        if (data.getChannelEnDisStatus(!channel))
+                        if (data.getChannelEnDisStatus(2 + !channel))
                             channel = !channel;
                     }
                 }
@@ -274,7 +274,7 @@ void Task_06(void *pvParameters) // This is a task.
                     if (++counter > 1)
                     {
                         counter = 0;
-                        if (data.getChannelEnDisStatus(!channel))
+                        if (data.getChannelEnDisStatus(4 + !channel))
                             channel = !channel;
                     }
                 }
