@@ -234,13 +234,9 @@ void testFileIO(fs::FS &fs, const char *path)
     file.close();
 }
 
-void MicroSDCard::getCSVFileName(char *buffer)
+String MicroSDCard::getCSVFileName(void)
 {
-    char name[20];
-    utils.integerToString(RTC.rtc.date, name, 2);
-    utils.integerToString(RTC.rtc.month, &name[2], 2);
-    utils.integerToString(RTC.rtc.year + 2000, &name[4], 4);
-    strcpy(buffer, name);
+    return csvFileName;
 }
 
 bool MicroSDCard::setup(void)
@@ -248,7 +244,7 @@ bool MicroSDCard::setup(void)
     if (!SD.begin())
     {
         printDebugln("Card Mount Failed");
-        cardMounted = false;       
+        cardMounted = false;
         return false;
     }
 
@@ -289,7 +285,7 @@ bool MicroSDCard::setup(void)
 
     cardMounted = true;
     // getCSVFileName(csvFileName);
-    // if (data.getDatalogStatus(LOCAL))
+    // if (data.getDatalogStatus(local))
     //     writeFileCSV(csvFileName);
     return cardMounted;
 }
@@ -301,33 +297,16 @@ void MicroSDCard::setupAfterRemoved()
     delay(1000);
 }
 
-void MicroSDCard::writeFileCSV(String fileName)
+void MicroSDCard::writeFileCSV(void)
 {
     String name;
     name = "/";
-    name += fileName;
-    name += ".csv";
+    name += csvFileName;
 
     if (cardMounted)
     {
         writeFile(SD, name.c_str(), "");
-        writeTableHeader(fileName);
-    }
-}
-
-void MicroSDCard::appendFileCSVWithName(const char *name, const char *data)
-{
-    char fileName[20];
-    char dataBuffer[100];
-
-    if (cardMounted)
-    {
-        strcpy(fileName, "/");
-        strcat(fileName, name);
-        strcat(fileName, ".csv");
-        dataBuffer[0] = '\n';
-        strcpy(&dataBuffer[1], data);
-        appendFile(SD, fileName, dataBuffer);
+        writeTableHeader();
     }
 }
 
@@ -342,7 +321,6 @@ void MicroSDCard::appendFileCSVWithName(String name, String data)
         fileName[0] = '/';
         name.toCharArray(&fileName[1], lengthString);
         fileName[lengthString] = '\0';
-        strcat(fileName, ".csv");
 
         lengthString = data.length() + 1;
         strcpy(dataBuffer, "\n");
@@ -353,6 +331,26 @@ void MicroSDCard::appendFileCSVWithName(String name, String data)
     }
 }
 
+void MicroSDCard::appendFileCSVWithName(String data)
+{
+    char path[20];
+    char dataBuffer[100];
+    byte lengthString = csvFileName.length() + 1;
+
+    if (cardMounted)
+    {
+        path[0] = '/';
+        csvFileName.toCharArray(&path[1], lengthString);
+        path[lengthString] = '\0';
+
+        lengthString = data.length() + 1;
+        strcpy(dataBuffer, "\n");
+        data.toCharArray(&dataBuffer[1], lengthString);
+        dataBuffer[lengthString] = '\0';
+
+        appendFile(SD, path, dataBuffer);
+    }
+}
 void MicroSDCard::getFileTitle(char *buffer)
 {
     char fileTitle[50];
@@ -391,7 +389,7 @@ String getStringUnit(uint8_t unit)
         return "[g]";
 }
 
-void MicroSDCard::writeTableHeader(String fileName)
+void MicroSDCard::writeTableHeader(void)
 {
     String strHeader;
     String strTemp = "";
@@ -407,12 +405,21 @@ void MicroSDCard::writeTableHeader(String fileName)
     strHeader += strTemp;
 
     getFileTitle(title);
-    printDebugln(String() + fileName + ".csv");
+    printDebugln(String() + csvFileName);
     printDebugln(title);
     printDebugln(strHeader);
 
-    appendFileCSVWithName(fileName, title);
-    appendFileCSVWithName(fileName, strHeader);
+    appendFileCSVWithName(csvFileName, title);
+    appendFileCSVWithName(csvFileName, strHeader);
 }
 
+void MicroSDCard::setCsvFileName(String fileName)
+{
+    if (csvFileName != fileName)
+    {
+        csvFileName = fileName;
+        printDebugln(String() + "Set new *.csv filename : " + fileName);
+        writeFileCSV();
+    }
+}
 MicroSDCard card;

@@ -798,7 +798,7 @@ bool Datalogger::checkSchedule(bool scheduleType, uint8_t loggerType)
         }
         else
         {
-            if (!dateSchedEn && !timeSchedEn[0] && !timeSchedEn[1] && data.getDatalogStatus(loggerType))
+            if (!dateSchedEn && !timeSchedEn[0] && !timeSchedEn[1] && data.getDatalogStatus(loggerType) && scheduleType == _on_)
             {
                 printDebugln(" (True) _________________________");
                 return true;

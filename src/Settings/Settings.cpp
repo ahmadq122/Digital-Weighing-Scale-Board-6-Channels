@@ -7,6 +7,7 @@
 #include "ADC/ADS1232.h"
 #include "PictureListID.h"
 #include "Utility/Utility.h"
+#include "PinMap.h"
 
 void Settings::mainMenu(void)
 {
@@ -120,7 +121,7 @@ start:
                 case 2:
                     printDebugln("Maximum page opened");
                     if (menuPage == 0)
-                        maximumWeight();
+                        setLimit();
                     else
                     {
                         mute = !mute;
@@ -134,9 +135,25 @@ start:
                         timeAndDate();
                     break;
                 case 4:
-                    printDebugln("Debug page opened");
+
                     if (menuPage == 0)
+                    {
+                        printDebugln("Debug page opened");
                         debugMenu();
+                    }
+                    else
+                    {
+                        hmi.showPage("off");
+                        hmi.waitForPageRespon();
+
+                        rtos.counterDownSecondsBattLow = 6;
+                        while (rtos.counterDownSecondsBattLow)
+                        {
+                            delay(1000);
+                        }
+                        if (!data.getDebugMode())
+                            digitalWrite(Pin_VCC_Control, 0); //Power Off The Device to Keep The Battery Life
+                    }
                     break;
                 case 5:
                     printDebugln("Calibration page opened");
@@ -259,12 +276,10 @@ void Settings::brightness(void)
         hmi.setVisObjectNextion("q1", true);
     }
 
+    hmi.setIntegerToNextion("h0.val", rtos.currentBrightness);
+
     while (!hmi.getExitPageFlag())
     {
-        if (rtos.dimmCounterDownSecond == 0 && data.getDimScreenTimer() > 0)
-        {
-            hmi.setIntegerToNextion("h0.val", rtos.currentBrightness);
-        }
         for (int i = 0; i < 7; i++)
         {
             button[i] = hmi.getDataButton(i);
@@ -280,13 +295,19 @@ void Settings::brightness(void)
                         hmi.setVisObjectNextion(String() + "b" + a, popup);
                     }
                     break;
+
+                case 7:
+                    data.setScreenBrightness(hmi.getDataInteger(0));
+                    printDebugln("Screen brightness set!");
+                    break;
+
                 default:
                     data.setDimScreenTimer(i - 1);
                     rtos.dimmCounterDownSecond = data.getDimScreenTimer();
                     hmi.setVisObjectNextion("q2", false);
                     for (uint8_t a = 1; a <= 6; a++)
                     {
-                        hmi.setVisObjectNextion(String() + "b" + i, false);
+                        hmi.setVisObjectNextion(String() + "b" + a, false);
                     }
                     if (data.getDimScreenTimer() == 0)
                     {
@@ -298,53 +319,79 @@ void Settings::brightness(void)
                         hmi.setStringToNextion("b0.txt", String() + data.getDimScreenTimer());
                         hmi.setVisObjectNextion("q1", true);
                     }
+
+                    popup = false;
                     break;
                 }
             }
         }
     }
-    data.setScreenBrightness(hmi.getDataInteger(0));
 }
 
-void Settings::updateMaximumValueToNextion(void)
+void Settings::updateLimitValueToNextion(void)
 {
     for (uint8_t i = 0; i < 6; i++)
     {
         hmi.setStringToNextion(String() + "b" + i + ".txt", String() + data.getGramMaximum(i));
     }
+    hmi.setStringToNextion(String() + "b6.txt", String() + data.getMinimumBattery());
+    hmi.setStringToNextion(String() + "b7.txt", String() + data.getMaximumBattery());
 }
-void Settings::maximumWeight(void)
+void Settings::setLimit(void)
 {
-    bool button[6];
+    bool button[8];
     bool button1[2] = {false};
     String newValueStr;
     float newValue = 0;
+    uint8_t batteryPercent = 0;
+    uint8_t batteryPercentNew = 0;
+    float batteryVoltage = 0.0;
 
 start:
     button1[0] = false;
     button1[1] = false;
 
-    hmi.showPage("maximum");
+    hmi.showPage("limit");
     hmi.waitForPageRespon();
 
-    updateMaximumValueToNextion();
+    updateLimitValueToNextion();
 
     while (true)
     {
-        // hmi.serialEvent_2();
+        batteryPercentNew = utils.getBatteryPercent();
+        if (batteryPercent != batteryPercentNew && batteryPercentNew != 0xFF)
+        {
+            hmi.setStringToNextion("t1.txt", String() + utils.integerToString(batteryPercentNew, 3) + "%");
+            hmi.setIntegerToNextion("j0.val", batteryPercentNew);
+            batteryPercent = batteryPercentNew;
+        }
+        if (batteryVoltage != utils.vBatActual)
+        {
+            hmi.setStringToNextion("t0.txt", String() + utils.vBatActual + "V");
+            batteryVoltage = utils.vBatActual;
+        }
+
         if (hmi.getExitPageFlag())
         {
-            printDebugln("Exit Maximum page");
+            printDebugln("Exit Limit page");
             return;
         }
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < 8; i++)
         {
             button[i] = hmi.getDataButton(i);
             if (button[i])
             {
                 hmi.showPage("numpad");
                 hmi.waitForPageRespon();
-                hmi.setStringToNextion("num_string.txt", String() + data.getGramMaximum(i));
+                if (i <= 5)
+                    hmi.setStringToNextion("num_string.txt", String() + data.getGramMaximum(i));
+                else
+                {
+                    if (i == 6)
+                        hmi.setStringToNextion("num_string.txt", String() + data.getMinimumBattery());
+                    else if (i == 7)
+                        hmi.setStringToNextion("num_string.txt", String() + data.getMaximumBattery());
+                }
                 hmi.flushAvailableButton();
                 while (!button1[0] && !button1[1])
                 {
@@ -356,14 +403,31 @@ start:
                 {
                     newValueStr = hmi.getDataString(0);
                     newValue = atof(newValueStr.c_str());
-                    printDebugln(String() + "CH" + (i + 1) + " Maximum set to " + newValueStr);
-                    data.setGramMaximum(i, newValue);
+                    if (i <= 5)
+                    {
+                        printDebugln(String() + "CH" + (i + 1) + " Gram Maximum set to " + newValueStr);
+                        data.setGramMaximum(i, newValue);
+                    }
+                    else
+                    {
+                        if (i == 6)
+                        {
+                            printDebugln(String() + "Battery Volt Minimum set to " + newValueStr);
+                            data.setMinimumBattery(newValue);
+                        }
+                        else if (i == 7)
+                        {
+                            printDebugln(String() + "Battery Volt Maximum set to " + newValueStr);
+                            data.setMaximumBattery(newValue);
+                        }
+                    }
                 }
                 goto start;
             }
         }
     }
 }
+
 void Settings::timeAndDate(void)
 {
     bool button[12];
@@ -541,9 +605,13 @@ void Settings::debugMenu(void)
                         Serial.begin(data.getBaudrateSerial(debugging));
                         while (!Serial)
                             ;
+                        digitalWrite(Pin_VCC_Control, 0);
                     }
                     else
+                    {
                         Serial.end();
+                        digitalWrite(Pin_VCC_Control, 1);
+                    }
                     printDebugln(String() + "Debug mode " + (enDisDebug ? "Enabled" : "Disabled"));
                     break;
                 default:

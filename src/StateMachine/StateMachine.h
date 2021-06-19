@@ -3,9 +3,6 @@
 
 #include "Arduino.h"
 
-#define ADCsample 10
-
-
 enum MachineState
 {
     HOME,
@@ -34,15 +31,13 @@ private:
     void updateButtonToggleStateToNextion(uint8_t channel);
     void updateWeightStringToNextion(void);
     void evenBuzzer(void);
-    void updateSignalIndicatorToNextion(uint8_t newValue);
-    void updateBatteryIndicatorToNextion(uint8_t newValue);
-    uint8_t getBatteryPercent(void);
+    void updateSignalIndicatorToNextion(uint8_t newValue, bool force);
+    void updateBatteryIndicatorToNextion(uint8_t newValue, bool force);
     bool isWeightExceedMaximumValue(uint8_t channel, float actualWeight);
     String getStringUnit(uint8_t unit);
     void updateExceedMaximumFlagToNextion(void);
     void updateSelectedUnitToNextion(uint8_t unit);
-
-    uint16_t adcBatteryContainer[ADCsample];
+    bool batProgressBarShowed = false;
     String prevWeightString[6];
     uint8_t batteryValue = 0;
     uint8_t signalValue = 0;

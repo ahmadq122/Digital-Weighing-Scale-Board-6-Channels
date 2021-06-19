@@ -2,6 +2,8 @@
 #include "time.h"
 #include "MyTime.h"
 #include "RTOS/RTOS.h"
+#include "./MicroSD/MicroSD.h"
+#include "./Utility/Utility.h"
 
 void MyTime::initTime(void)
 {
@@ -82,7 +84,10 @@ bool MyTime::getMyLocalTime(void)
     if (!rtos.syncroneRTC)
     {
         if (syncWithNTPTimeNDate())
+        {
+            card.setCsvFileName(String() + (2000 + year.toInt() + "-" + utils.integerToString(date.toInt(), 2) + "-" + utils.integerToString(month.toInt(), 2)) + ".csv");
             rtos.syncroneRTC = true;
+        }
     }
     return true;
 }
@@ -174,6 +179,11 @@ void MyTime::setRtcTime(uint8_t hour, uint8_t minute, uint8_t second)
 void MyTime::setRtcDate(uint8_t date, uint8_t month, uint8_t year)
 {
     setDate(date, month, (2000 + year));
+}
+
+bool MyTime::getNtpEnabled(void)
+{
+    return ntpEnabled;
 }
 
 MyTime mtime;

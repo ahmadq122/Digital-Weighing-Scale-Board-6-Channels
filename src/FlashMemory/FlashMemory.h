@@ -82,6 +82,8 @@ public:
     bool setScreenBrightness(uint8_t newValue);
     bool setSpeedRate(bool newValue);
     bool setBuzzerMute(bool newValue);
+    bool setMaximumBattery(float newValue);
+    bool setMinimumBattery(float newValue);
 
     //reading data flash
     const char *getSSID(void);
@@ -112,9 +114,37 @@ public:
     uint8_t getScreenBrightness(void);
     bool getSpeedRate(void);
     bool getBuzzerMute(void);
+    float getMaximumBattery(void);
+    float getMinimumBattery(void);
     bool resetDefault(void);
     bool resetCalibrationData(uint8_t channel);
 
+    // struct dataFlash
+    // {
+    //     char ssid[MAX_SSID_CHAR];
+    //     char password[MAX_PASSWORD_CHAR];
+    //     char keyAPI[MAX_APIKEY_CHAR];
+    //     uint8_t encryptType;
+    //     uint8_t timeZone = 0;
+    //     uint8_t measurementUnit = 0;
+    //     uint8_t channelEnDisStatus = B00111111;
+    //     uint8_t generalStatus = B00000001; //na, buzzer, spped rate, enable web log, enable serial log, enable card log, networkEnable, debugMode
+    //     // uint8_t fieldChannel[MAX_CHANNEL];
+    //     uint8_t pointCalibrationStatus[MAX_CHANNEL];
+    //     // uint16_t batteryCapacity = 1000;
+    //     uint32_t periodDataLog[3];
+    //     uint8_t baudrateSerial[2];
+    //     uint32_t adcCalibrationPoint[MAX_CHANNEL][MAX_POINT_CAL];
+    //     float gramCalibrationPoint[MAX_CHANNEL][MAX_POINT_CAL - 1];
+    //     float gramMaximum[MAX_CHANNEL];
+    //     uint16_t timeSchedulerDataLog[2][3][2];
+    //     uint16_t dateSchedulerDataLog[2][3];
+    //     uint8_t enableDateScheduler = 0;
+    //     uint8_t dimScreenTimer = 0;
+    //     uint8_t screenBrightness = 100;
+    //     uint16_t batteryMaximum = 0x0800 | 0x0004;
+    //     uint16_t batteryMinimum = 0x0700 | 0x0000;
+    // } flash;
 
 private:
     struct dataFlash
@@ -140,6 +170,8 @@ private:
         uint8_t enableDateScheduler = 0;
         uint8_t dimScreenTimer = 0;
         uint8_t screenBrightness = 100;
+        uint16_t batteryMaximum = 0x0800;
+        uint16_t batteryMinimum = 0x0700;
     } flash;
 
     uint32_t baudrate[10] = {

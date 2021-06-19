@@ -143,10 +143,8 @@ Wire Wire Line
 Connection ~ 1895 6290
 Text GLabel 2020 6290 2    39   Output ~ 0
 VCC_CNTRL
-Text GLabel 1260 3470 0    39   Output ~ 0
+Text GLabel 1250 3430 0    39   Output ~ 0
 VCC_B1
-Wire Wire Line
-	1310 3470 1260 3470
 Text GLabel 1210 3770 0    39   Output ~ 0
 5V
 $Comp
@@ -174,12 +172,12 @@ Wire Wire Line
 $Comp
 L Device:D_Schottky D1
 U 1 1 60756907
-P 2060 3470
-F 0 "D1" H 2060 3320 39  0000 C CNN
-F 1 "D_Schottky" H 2060 3370 24  0000 C CNN
-F 2 "Diode_SMD:D_SMA-SMB_Universal_Handsoldering" H 2060 3470 50  0001 C CNN
-F 3 "~" H 2060 3470 50  0001 C CNN
-	1    2060 3470
+P 2060 3430
+F 0 "D1" H 2060 3280 39  0000 C CNN
+F 1 "D_Schottky" H 2060 3330 24  0000 C CNN
+F 2 "Diode_SMD:D_SMA-SMB_Universal_Handsoldering" H 2060 3430 50  0001 C CNN
+F 3 "~" H 2060 3430 50  0001 C CNN
+	1    2060 3430
 	-1   0    0    1   
 $EndComp
 $Comp
@@ -232,7 +230,7 @@ F 3 "~" H 2260 3970 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	2210 3470 2260 3470
+	2210 3430 2260 3430
 Wire Wire Line
 	2210 3770 2260 3770
 Text GLabel 2385 3595 2    39   Output ~ 0
@@ -249,11 +247,9 @@ GND
 Wire Wire Line
 	2260 4170 2260 4120
 Wire Wire Line
-	1710 3470 1810 3470
+	1810 3430 1810 3820
 Wire Wire Line
-	1810 3470 1810 3820
-Wire Wire Line
-	1810 3470 1910 3470
+	1810 3430 1910 3430
 Wire Wire Line
 	1910 3770 1510 3770
 $Comp
@@ -299,7 +295,7 @@ Connection ~ 2145 6090
 Wire Wire Line
 	1815 1440 1815 1490
 Wire Wire Line
-	2260 3470 2260 3595
+	2260 3430 2260 3595
 Wire Wire Line
 	2385 3595 2260 3595
 Connection ~ 2260 3595
@@ -331,7 +327,6 @@ Text GLabel 2950 950  1    39   Output ~ 0
 VCC_B1
 Text GLabel 3050 950  1    39   BiDi ~ 0
 VCC_B
-Connection ~ 1810 3470
 Text GLabel 5950 1800 2    39   Input ~ 0
 3V3
 Text GLabel 5950 1700 2    39   Input ~ 0
@@ -1027,13 +1022,13 @@ Wire Wire Line
 	2540 2760 2540 2800
 $Comp
 L Transistor_FET:Si4542DY Q2
-U 1 1 6087827C
-P 1510 3570
-F 0 "Q2" V 1510 3720 39  0000 L CNN
-F 1 "Si4542DY" V 1460 3670 24  0000 L CNN
-F 2 "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm" H 1710 3495 50  0001 L CNN
-F 3 "https://www.onsemi.com/pub/Collateral/SI4542DY-D.PDF" H 1610 3570 50  0001 L CNN
-	1    1510 3570
+U 2 1 6087827C
+P 1510 3530
+F 0 "Q2" V 1510 3680 39  0000 L CNN
+F 1 "Si4542DY" V 1460 3630 24  0000 L CNN
+F 2 "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm" H 1710 3455 50  0001 L CNN
+F 3 "https://www.onsemi.com/pub/Collateral/SI4542DY-D.PDF" H 1610 3530 50  0001 L CNN
+	2    1510 3530
 	0    1    -1   0   
 $EndComp
 $Comp
@@ -1107,4 +1102,13 @@ F 3 "https://www.onsemi.com/pub/Collateral/BSS138-D.PDF" H 3800 6700 50  0001 L 
 	1    3800 6700
 	1    0    0    -1  
 $EndComp
+Wire Wire Line
+	1510 3730 1510 3770
+Wire Wire Line
+	1810 3430 1710 3430
+Connection ~ 1810 3430
+Wire Wire Line
+	1310 3430 1250 3430
+Text Notes 1860 5660 0    20   ~ 0
+add diode, and move vcc sens junction
 $EndSCHEMATC

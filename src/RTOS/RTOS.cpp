@@ -102,6 +102,8 @@ void Task_01(void *pvParameters) // This is a task.
 
         if (rtos.counterDownSeconds)
             rtos.counterDownSeconds--;
+        if (rtos.counterDownSecondsBattLow)
+            rtos.counterDownSecondsBattLow--;
 
         if (rtos.counterDownSecondsLog[serial])
             rtos.counterDownSecondsLog[serial]--;
@@ -111,7 +113,10 @@ void Task_01(void *pvParameters) // This is a task.
             rtos.counterDownSecondsLog[remote]--;
 
         if (++rtos.interruptSeconds > 59)
+        {
+            rtos.minuteTriggered = true;
             rtos.interruptSeconds = 0;
+        }
 
         if (rtos.interruptSeconds % 5 == 0 && !rtos.wifiConnectionTriggered)
             rtos.wifiConnectionTriggered = true;
@@ -127,9 +132,9 @@ void Task_01(void *pvParameters) // This is a task.
                 rtos.dimmCounterDownSecond--;
             else
             {
-                if (rtos.currentBrightness > 10)
+                if (rtos.currentBrightness > Auto_Dim_Brightness)
                 {
-                    rtos.currentBrightness = 10;
+                    rtos.currentBrightness = Auto_Dim_Brightness;
                     hmi.setIntegerToNextion("dim", rtos.currentBrightness);
                 }
             }

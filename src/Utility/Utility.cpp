@@ -1,4 +1,8 @@
 #include "Utility.h"
+#include "PinMap.h"
+#include "DebugSerial/DebugSerial.h"
+#include "RTOS/RTOS.h"
+#include "FlashMemory/FlashMemory.h"
 
 uint8_t Utility::charArraySize(const char *charArray)
 {
@@ -122,6 +126,74 @@ double Utility::generateMultiplier(unsigned char parameter)
         return 100000;
     else
         return 0;
+}
+
+uint8_t Utility::getBatteryPercent(void)
+{
+    float adcBattery = 0;
+    float percent = 0.0;
+    float voltageDivider = 0.0;
+    float voltageActual = 0.0;
+    float attenuation = 0.0;
+    static uint8_t index = 0;
+    float min = data.getMinimumBattery();
+    float max = data.getMaximumBattery();
+
+    attenuation = 0.3188; //(Resistor_Two_VoltDiv / (Resistor_One_VoltDiv + Resistor_Two_VoltDiv));
+
+    //USE MOVING AVERAGE TERM
+
+    if (index < ADCsample)
+    {
+        adcBatteryContainer[index] = analogRead(Pin_VBat_Sense);
+        delay(10);
+        index++;
+        return 0;
+    }
+    else
+    {
+        if (rtos.secondTriggered[6])
+        {
+            for (uint8_t i = 0; i < (ADCsample - 1); i++)
+            {
+                adcBatteryContainer[i] = adcBatteryContainer[i + 1];
+            }
+            adcBatteryContainer[ADCsample - 1] = analogRead(Pin_VBat_Sense);
+            delay(10);
+            for (uint8_t i = 0; i < ADCsample; i++)
+            {
+                adcBattery += adcBatteryContainer[i];
+            }
+
+            adcBattery /= ADCsample;
+            voltageDivider = (adcBattery / 4095.0) * ESP_Analog_Voltage_Refrence;
+
+            if (adcBattery > 10)
+            {
+                if (data.getDebugMode())
+                    voltageDivider += 0.115; //correction
+                else
+                    voltageDivider += 0.175; //correction
+            }
+
+            voltageActual = voltageDivider / attenuation;
+            vBatActual = voltageActual;
+
+            percent = ((constrain((voltageActual - min), 0.0, (max - min))) / (max - min)) * 100.0;
+
+            // printDebugln(String() + "---------------------------");
+            // // printDebugln(String() + "Attenuation : " + attenuation);
+            // printDebugln(String() + "Voltage ADC : " + adcBattery);
+            // printDebugln(String() + "Voltage Actual : " + voltageActual + "V");
+            // printDebugln(String() + "Voltage Divider : " + voltageDivider + "V");
+            // printDebugln(String() + "Battey Percent : " + percent + "%");
+            // printDebugln(String() + "---------------------------");
+            rtos.secondTriggered[6] = false;
+
+            return (uint8_t)percent;
+        }
+    }
+    return 0xFF;
 }
 
 Utility utils;

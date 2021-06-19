@@ -17,7 +17,7 @@ void loop()
   uint8_t nextState = HOME;
 
   // MemoryFlash d;
-  
+
   // Serial.println(String() + "uint8_t:" + sizeof(uint8_t));
   // Serial.println(String() + "uint16_t:" + sizeof(uint16_t));
   // Serial.println(String() + "uShort:" + sizeof(unsigned short));

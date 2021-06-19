@@ -28,7 +28,7 @@ bool RTCDS1307::begin()
 {
     bool ret = Wire.begin();
     if (ret)
-        readAll();
+        ret = readAll();
     return ret;
 }
 

@@ -13,6 +13,7 @@
 #include "Datalogger/Datalogger.h"
 #include "PinMap.h"
 #include "PictureListID.h"
+#include "Utility\Utility.h"
 
 /*****************************************************************************
  *******************************ESP32S-PIN************************************
@@ -63,12 +64,20 @@
 
 void StateMachine::setup(void)
 {
+    uint8_t powerUpButtonWait = 2;
     bool flashBegin = false;
     uint8_t counter = 0;
+
+    pinMode(Pin_VCC_Control, OUTPUT);
     pinMode(Pin_Buzzer, OUTPUT);
+    digitalWrite(Pin_VCC_Control, 0);
     digitalWrite(Pin_Buzzer, 0);
 
-    delay(100);
+    while (powerUpButtonWait > 0)
+    {
+        delay(1000);
+        powerUpButtonWait--;
+    }
 
     Serial.begin(115200);
     NexSerial.begin(115200);
@@ -88,7 +97,7 @@ void StateMachine::setup(void)
     }
     Serial.end();
 
-    rtos.updateStartProgressBar(10);
+    rtos.updateStartProgressBar(5);
     while (flashBegin == false)
     {
         flashBegin = initFlash(MEMORY_SIZE);
@@ -96,13 +105,16 @@ void StateMachine::setup(void)
     }
     delay(10);
 
-    rtos.updateStartProgressBar(10);
+    rtos.updateStartProgressBar(5);
     if (data.getDebugMode())
     {
         Serial.begin(data.getBaudrateSerial(debugging));
         while (!Serial)
             ;
+        digitalWrite(Pin_VCC_Control, 0);
     }
+    else
+        digitalWrite(Pin_VCC_Control, 1);
     Serial1.begin(115200);
     while (!Serial1)
         ;
@@ -112,16 +124,16 @@ void StateMachine::setup(void)
     rtos.setup();
     net.setup();
     initTime();
-    initSDCard();
     rtos.updateStartProgressBar(10);
     hmi.init();
-
+    initSDCard();
     while (rtos.startProgressBar < 100)
     {
         printDebugln(String() + "Progress: " + rtos.startProgressBar + " %");
         rtos.updateStartProgressBar(5);
         delay(50);
     }
+
     digitalWrite(Pin_Buzzer, 1);
     delay(100);
     digitalWrite(Pin_Buzzer, 0);
@@ -131,6 +143,8 @@ bool StateMachine::initTime(void)
 {
     bool ret = RTC.begin();
     mtime.initOffset(data.getTimezone());
+    // if (ret)
+    //     card.setCsvFileName(String() + (2000 + RTC.rtc.year + "-" + utils.integerToString(RTC.rtc.year, 2) + "-" + utils.integerToString(month.toInt(), 2)) + ".csv");
     return ret;
 }
 
@@ -166,6 +180,7 @@ void StateMachine::initSDCard(void)
  * 15) Tare Channel 6
 */
 
+
 uint8_t StateMachine::homeScreen(void)
 {
     uint8_t button[16] = {0};
@@ -187,9 +202,12 @@ uint8_t StateMachine::homeScreen(void)
         hmi.setStringToNextion((String() + "t_ch" + (i + 1) + ".txt"), "00000.00");
         hmi.setStringToNextion(String() + "t_mu" + (i + 1) + ".txt", getStringUnit(data.getMeasurementUnit()));
     }
+
+    batProgressBarShowed = true;
     //initialize the signal level base on the last signal value
-    hmi.setIntegerToNextion("signal.val", signalValue);
-    hmi.setIntegerToNextion("bat.val", batteryValue);
+    net.checkConnection(&wifiSignal, &rtos.wifiConnectionTriggered);
+    updateSignalIndicatorToNextion(wifiSignal, true);
+    updateBatteryIndicatorToNextion(utils.getBatteryPercent(), true);
 
     while (true)
     {
@@ -370,14 +388,15 @@ uint8_t StateMachine::homeScreen(void)
         if (net.checkConnection(&wifiSignal, &rtos.wifiConnectionTriggered))
         {
             rtos.wifiConnected = true;
-            updateSignalIndicatorToNextion(wifiSignal);
+            updateSignalIndicatorToNextion(wifiSignal, false);
         }
         else
         {
-            updateSignalIndicatorToNextion(0);
+            updateSignalIndicatorToNextion(0, false);
             rtos.wifiConnected = false;
         }
-        updateBatteryIndicatorToNextion(getBatteryPercent());
+
+        updateBatteryIndicatorToNextion(utils.getBatteryPercent(), false);
         evenBuzzer();
 
         if (rtos.secondTriggered[5])
@@ -544,54 +563,59 @@ void StateMachine::evenBuzzer(void)
         digitalWrite(Pin_Buzzer, 0);
 }
 
-void StateMachine::updateSignalIndicatorToNextion(uint8_t newValue)
+void StateMachine::updateSignalIndicatorToNextion(uint8_t newValue, bool force)
 {
-    if (newValue != signalValue)
+    if ((newValue != signalValue) || force)
     {
         hmi.setIntegerToNextion("signal.val", newValue);
         signalValue = newValue;
         printDebugln(String() + "Updated: " + newValue + "%" + " signal");
     }
 }
-void StateMachine::updateBatteryIndicatorToNextion(uint8_t newValue)
+void StateMachine::updateBatteryIndicatorToNextion(uint8_t newValue, bool force)
 {
-    if (newValue != batteryValue)
+    if (newValue == 0xFF)
+        return;
+    if (newValue > 5)
     {
-        hmi.setIntegerToNextion("bat.val", newValue);
-        batteryValue = newValue;
-        printDebugln(String() + "Updated: " + newValue + "%" + " battery");
-    }
-}
-
-uint8_t StateMachine::getBatteryPercent(void)
-{
-    float adcBattery = 0;
-    uint8_t percent = 0;
-    static uint8_t index = 0;
-
-    //USE MOVING AVERAGE METHOD
-
-    if (index < ADCsample)
-    {
-        adcBatteryContainer[index] = analogRead(Pin_VBat_Sense);
-        index++;
+        if (!batProgressBarShowed)
+        {
+            hmi.setVisObjectNextion("battx", false);
+            hmi.setVisObjectNextion("batt", true);
+            batProgressBarShowed = true;
+        }
+        if ((newValue != batteryValue) || force)
+        {
+            hmi.setIntegerToNextion("batt.val", newValue);
+            batteryValue = newValue;
+            printDebugln(String() + "Updated: " + newValue + "%" + " battery");
+        }
+        rtos.counterDownSecondsBattLow = 0;
     }
     else
     {
-        for (uint8_t i = 0; i < (ADCsample - 1); i++)
+        if (batProgressBarShowed)
         {
-            adcBatteryContainer[i] = adcBatteryContainer[i + 1];
+            hmi.setVisObjectNextion("batt", false);
+            hmi.setVisObjectNextion("battx", true);
+            if (!data.getDebugMode())
+                rtos.counterDownSecondsBattLow = Timer_Second_Battery_Low;
+            batProgressBarShowed = false;
         }
-        adcBatteryContainer[ADCsample - 1] = analogRead(Pin_VBat_Sense);
-        for (uint8_t i = 0; i < ADCsample; i++)
+
+        if (!rtos.counterDownSecondsBattLow && !data.getDebugMode())
         {
-            adcBattery += adcBatteryContainer[i];
+            hmi.showPage("off");
+            hmi.waitForPageRespon();
+
+            rtos.counterDownSecondsBattLow = 6;
+            while (rtos.counterDownSecondsBattLow)
+            {
+                delay(1000);
+            }
+            digitalWrite(Pin_VCC_Control, 0); //Power Off The Device to Keep The Battery Life
         }
-        adcBattery /= ADCsample;
-        percent = (adcBattery / 4095) * 100;
-        return percent;
     }
-    return 0;
 }
 
 String StateMachine::getStringUnit(uint8_t unit)

@@ -96,6 +96,10 @@ bool MemoryFlash::resetDefault()
         flash.enableDateScheduler = B00000000;
         flash.dimScreenTimer = 0;
         flash.screenBrightness = 100;
+
+        flash.batteryMinimum = 0x0700; //7.0v
+        flash.batteryMaximum = 0x0804; //8.4v
+
         storeDataToFlash();
     }
     else
@@ -117,7 +121,6 @@ bool MemoryFlash::resetCalibrationData(uint8_t channel)
 
 void MemoryFlash::readAll()
 {
-
     EEPROM.get(0, flash);
     printDebugln("All flash data read!");
 }
@@ -400,21 +403,51 @@ bool MemoryFlash::setBuzzerMute(bool newValue)
     return false;
 }
 
-// bool MemoryFlash::setBatteryCapacity(uint16_t newValue)
-// {
-//     if (newValue != flash.batteryCapacity)
-//     {
-//         flash.batteryCapacity = newValue;
-//         storeDataToFlash();
-//         printDebugln(String() + "New data set : " + newValue);
-//         return true;
-//     }
-//     else
-//     {
-//         printDebugln(String() + "New data already in flash!");
-//     }
-//     return false;
-// }
+bool MemoryFlash::setMaximumBattery(float newValue)
+{
+    uint16_t a = (uint16_t)newValue;
+    uint16_t b = (uint16_t)((float)(newValue - a) * 100.0);
+
+    printDebugln(String() + "before: " + a + " after: " + b);
+
+    uint16_t battVoltageNew = (a << 8) | b;
+
+    if (battVoltageNew != flash.batteryMaximum)
+    {
+        flash.batteryMaximum = battVoltageNew;
+        storeDataToFlash();
+        printDebugln(String() + "New data set : " + (flash.batteryMaximum >> 8) + "." + (flash.batteryMaximum & 0x00FF) + "V");
+        return true;
+    }
+    else
+    {
+        printDebugln(String() + "New data already in flash!");
+    }
+    return false;
+}
+
+bool MemoryFlash::setMinimumBattery(float newValue)
+{
+    uint16_t a = (uint16_t)newValue;
+    uint16_t b = (uint16_t)((float)(newValue - a) * 100.0);
+
+    printDebugln(String() + "before: " + a + " after: " + b);
+
+    uint16_t battVoltageNew = (a << 8) | b;
+
+    if (battVoltageNew != flash.batteryMinimum)
+    {
+        flash.batteryMinimum = battVoltageNew;
+        storeDataToFlash();
+        printDebugln(String() + "New data set : " + (flash.batteryMinimum >> 8) + "." + (flash.batteryMinimum & 0x00FF) + "V");
+        return true;
+    }
+    else
+    {
+        printDebugln(String() + "New data already in flash!");
+    }
+    return false;
+}
 
 // bool MemoryFlash::setFieldChannel(uint8_t channel, uint8_t newValue)
 // {
@@ -431,6 +464,7 @@ bool MemoryFlash::setBuzzerMute(bool newValue)
 //     }
 //     return false;
 // }
+
 bool MemoryFlash::setPointCalibrationStatus(uint8_t channel, uint8_t point, bool newValue)
 {
     if (newValue != bitRead(flash.pointCalibrationStatus[channel], point))
@@ -735,6 +769,25 @@ bool MemoryFlash::getBuzzerMute(void)
 {
     return bitRead(flash.generalStatus, BUZZER_MUTE);
 }
+
+float MemoryFlash::getMaximumBattery(void)
+{
+    float value1 = (flash.batteryMaximum >> 8) & 0x00FF;
+    float value2 = flash.batteryMaximum & 0x00FF;
+    value2 /= 100.0;
+    value1 += value2;
+    return value1;
+}
+
+float MemoryFlash::getMinimumBattery(void)
+{
+    float value1 = (flash.batteryMinimum >> 8) & 0x00FF;
+    float value2 = flash.batteryMinimum & 0x00FF;
+    value2 /= 100.0;
+    value1 += value2;
+    return value1;
+}
+
 // uint8_t MemoryFlash::getFieldChannel(uint8_t channel)
 // {
 //     return flash.fieldChannel[channel];

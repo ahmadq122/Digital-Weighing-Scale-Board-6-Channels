@@ -11,7 +11,7 @@ public:
 private:
     void timeZone(void);
     void brightness(void);
-    void maximumWeight(void);
+    void setLimit(void);
     void timeAndDate(void);
     // void batteryCapacity(void);
     void debugMenu(void);
@@ -21,7 +21,7 @@ private:
     void pointCalibration(void);
 
     void updateSelectedTimezoneToNextion(void);
-    void updateMaximumValueToNextion(void);
+    void updateLimitValueToNextion(void);
     void showBaudrateOption(bool type, bool show);
     void updateSelectedBaudrateToNextion(bool type, uint8_t selected);
     void updateSetpointToNextion(uint8_t channel);

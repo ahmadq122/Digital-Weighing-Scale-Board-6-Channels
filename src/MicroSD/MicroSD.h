@@ -6,19 +6,21 @@
 class MicroSDCard
 {
 public:
-    char csvFileName[20];
+
 
     bool setup(void);
     void setupAfterRemoved(void);
-    void writeFileCSV(String fileName);
-    void appendFileCSVWithName(const char *name, const char *data);
+    void writeFileCSV(void);
     void appendFileCSVWithName(String name, String data);
-    void writeTableHeader(String fileName);
-    void getCSVFileName(char *buffer);
+    void appendFileCSVWithName(String data);
+    void writeTableHeader(void);
+    String getCSVFileName(void);
     void getFileTitle(char *buffer);
+    void setCsvFileName(String fileName);
 
 private:
     String title;
+        String csvFileName;
     bool cardMounted = false;
 };
 
