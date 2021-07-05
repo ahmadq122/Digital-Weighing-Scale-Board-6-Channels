@@ -1,0 +1,20 @@
+{
+    "files.associations": {
+        "cstdint": "cpp",
+        "random": "cpp",
+        "*.tcc": "cpp",
+        "cmath": "cpp",
+        "array": "cpp",
+        "string": "cpp",
+        "fstream": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp",
+        "sstream": "cpp",
+        "deque": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp",
+        "vector": "cpp",
+        "memory": "cpp",
+        "initializer_list": "cpp"
+    }
+}

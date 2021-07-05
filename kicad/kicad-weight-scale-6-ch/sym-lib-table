@@ -1,0 +1,10 @@
+(sym_lib_table
+  (lib (name DataLoggingBoard)(type Legacy)(uri ${KIPRJMOD}/DataLoggingBoard.lib)(options "")(descr ""))
+  (lib (name WCMCU-ADS1232)(type Legacy)(uri ${KIPRJMOD}/WCMCU-ADS1232.lib)(options "")(descr ""))
+  (lib (name TP4056)(type Legacy)(uri ${KIPRJMOD}/TP4056.lib)(options "")(descr ""))
+  (lib (name "Step Up DC to 5V USB")(type Legacy)(uri "${KIPRJMOD}/Step Up DC to 5V USB.lib")(options "")(descr ""))
+  (lib (name "ESP WROOM32 DEV-BOARD")(type Legacy)(uri "${KIPRJMOD}/ESP WROOM32 DEV-BOARD.lib")(options "")(descr ""))
+  (lib (name "USB Type C Converter")(type Legacy)(uri "${KIPRJMOD}/USB Type C Converter.lib")(options "")(descr ""))
+  (lib (name "USB Type A Converter")(type Legacy)(uri "${KIPRJMOD}/USB Type A Converter.lib")(options "")(descr ""))
+  (lib (name TP4056-1)(type Legacy)(uri ${KIPRJMOD}/TP4056-1.lib)(options "")(descr ""))
+)
