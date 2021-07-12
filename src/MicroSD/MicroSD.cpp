@@ -1,7 +1,4 @@
 #include "MicroSD.h"
-#include "FS.h"
-#include "SD.h"
-#include "SPI.h"
 #include "FlashMemory/FlashMemory.h"
 #include "Time/MyTime.h"
 #include "DebugSerial/DebugSerial.h"
@@ -23,7 +20,7 @@
       D1       -
 */
 
-void listDir(fs::FS &fs, const char *dirname, uint8_t levels)
+void MicroSDCard::listDir(fs::FS &fs, const char *dirname, uint8_t levels)
 {
     if (data.getDebugMode())
         Serial.printf("Listing directory: %s\n", dirname);
@@ -63,7 +60,7 @@ void listDir(fs::FS &fs, const char *dirname, uint8_t levels)
     }
 }
 
-void createDir(fs::FS &fs, const char *path)
+void MicroSDCard::createDir(fs::FS &fs, const char *path)
 {
     if (data.getDebugMode())
         Serial.printf("Creating Dir: %s\n", path);
@@ -77,7 +74,7 @@ void createDir(fs::FS &fs, const char *path)
     }
 }
 
-void removeDir(fs::FS &fs, const char *path)
+void MicroSDCard::removeDir(fs::FS &fs, const char *path)
 {
     if (data.getDebugMode())
         Serial.printf("Removing Dir: %s\n", path);
@@ -91,7 +88,7 @@ void removeDir(fs::FS &fs, const char *path)
     }
 }
 
-void readFile(fs::FS &fs, const char *path)
+void MicroSDCard::readFile(fs::FS &fs, const char *path)
 {
     if (data.getDebugMode())
         Serial.printf("Reading file: %s\n", path);
@@ -111,7 +108,7 @@ void readFile(fs::FS &fs, const char *path)
     file.close();
 }
 
-void writeFile(fs::FS &fs, const char *path, const char *message)
+void MicroSDCard::writeFile(fs::FS &fs, const char *path, const char *message)
 {
     if (data.getDebugMode())
         Serial.printf("Writing file: %s\n", path);
@@ -133,7 +130,7 @@ void writeFile(fs::FS &fs, const char *path, const char *message)
     file.close();
 }
 
-void appendFile(fs::FS &fs, const char *path, const char *message)
+void MicroSDCard::appendFile(fs::FS &fs, const char *path, const char *message)
 {
     if (data.getDebugMode())
         Serial.printf("Appending to file: %s\n", path);
@@ -155,7 +152,7 @@ void appendFile(fs::FS &fs, const char *path, const char *message)
     file.close();
 }
 
-void renameFile(fs::FS &fs, const char *path1, const char *path2)
+void MicroSDCard::renameFile(fs::FS &fs, const char *path1, const char *path2)
 {
     if (data.getDebugMode())
         Serial.printf("Renaming file %s to %s\n", path1, path2);
@@ -169,7 +166,7 @@ void renameFile(fs::FS &fs, const char *path1, const char *path2)
     }
 }
 
-void deleteFile(fs::FS &fs, const char *path)
+void MicroSDCard::deleteFile(fs::FS &fs, const char *path)
 {
     if (data.getDebugMode())
         Serial.printf("Deleting file: %s\n", path);
@@ -183,7 +180,7 @@ void deleteFile(fs::FS &fs, const char *path)
     }
 }
 
-void testFileIO(fs::FS &fs, const char *path)
+void MicroSDCard::testFileIO(fs::FS &fs, const char *path)
 {
     File file = fs.open(path);
     static uint8_t buf[512];
@@ -284,63 +281,72 @@ bool MicroSDCard::setup(void)
         Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
 
     cardMounted = true;
-    // getCSVFileName(csvFileName);
-    // if (data.getDatalogStatus(local))
-    //     writeFileCSV(csvFileName);
+    if (data.getDatalogStatus(local))
+    {
+        updateCsvFileName();
+    }
     return cardMounted;
 }
 
-void MicroSDCard::setupAfterRemoved()
+void MicroSDCard::setupAfterRemoved(void)
 {
     delay(1000);
     setup();
     delay(1000);
 }
 
+void MicroSDCard::unmount(void)
+{
+    SD.end();
+    cardMounted = false;
+}
+
 void MicroSDCard::writeFileCSV(void)
 {
-    String name;
-    name = "/";
-    name += csvFileName;
+    String path;
+    String msg;
+    uint8_t countOut = 0;
+    bool fileExists = false;
+    path = "/";
+    path += csvFileName;
 
     if (cardMounted)
     {
-        writeFile(SD, name.c_str(), "");
-        writeTableHeader();
+        if (SD.exists(path))
+        {
+            printDebugln("File in \"" + path + "\" path already exist!");
+            writeTableHeader();
+        }
+        else
+        {
+            printDebugln("Write new file at path \"" + path + "\"!");
+            msg = String() + "This file has created on " + mtime.getDayStr() + ", " + mtime.getDateStr() + " at " + mtime.getTimeStr();
+            printDebugln(msg);
+            while (!fileExists && countOut < 3)
+            {
+                writeFile(SD, path.c_str(), msg.c_str());
+                delay(250);
+                fileExists = SD.exists(path);
+                countOut++;
+            }
+            if (fileExists)
+                writeTableHeader();
+            else
+                printDebugln("Time out in writing file " + path);
+        }
     }
 }
 
-void MicroSDCard::appendFileCSVWithName(String name, String data)
+void MicroSDCard::appendFileCsvWithName(String name, String data)
 {
-    char fileName[20];
+    char path[20];
     char dataBuffer[100];
     byte lengthString = name.length() + 1;
 
     if (cardMounted)
     {
-        fileName[0] = '/';
-        name.toCharArray(&fileName[1], lengthString);
-        fileName[lengthString] = '\0';
-
-        lengthString = data.length() + 1;
-        strcpy(dataBuffer, "\n");
-        data.toCharArray(&dataBuffer[1], lengthString);
-        dataBuffer[lengthString] = '\0';
-
-        appendFile(SD, fileName, dataBuffer);
-    }
-}
-
-void MicroSDCard::appendFileCSVWithName(String data)
-{
-    char path[20];
-    char dataBuffer[100];
-    byte lengthString = csvFileName.length() + 1;
-
-    if (cardMounted)
-    {
         path[0] = '/';
-        csvFileName.toCharArray(&path[1], lengthString);
+        name.toCharArray(&path[1], lengthString);
         path[lengthString] = '\0';
 
         lengthString = data.length() + 1;
@@ -351,14 +357,43 @@ void MicroSDCard::appendFileCSVWithName(String data)
         appendFile(SD, path, dataBuffer);
     }
 }
+
+void MicroSDCard::appendFileCsv(String data)
+{
+    char path[20];
+    char dataBuffer[100];
+    byte lengthString = csvFileName.length() + 1;
+
+    path[0] = '/';
+    csvFileName.toCharArray(&path[1], lengthString);
+    path[lengthString] = '\0';
+
+    lengthString = data.length() + 1;
+    strcpy(dataBuffer, "\n");
+    data.toCharArray(&dataBuffer[1], lengthString);
+    dataBuffer[lengthString] = '\0';
+
+    if (SD.exists(path))
+    {
+        appendFile(SD, path, dataBuffer);
+    }
+    else
+    {
+        // SD.end();
+        printDebug(path);
+        printDebugln(" file doesn't exist!");
+        // setupAfterRemoved();
+    }
+}
+
 void MicroSDCard::getFileTitle(char *buffer)
 {
-    char fileTitle[50];
+    char fileTitle[80];
 
-    strcpy(fileTitle, "File is written on ");
-    RTC.getDateString(&fileTitle[(String() + fileTitle).length()]);
-    strcat(fileTitle, " ");
-    RTC.getTimeString(&fileTitle[(String() + fileTitle).length()]);
+    strcpy(fileTitle, "The following table has written on ");
+    mtime.getDateStr(&fileTitle[(String() + fileTitle).length()]);
+    strcat(fileTitle, " at ");
+    mtime.getTimeStr(&fileTitle[(String() + fileTitle).length()]);
 
     strcpy(buffer, fileTitle);
 }
@@ -393,24 +428,33 @@ void MicroSDCard::writeTableHeader(void)
 {
     String strHeader;
     String strTemp = "";
-    char title[50];
-    strHeader = "Date;Time";
+    char title[80];
+    strHeader = "Time";
 
     for (uint8_t i = 0; i < MAX_CHANNEL; i++)
     {
         strTemp += ";";
-        strTemp += String() + "CH" + (i + 1) + " " + getStringUnit(data.getMeasurementUnit());
+        strTemp += String() + "Ch" + (i + 1) + " " + getStringUnit(data.getMeasurementUnit());
     }
 
     strHeader += strTemp;
 
     getFileTitle(title);
-    printDebugln(String() + csvFileName);
-    printDebugln(title);
-    printDebugln(strHeader);
+    // printDebugln(csvFileName);
+    // printDebugln(title);
+    // printDebugln(strHeader);
 
-    appendFileCSVWithName(csvFileName, title);
-    appendFileCSVWithName(csvFileName, strHeader);
+    appendFileCsvWithName(csvFileName, title);
+    appendFileCsvWithName(csvFileName, strHeader);
+}
+
+void MicroSDCard::updateCsvFileName(void)
+{
+    uint8_t date, year, month;
+    mtime.getActualDate(&date, &month, &year);
+    String fileName = String() + (2000 + year) + "-" + utils.integerToString(month, 2) + "-" + utils.integerToString(date, 2) + ".csv";
+    // printDebugln(csvFileName);
+    setCsvFileName(fileName);
 }
 
 void MicroSDCard::setCsvFileName(String fileName)

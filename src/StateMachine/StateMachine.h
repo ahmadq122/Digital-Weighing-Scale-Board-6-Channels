@@ -26,7 +26,7 @@ private:
     bool initFlash(uint16_t memory);
     bool initTime(void);
     void setupPinIO(void);
-    void initSDCard(void);
+    // void initSDCard(void);
 
     void updateButtonToggleStateToNextion(uint8_t channel);
     void updateWeightStringToNextion(void);
@@ -44,6 +44,7 @@ private:
     bool buzzerState = false;
     bool maxState[6] = {0, 0, 0, 0, 0, 0};
     bool dataLoggingState[3] = {false};
+    String oldDateString;
 };
 
 #endif

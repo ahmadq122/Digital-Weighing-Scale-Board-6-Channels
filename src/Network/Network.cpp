@@ -262,6 +262,9 @@ __scan:
                 {
                     hmi.showPage("keyboard");
                     hmi.waitForPageRespon();
+                    hmi.setIntegerToNextion("kb_hide.val", 1);
+                    hmi.setIntegerToNextion("kb_string.pw", 1);
+                    
                     button = 0;
                     while (!hmi.checkAnyButtonPressed(&button))
                     {

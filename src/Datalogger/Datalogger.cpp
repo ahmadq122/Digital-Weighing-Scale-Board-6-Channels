@@ -2,12 +2,13 @@
 #include "FlashMemory/FlashMemory.h"
 #include "Nextion/Nextion.h"
 #include "DebugSerial/DebugSerial.h"
-#include "RTC/RTCDS1307.h"
+#include "ADC/ADS1232.h"
 #include "RTOS/RTOS.h"
 #include "Time/MyTime.h"
 #include <HTTPClient.h>
 #include "Utility/Utility.h"
 #include "PictureListID.h"
+#include "MicroSD/MicroSD.h"
 
 void Datalogger::showObjDatalogPage(uint8_t loggerType, bool show)
 {
@@ -69,7 +70,14 @@ __start:
     if (loggerType == serial)
         hmi.showPage("serial");
     else if (loggerType == local)
+    {
         hmi.showPage("local");
+        if (!card.cardMounted)
+        {
+            enDis = false;
+            data.setDatalogStatus(loggerType, enDis);
+        }
+    }
     else if (loggerType == remote)
         hmi.showPage("remote");
     hmi.waitForPageRespon();
@@ -99,12 +107,31 @@ __start:
                 {
                 case 0:
                     enDis = !enDis;
-                    data.setDatalogStatus(loggerType, enDis);
                     hmi.setIntegerToNextion("b0.val", enDis);
                     if (enDis)
+                    {
                         hmi.setIntegerToNextion("q2.picc", Datalog_Serial_Prs_Bkg);
+                        if (!card.cardMounted)
+                        {
+                            card.setup();
+                            hmi.flushAvailableSerial();
+                        }
+                        if (card.cardMounted)
+                        {
+                            card.updateCsvFileName();
+                        }
+                        else
+                        {
+                            enDis = false;
+                            hmi.setIntegerToNextion("b0.val", enDis);
+                        }
+                    }
                     else
+                    {
+                        card.unmount();
                         hmi.setIntegerToNextion("q2.picc", Datalog_Serial_Normal_Bkg);
+                    }
+                    data.setDatalogStatus(loggerType, enDis);
                     showObjDatalogPage(loggerType, enDis);
                     break;
                 case 1:
@@ -741,8 +768,8 @@ bool Datalogger::checkSchedule(bool scheduleType, uint8_t loggerType)
     uint8_t date = 0;
     uint8_t month = 0;
     uint8_t year = 0;
-    bool timeSchedEn[2];
-    bool dateSchedEn;
+    bool timeSchedEn[4];
+    bool dateSchedEn[2];
 
     mtime.getActualTimeInMinute(&timeMinute);
     mtime.getActualDate(&date, &month, &year);
@@ -752,11 +779,14 @@ bool Datalogger::checkSchedule(bool scheduleType, uint8_t loggerType)
     timeMinuteSet[0] = (hourSet[0] * 60) + minuteSet[0];
     timeMinuteSet[1] = (hourSet[1] * 60) + minuteSet[1];
 
-    dateSchedEn = data.getEnableDateScheduler(scheduleType, loggerType);
+    dateSchedEn[0] = data.getEnableDateScheduler(scheduleType, loggerType);
+    dateSchedEn[1] = data.getEnableDateScheduler(!scheduleType, loggerType);
     timeSchedEn[0] = data.getEnableTimeScheduler(scheduleType, loggerType, 0);
     timeSchedEn[1] = data.getEnableTimeScheduler(scheduleType, loggerType, 1);
+    timeSchedEn[2] = data.getEnableTimeScheduler(!scheduleType, loggerType, 0);
+    timeSchedEn[3] = data.getEnableTimeScheduler(!scheduleType, loggerType, 1);
 
-    if (dateSchedEn)
+    if (dateSchedEn[0])
         printDebugln(String() + utils.integerToString(date, 2) + "/" + utils.integerToString(month, 2) + "/" + utils.integerToString(year, 2) + " -> " + utils.integerToString(dateSet, 2) + "/" + utils.integerToString(monthSet, 2) + "/" + utils.integerToString(yearSet, 2));
     if (timeSchedEn[0] || timeSchedEn[1])
     {
@@ -767,7 +797,7 @@ bool Datalogger::checkSchedule(bool scheduleType, uint8_t loggerType)
                                                                  : "Remote log ");
     printDebug(scheduleType == _on_ ? "On" : "Off");
 
-    if (dateSchedEn)
+    if (dateSchedEn[0])
     {
         if (date == dateSet && month == monthSet && year == yearSet)
         {
@@ -798,7 +828,7 @@ bool Datalogger::checkSchedule(bool scheduleType, uint8_t loggerType)
         }
         else
         {
-            if (!dateSchedEn && !timeSchedEn[0] && !timeSchedEn[1] && data.getDatalogStatus(loggerType) && scheduleType == _on_)
+            if (!dateSchedEn[0] && !dateSchedEn[1] && !timeSchedEn[0] && !timeSchedEn[1] && !timeSchedEn[2] && !timeSchedEn[3] && data.getDatalogStatus(loggerType))
             {
                 printDebugln(" (True) _________________________");
                 return true;
@@ -812,22 +842,53 @@ bool Datalogger::checkSchedule(bool scheduleType, uint8_t loggerType)
 
 void Datalogger::logData(uint8_t loggerType)
 {
+    String logMessage;
     if (data.getDatalogStatus(loggerType))
     {
         if (!rtos.counterDownSecondsLog[loggerType])
         {
             if (loggerType == serial)
             {
-                printDebugln("Serial data logging triggered!");
+                logMessage = String() + mtime.getDateStr() + ";" + mtime.getTimeStr();
+                for (uint8_t i = 0; i < MAX_CHANNEL; i++)
+                {
+                    if (data.getChannelEnDisStatus(i))
+                    {
+                        logMessage += ";";
+                        logMessage += ads.getStringWeightInGram(i);
+                    }
+                    else
+                    {
+                        logMessage += ";";
+                        logMessage += "Disabled";
+                    }
+                }
+                printDebug("Serial log: ");
+                printDebugln(logMessage);
             }
             else if (loggerType == local)
             {
-                printDebugln("Local data logging triggered!");
+                logMessage = String() + mtime.getTimeStr();
+                for (uint8_t i = 0; i < MAX_CHANNEL; i++)
+                {
+                    if (data.getChannelEnDisStatus(i))
+                    {
+                        logMessage += ";";
+                        logMessage += ads.getStringWeightInGram(i);
+                    }
+                    else
+                    {
+                        logMessage += ";";
+                        logMessage += "Disabled";
+                    }
+                }
+                printDebug("Local log: ");
+                printDebugln(logMessage);
+                card.appendFileCsv(logMessage);
             }
             else if (loggerType == remote)
             {
-                if (data.getChannelEnDisStatus(0) || data.getChannelEnDisStatus(1) || data.getChannelEnDisStatus(2) ||
-                    data.getChannelEnDisStatus(3) || data.getChannelEnDisStatus(4) || data.getChannelEnDisStatus(5))
+                if (!data.isAllChannelDisabled())
                 {
                     while (!data.getChannelEnDisStatus(remoteUpdateForChannel))
                     {
@@ -851,7 +912,7 @@ void Datalogger::logData(uint8_t loggerType)
 ///////////THINKSPEAK DATA LOGGER
 void Datalogger::remoteLogging(uint8_t channel)
 {
-    String serverPath = thingSpeakServer + data.getKeyAPI() + "&field" + (channel + 1) + "=" + rtos.counterUpSeconds;
+    String serverPath = thingSpeakServer + data.getKeyAPI() + "&field" + (channel + 1) + "=" + ads.getWeightInGram(channel);
     String payload = "Payload : ";
     int httpResponseCode = 0;
 

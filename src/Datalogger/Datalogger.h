@@ -3,6 +3,8 @@
 
 #include "Arduino.h"
 
+#define LogSerial Serial1
+
 class Datalogger
 {
 public:

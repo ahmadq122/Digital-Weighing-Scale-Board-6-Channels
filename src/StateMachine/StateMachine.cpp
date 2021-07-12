@@ -115,8 +115,8 @@ void StateMachine::setup(void)
     }
     else
         digitalWrite(Pin_VCC_Control, 1);
-    Serial1.begin(115200);
-    while (!Serial1)
+    LogSerial.begin(data.getBaudrateSerial(logging));
+    while (!LogSerial)
         ;
 
     rtos.updateStartProgressBar(10);
@@ -126,7 +126,8 @@ void StateMachine::setup(void)
     initTime();
     rtos.updateStartProgressBar(10);
     hmi.init();
-    initSDCard();
+    card.setup();
+    // initSDCard();
     while (rtos.startProgressBar < 100)
     {
         printDebugln(String() + "Progress: " + rtos.startProgressBar + " %");
@@ -141,11 +142,8 @@ void StateMachine::setup(void)
 
 bool StateMachine::initTime(void)
 {
-    bool ret = RTC.begin();
     mtime.initOffset(data.getTimezone());
-    // if (ret)
-    //     card.setCsvFileName(String() + (2000 + RTC.rtc.year + "-" + utils.integerToString(RTC.rtc.year, 2) + "-" + utils.integerToString(month.toInt(), 2)) + ".csv");
-    return ret;
+    return mtime.tBegin();
 }
 
 bool StateMachine::initFlash(uint16_t memory)
@@ -155,10 +153,10 @@ bool StateMachine::initFlash(uint16_t memory)
     return data.begin(memory);
 }
 
-void StateMachine::initSDCard(void)
-{
-    card.setup();
-}
+// void StateMachine::initSDCard(void)
+// {
+//     card.setup();
+// }
 
 /******************
  * List of Button at HomeScreen
@@ -179,7 +177,6 @@ void StateMachine::initSDCard(void)
  * 14) Tare Channel 5
  * 15) Tare Channel 6
 */
-
 
 uint8_t StateMachine::homeScreen(void)
 {
@@ -252,6 +249,21 @@ uint8_t StateMachine::homeScreen(void)
             }
         }
 
+        if (rtos.minuteTriggered)
+        {
+            String newDateString = mtime.getDateStr();
+
+            if (oldDateString != newDateString)
+            {
+                if (data.getDatalogStatus(local))
+                {
+                    oldDateString = newDateString;
+                    card.updateCsvFileName();
+                }
+            }
+            rtos.minuteTriggered = false;
+        }
+
         for (int i = 0; i < 16; i++)
         {
             button[i] = hmi.getDataButton(i);
@@ -277,7 +289,11 @@ uint8_t StateMachine::homeScreen(void)
                 {
                     enDisChannel[Channel1] = !enDisChannel[Channel1];
                     data.setChannelEnDisStatus(Channel1, enDisChannel[Channel1]);
-                    updateButtonToggleStateToNextion(Channel1);
+                    for (uint8_t i = 0; i < MAX_CHANNEL; i++)
+                    {
+                        enDisChannel[i] = data.getChannelEnDisStatus(i);
+                        updateButtonToggleStateToNextion(i);
+                    }
                     if (enDisChannel[Channel1])
                         printDebugln("Channel 1 : Enabled");
                     else
@@ -287,7 +303,11 @@ uint8_t StateMachine::homeScreen(void)
                 {
                     enDisChannel[Channel2] = !enDisChannel[Channel2];
                     data.setChannelEnDisStatus(Channel2, enDisChannel[Channel2]);
-                    updateButtonToggleStateToNextion(Channel2);
+                    for (uint8_t i = 0; i < MAX_CHANNEL; i++)
+                    {
+                        enDisChannel[i] = data.getChannelEnDisStatus(i);
+                        updateButtonToggleStateToNextion(i);
+                    }
                     if (enDisChannel[Channel2])
                         printDebugln("Channel 2 : Enabled");
                     else
@@ -297,7 +317,11 @@ uint8_t StateMachine::homeScreen(void)
                 {
                     enDisChannel[Channel3] = !enDisChannel[Channel3];
                     data.setChannelEnDisStatus(Channel3, enDisChannel[Channel3]);
-                    updateButtonToggleStateToNextion(Channel3);
+                    for (uint8_t i = 0; i < MAX_CHANNEL; i++)
+                    {
+                        enDisChannel[i] = data.getChannelEnDisStatus(i);
+                        updateButtonToggleStateToNextion(i);
+                    }
                     if (enDisChannel[Channel3])
                         printDebugln("Channel 3 : Enabled");
                     else
@@ -307,7 +331,11 @@ uint8_t StateMachine::homeScreen(void)
                 {
                     enDisChannel[Channel4] = !enDisChannel[Channel4];
                     data.setChannelEnDisStatus(Channel4, enDisChannel[Channel4]);
-                    updateButtonToggleStateToNextion(Channel4);
+                    for (uint8_t i = 0; i < MAX_CHANNEL; i++)
+                    {
+                        enDisChannel[i] = data.getChannelEnDisStatus(i);
+                        updateButtonToggleStateToNextion(i);
+                    }
                     if (enDisChannel[Channel4])
                         printDebugln("Channel 4 : Enabled");
                     else
@@ -317,7 +345,11 @@ uint8_t StateMachine::homeScreen(void)
                 {
                     enDisChannel[Channel5] = !enDisChannel[Channel5];
                     data.setChannelEnDisStatus(Channel5, enDisChannel[Channel5]);
-                    updateButtonToggleStateToNextion(Channel5);
+                    for (uint8_t i = 0; i < MAX_CHANNEL; i++)
+                    {
+                        enDisChannel[i] = data.getChannelEnDisStatus(i);
+                        updateButtonToggleStateToNextion(i);
+                    }
                     if (enDisChannel[Channel5])
                         printDebugln("Channel 5 : Enabled");
                     else
@@ -327,7 +359,11 @@ uint8_t StateMachine::homeScreen(void)
                 {
                     enDisChannel[Channel6] = !enDisChannel[Channel6];
                     data.setChannelEnDisStatus(Channel6, enDisChannel[Channel6]);
-                    updateButtonToggleStateToNextion(Channel6);
+                    for (uint8_t i = 0; i < MAX_CHANNEL; i++)
+                    {
+                        enDisChannel[i] = data.getChannelEnDisStatus(i);
+                        updateButtonToggleStateToNextion(i);
+                    }
                     if (enDisChannel[Channel6])
                         printDebugln("Channel 6 : Enabled");
                     else
@@ -335,51 +371,69 @@ uint8_t StateMachine::homeScreen(void)
                 }
                 else if (button[10])
                 {
-                    ads.enableTare[Channel1] = true;
-                    printDebugln("Channel 1 Tare >>>>>>>>>>>>>>>>>>>");
-                    // while (ads.enableTare[Channel1])
-                    //     ;
-                    hmi.showSavingBarAnimation(100);
+                    if (enDisChannel[Channel1])
+                    {
+                        ads.enableTare[Channel1] = true;
+                        printDebugln("Channel 1 Tare >>>>>>>>>>>>>>>>>>>");
+                        // while (ads.enableTare[Channel1])
+                        //     ;
+                        hmi.showSavingBarAnimation(100);
+                    }
                 }
                 else if (button[11])
                 {
-                    ads.enableTare[Channel2] = true;
-                    printDebugln("Channel 2 Tare >>>>>>>>>>>>>>>>>>>");
-                    // while (ads.enableTare[Channel2])
-                    //     ;
-                    hmi.showSavingBarAnimation(100);
+                    if (enDisChannel[Channel2])
+                    {
+                        ads.enableTare[Channel2] = true;
+                        printDebugln("Channel 2 Tare >>>>>>>>>>>>>>>>>>>");
+                        // while (ads.enableTare[Channel2])
+                        //     ;
+                        hmi.showSavingBarAnimation(100);
+                    }
                 }
                 else if (button[12])
                 {
-                    ads.enableTare[Channel3] = true;
-                    printDebugln("Channel 3 Tare >>>>>>>>>>>>>>>>>>>");
-                    // while (ads.enableTare[Channel3])
-                    //     ;
-                    hmi.showSavingBarAnimation(100);
+                    if (enDisChannel[Channel3])
+                    {
+                        ads.enableTare[Channel3] = true;
+                        printDebugln("Channel 3 Tare >>>>>>>>>>>>>>>>>>>");
+                        // while (ads.enableTare[Channel3])
+                        //     ;
+                        hmi.showSavingBarAnimation(100);
+                    }
                 }
                 else if (button[13])
                 {
-                    ads.enableTare[Channel4] = true;
-                    printDebugln("Channel 4 Tare >>>>>>>>>>>>>>>>>>>");
-                    // while (ads.enableTare[Channel4])
-                    //     ;
-                    hmi.showSavingBarAnimation(100);
+                    if (enDisChannel[Channel4])
+                    {
+                        ads.enableTare[Channel4] = true;
+                        printDebugln("Channel 4 Tare >>>>>>>>>>>>>>>>>>>");
+                        // while (ads.enableTare[Channel4])
+                        //     ;
+                        hmi.showSavingBarAnimation(100);
+                    }
                 }
                 else if (button[14])
                 {
-                    ads.enableTare[Channel5] = true;
-                    printDebugln("Channel 5 Tare >>>>>>>>>>>>>>>>>>>");
-                    // while (ads.enableTare[Channel5])
-                    //     ;
-                    hmi.showSavingBarAnimation(100);
+                    if (enDisChannel[Channel5])
+                    {
+                        ads.enableTare[Channel5] = true;
+                        printDebugln("Channel 5 Tare >>>>>>>>>>>>>>>>>>>");
+                        // while (ads.enableTare[Channel5])
+                        //     ;
+                        hmi.showSavingBarAnimation(100);
+                    }
                 }
                 else if (button[15])
                 {
-                    ads.enableTare[Channel6] = true;
-                    printDebugln("Channel 6 Tare >>>>>>>>>>>>>>>>>>>");
-                    // while (ads.enableTare[Channel6])
-                    //     ;
-                    hmi.showSavingBarAnimation(100);
+                    if (enDisChannel[Channel6])
+                    {
+                        ads.enableTare[Channel6] = true;
+                        printDebugln("Channel 6 Tare >>>>>>>>>>>>>>>>>>>");
+                        // while (ads.enableTare[Channel6])
+                        //     ;
+                        hmi.showSavingBarAnimation(100);
+                    }
                 }
             }
         }
@@ -401,20 +455,23 @@ uint8_t StateMachine::homeScreen(void)
 
         if (rtos.secondTriggered[5])
         {
-            for (uint8_t i = 0; i < 3; i++)
+            if (!data.isAllChannelDisabled())
             {
-                if (data.getDatalogStatus(i))
+                for (uint8_t i = 0; i < 3; i++)
                 {
-                    if (!dataLoggingState[i])
+                    if (data.getDatalogStatus(i))
                     {
-                        if (logger.checkSchedule(_on_, i))
-                            dataLoggingState[i] = true;
-                    }
-                    else
-                    {
-                        logger.logData(i);
-                        if (logger.checkSchedule(_off_, i))
-                            dataLoggingState[i] = false;
+                        if (!dataLoggingState[i])
+                        {
+                            if (logger.checkSchedule(_on_, i))
+                                dataLoggingState[i] = true;
+                        }
+                        else
+                        {
+                            logger.logData(i);
+                            if (logger.checkSchedule(_off_, i))
+                                dataLoggingState[i] = false;
+                        }
                     }
                 }
             }

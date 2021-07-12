@@ -51,6 +51,8 @@ public:
     bool init(uint8_t board);
     bool dataRead(uint8_t board, bool channel, bool calibrating);
     String getStringWeightInUnit(uint8_t channel);
+    String getStringWeightInGram(uint8_t channel);
+    float getWeightInGram(uint8_t channel);
     uint8_t PDWN;
     bool isAvailable[3];
     float tare[MAX_CHANNEL] = {0};

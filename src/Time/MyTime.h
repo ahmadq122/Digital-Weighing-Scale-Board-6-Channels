@@ -12,13 +12,18 @@
 class MyTime : RTCDS1307
 {
 public:
+    bool tBegin(void);
     void initTime(void);
     void initOffset(uint8_t timeZone);
     void updateTime(void);
     bool getMyLocalTime(void);
     bool updateRTC_N_NTPTime(void);
+    void getDayStr(char *buffer);
+    String getDayStr(void);
     void getTimeStr(char *buffer);
+    String getTimeStr(void);
     void getDateStr(char *buffer);
+    String getDateStr(void);
     void getTimeAndDateStr(char *buffer);
     void getActualTimeInMinute(uint16_t *timeMinute);
     void getActualDate(uint8_t *date, uint8_t *month, uint8_t *year);

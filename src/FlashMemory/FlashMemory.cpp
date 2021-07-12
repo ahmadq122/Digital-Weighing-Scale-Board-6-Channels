@@ -734,6 +734,10 @@ uint8_t MemoryFlash::getMeasurementUnit(void)
 {
     return flash.measurementUnit;
 }
+bool MemoryFlash::isAllChannelDisabled(void)
+{
+    return (flash.channelEnDisStatus == 0);
+}
 bool MemoryFlash::getChannelEnDisStatus(uint8_t channel)
 {
     return bitRead(flash.channelEnDisStatus, channel);

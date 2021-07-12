@@ -5,6 +5,11 @@
 #include "./MicroSD/MicroSD.h"
 #include "./Utility/Utility.h"
 
+bool MyTime::tBegin(void)
+{
+    return begin();
+}
+
 void MyTime::initTime(void)
 {
     //init and get the time
@@ -31,6 +36,7 @@ bool MyTime::getMyLocalTime(void)
     struct tm timeinfo;
     char temp[5];
     String sec, min, hour, day, date, month, year, ampm;
+    String csvFileName;
     if (!getLocalTime(&timeinfo))
     {
         //    Serial.println("Failed to obtain time");
@@ -85,7 +91,6 @@ bool MyTime::getMyLocalTime(void)
     {
         if (syncWithNTPTimeNDate())
         {
-            card.setCsvFileName(String() + (2000 + year.toInt() + "-" + utils.integerToString(date.toInt(), 2) + "-" + utils.integerToString(month.toInt(), 2)) + ".csv");
             rtos.syncroneRTC = true;
         }
     }
@@ -108,9 +113,35 @@ bool MyTime::updateRTC_N_NTPTime(void)
     return false;
 }
 
+String MyTime::getDayStr(void)
+{
+    char buffer[6];
+    getDayString((ntpEnabled ? ntp.day : rtc.day), buffer);
+    return buffer;
+}
+
+void MyTime::getDayStr(char *buffer)
+{
+    getDayString((ntpEnabled ? ntp.day : rtc.day), buffer);
+}
+
+String MyTime::getTimeStr(void)
+{
+    char buffer[15];
+    getTimeString(buffer);
+    return buffer;
+}
+
 void MyTime::getTimeStr(char *buffer)
 {
     getTimeString(buffer);
+}
+
+String MyTime::getDateStr(void)
+{
+    char buffer[15];
+    getDateString(buffer);
+    return buffer;
 }
 
 void MyTime::getDateStr(char *buffer)

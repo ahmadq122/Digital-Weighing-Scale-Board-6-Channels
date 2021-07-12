@@ -92,6 +92,7 @@ public:
     uint8_t getEncryptType(void);
     uint8_t getTimezone(void);
     uint8_t getMeasurementUnit(void);
+    bool isAllChannelDisabled(void);
     bool getChannelEnDisStatus(uint8_t channel);
     bool getDebugMode(void);
     bool getNetworkEnable(void);

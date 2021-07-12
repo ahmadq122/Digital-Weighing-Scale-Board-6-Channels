@@ -4,4 +4,3 @@ The board using ESP32 Dev Board as the microcontroller with Nextion 3.2" LCD Tou
 Code programming is done in:
 IDE: Platform IO - Visual Studio Code
 Framework: Arduino
->>>>>>> master

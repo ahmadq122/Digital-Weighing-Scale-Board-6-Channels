@@ -360,6 +360,22 @@ String ADS1232::getStringWeightInUnit(uint8_t channel)
     }
 }
 
+float ADS1232::getWeightInGram(uint8_t channel)
+{
+    uint8_t unit = data.getMeasurementUnit();
+    float weight = getWeightInUnit(channel);
+
+    return (weight * dividerUnits[unit]);
+}
+
+String ADS1232::getStringWeightInGram(uint8_t channel)
+{
+    uint8_t unit = data.getMeasurementUnit();
+    float weight = getWeightInUnit(channel);
+
+    return utils.floatToString((weight * dividerUnits[unit]), 5, 2);
+}
+
 uint8_t ADS1232::getPointDoneCalibrated(uint8_t pointCalibrationStatus)
 {
     for (uint8_t i = 0; i < MAX_POINT_CAL; i++)
