@@ -18,6 +18,7 @@ void Task_04(void *pvParameters); //ADS Board 1
 void Task_05(void *pvParameters); //ADS Board 2
 void Task_06(void *pvParameters); //ADS Board 3
 void Task_07(void *pvParameters); //Remote log
+// void Task_08(void *pvParameters); //Battery Monitoring
 
 // the setup function runs once when you press reset or power the board
 void RealTimeOS::setup(void)
@@ -85,6 +86,15 @@ void RealTimeOS::setup(void)
         configMAX_PRIORITIES - 7, // Priority
         NULL,
         ARDUINO_RUNNING_CORE);
+
+    // xTaskCreatePinnedToCore(
+    //     Task_08,
+    //     "Task_08",
+    //     1024 * 2, // Stack size
+    //     NULL,
+    //     configMAX_PRIORITIES - 8, // Priority
+    //     NULL,
+    //     ARDUINO_RUNNING_CORE);
 }
 
 /*--------------------------------------------------*/
@@ -322,11 +332,24 @@ void Task_07(void *pvParameters) // This is a task.
     }
 }
 
+// void Task_08(void *pvParameters) // This is a task.
+// {
+//     (void)pvParameters;
+
+//     for (;;) // A Task shall never return or exit.
+//     {
+//         if()
+//         vTaskDelay(1000); // Delay for 1 second
+//     }
+// }
+
 void RealTimeOS::updateStartProgressBar(uint8_t add)
 {
     startProgressBar += add;
     startProgressBar = constrain(startProgressBar, 0, 100);
     hmi.setIntegerToNextion("init.val", startProgressBar);
 }
+
+
 
 RealTimeOS rtos;

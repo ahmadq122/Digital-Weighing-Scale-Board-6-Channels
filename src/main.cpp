@@ -2,12 +2,12 @@
 // #include "Nextion/Nextion.h"
 #include "FlashMemory/FlashMemory.h"
 
-StateMachine state;
+StateMachine* state;
 
 void setup()
 {
   // put your setup code here, to run once:
-  state.setup();
+  state->setup();
 }
 
 void loop()
@@ -37,21 +37,21 @@ void loop()
 
   while (true)
   {
-    nextState = state.homeScreen();
+    nextState = state->homeScreen();
 
     switch (nextState)
     {
     case NETWORK:
-      state.networkSettings();
+      state->networkSettings();
       break;
     case SETTINGS:
-      state.settings();
+      state->settings();
       break;
     case UNITS:
-      state.measurementUnits();
+      state->measurementUnits();
       break;
     case DATALOG:
-      state.datalogSettings();
+      state->datalogSettings();
       break;
     default:
       break;

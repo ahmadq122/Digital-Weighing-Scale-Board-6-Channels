@@ -23,6 +23,8 @@ public:
     uint8_t datalogSettings(void);
 
 private:
+
+
     bool initFlash(uint16_t memory);
     bool initTime(void);
     void setupPinIO(void);
